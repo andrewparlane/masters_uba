@@ -73,6 +73,10 @@ fullAdder1: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, fullAdder1_tb)
 
+fullAdderN: srcs
+	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
+	@$(call VSIM_CMD, fullAdderN_tb)
+
 view_saved_waves:
 	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
 
