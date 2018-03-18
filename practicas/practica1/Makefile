@@ -22,7 +22,7 @@ endif
 
 # commands to run once vsim starts
 VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
-								run 1000; \
+								run 1000000000; \
 								quit -f
 
 # flags to pass to VSIM_CMD

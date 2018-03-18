@@ -45,6 +45,7 @@ begin
                         " actualOutput: "   & integer'image(to_integer(unsigned(output)))
                 severity error;
         end loop startloop;
+        std.env.stop;
     end process;
 
 end architecture synth;
