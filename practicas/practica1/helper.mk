@@ -30,9 +30,10 @@ GENERATE_COLOURIZE_SED = -e $$'s/$(1)/$(2)\\1$(COLOUR_NONE)/'
 # 	It adds the $(MORE_COLOURS) var at the end, which can be used in individual makefiles
 # 	to add more colourization. IE. if you want to colourize lines with Importing in them
 # 	Additionally you can override COLOURIZE_SED_ALL to replace all colourization options
-COLOURIZE_SED_ALL ?= sed -r $(call GENERATE_COLOURIZE_SED,(Error:|UVM_ERROR|UVM_FATAL|Fatal:|FATAL ERROR|Error|Falla),$(COLOUR_RED)) \
+COLOURIZE_SED_ALL ?= sed -r $(call GENERATE_COLOURIZE_SED,(Error:|UVM_ERROR|UVM_FATAL|Fatal:|FATAL ERROR|Error|Failure|FALLA!),$(COLOUR_RED)) \
 							$(call GENERATE_COLOURIZE_SED,(Warning:|Note:|UVM_WARNING),$(COLOUR_ORANGE)) \
 							$(call GENERATE_COLOURIZE_SED,(UVM_INFO),$(COLOUR_BLUE)) \
+							$(call GENERATE_COLOURIZE_SED,(APROBAR!),$(COLOUR_GREEN)) \
 							$(MORE_COLOURS)
 
 # Actual macro that colourizes
