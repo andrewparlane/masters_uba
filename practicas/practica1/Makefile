@@ -1,6 +1,8 @@
 # ----------------------------------------------------------------------------------
 # Requirements:
-#   QuestaSim - We use the vcom compiler packaged with QuestaSim.
+#	QuestaSim - We use vcom and vsim.
+#	Each test bench must contain an instantiation called dut.
+#	Each test bench must call std.env.stop when it's finished testing.
 # ----------------------------------------------------------------------------------
 
 # set the default target to be all. Otherwise it's the first target it finds
