@@ -3,21 +3,21 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity rippleAdderN is
+entity rippleAdder is
     generic(WIDTH: integer := 8);
     port(a, b:  in  std_logic_vector((width - 1) downto 0);
          cIn:   in  std_logic;
          o:     out std_logic_vector((width - 1) downto 0);
          cOut:  out std_logic);
-end entity rippleAdderN;
+end entity rippleAdder;
 
-architecture synth of rippleAdderN is
+architecture synth of rippleAdder is
     component fullAdder
         port(a, b:  in  std_logic;
              cIn:   in  std_logic;
              o:     out std_logic;
              cOut:  out std_logic);
-    end component;
+    end component fullAdder;
 
     -- usamos WIDTH señales de carry
     -- y asignamos cIn a carry(0)

@@ -3,17 +3,17 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity rippleAdderN_tb is
-end entity rippleAdderN_tb;
+entity rippleAdder_tb is
+end entity rippleAdder_tb;
 
-architecture synth of rippleAdderN_tb is
-    component rippleAdderN
+architecture synth of rippleAdder_tb is
+    component rippleAdder
         generic(WIDTH: integer := 8);
         port(A, B:  in  STD_LOGIC_VECTOR((WIDTH - 1) downto 0);
              Cin:   in  STD_LOGIC;
              O:     out STD_LOGIC_VECTOR((WIDTH - 1) downto 0);
              Cout:  out STD_LOGIC);
-    end component rippleAdderN;
+    end component rippleAdder;
 
     constant WIDTH: integer     := 4;
 
@@ -24,7 +24,7 @@ architecture synth of rippleAdderN_tb is
     signal output: std_logic_vector(WIDTH downto 0);
 begin
 
-    dut:    rippleAdderN   generic map (WIDTH => WIDTH)
+    dut:    rippleAdder    generic map (WIDTH => WIDTH)
                            port map (a => inputs((2 * WIDTH) downto (WIDTH + 1)),
                                      b => inputs(WIDTH downto 1),
                                      cIn => inputs(0),
