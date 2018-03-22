@@ -69,13 +69,13 @@ $(foreach src,$(SRCS),$(eval $(call create_target_for, $(src))))
 srcs: $(VLIB_DIR) $(call src2obj, $(SRCS))
 	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
 
-fullAdder1: srcs
+fullAdder: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
-	@$(call VSIM_CMD, fullAdder1_tb)
+	@$(call VSIM_CMD, fullAdder_tb)
 
-fullAdderN: srcs
+rippleAdderN: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
-	@$(call VSIM_CMD, fullAdderN_tb)
+	@$(call VSIM_CMD, rippleAdderN_tb)
 
 view_saved_waves:
 	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
