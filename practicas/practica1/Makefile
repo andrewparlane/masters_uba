@@ -19,7 +19,7 @@ VCOM_FLAGS 	= -work $(VLIB_NAME)
 ifeq ($(DEBUG),1)
 ADD_DEBUG_WAVES				=	add wave -r /*
 else
-ADD_DEBUG_WAVES				=	add wave /*
+ADD_DEBUG_WAVES				=	add wave dut/*
 endif
 
 # commands to run once vsim starts
