@@ -95,6 +95,10 @@ flipFlopN_srst: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, flipFlopN_srst_tb)
 
+contador2: srcs
+	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
+	@$(call VSIM_CMD, contador2_tb)
+
 view_saved_waves:
 	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
 
