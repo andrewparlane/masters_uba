@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <libgen.h>
 #include <getopt.h>
+#include <ctype.h>
 
 #define MAJOR_VERSION   0
 #define MINOR_VERSION   1
@@ -42,6 +43,8 @@ static bool parseFile(const char *archivo, bool cFlag, bool wFlag, bool lFlag)
            lFlag ? "l" : "",
            wFlag ? "w" : "",
            cFlag ? "c" : "");
+
+    return true;
 }
 
 static bool parseStdin(bool cFlag, bool wFlag, bool lFlag)
@@ -50,6 +53,8 @@ static bool parseStdin(bool cFlag, bool wFlag, bool lFlag)
            lFlag ? "l" : "",
            wFlag ? "w" : "",
            cFlag ? "c" : "");
+
+    return true;
 }
 
 int main(int argc, char **argv)
