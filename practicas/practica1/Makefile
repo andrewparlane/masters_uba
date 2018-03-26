@@ -103,6 +103,10 @@ contador4: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, contador4_tb)
 
+contadorN: srcs
+	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
+	@$(call VSIM_CMD, contadorN_tb)
+
 view_saved_waves:
 	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
 
