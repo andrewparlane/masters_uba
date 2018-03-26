@@ -44,7 +44,7 @@ VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
 # this has: colour codes for outputting messages in colour
 #			a macro to turn the source path into the object path
 #			a macro to create a target based on a source file name
-include helper.mk
+include ../../herramientas/helper.mk
 
 # src files directory
 SRCS				= $(wildcard src/*.vhd) \
