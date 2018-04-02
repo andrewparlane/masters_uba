@@ -4,6 +4,7 @@
 #include <libgen.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #define MAJOR_VERSION   0
 #define MINOR_VERSION   1
@@ -36,25 +37,122 @@ static void usage(const char *nombre)
     // porque no soportamos %1$s
 }
 
-static bool parseFile(const char *archivo, bool cFlag, bool wFlag, bool lFlag)
+static bool obtenerCharacter(FILE *stream, bool *whitespace, bool *newline)
 {
-    printf("parsing %s with -%s%s%s\n",
-           archivo,
-           lFlag ? "l" : "",
-           wFlag ? "w" : "",
-           cFlag ? "c" : "");
+    *whitespace = false;
+    *newline = false;
+    while (1)
+    {
+        int c = fgetc(stream);
+        if (c == EOF)
+        {
+            return false;
+        }
 
-    return true;
+        uint8_t bytesMas;
+        // 0xxx_xxxx => 1 byte
+        // 110x_xxxx => 2 bytes
+        // 1110_xxxx => 3 bytes
+        // 1111_0xxx => 4 bytes
+        // 1111_1xxx => inválido
+        if (c < 128) // ascii
+        {
+            *whitespace = isspace(c);
+            *newline = (c == '\n');
+            return true;
+        }
+        else if (c < 0xE0)
+        {
+            bytesMas = 1;
+        }
+        else if (c < 0xF0)
+        {
+            bytesMas = 2;
+        }
+        else
+        {
+            bytesMas = 3;
+        }
+
+        int i;
+        for (i = 0; i < bytesMas; i++)
+        {
+            c = fgetc(stream);
+            if (c == EOF)
+            {
+                // inválido, no contamos
+                return false;
+            }
+            // TODO whitespace en UTF8?
+        }
+
+        return true;
+    }
 }
 
-static bool parseStdin(bool cFlag, bool wFlag, bool lFlag)
+static void parseStream(FILE *stream, uint32_t *chars, uint32_t *palabras, uint32_t *lineas)
 {
-    printf("parsing stdin with -%s%s%s\n",
-           lFlag ? "l" : "",
-           wFlag ? "w" : "",
-           cFlag ? "c" : "");
+    *chars = 0;
+    *palabras = 0;
+    *lineas = 0;
+    bool ultimoEstuvoWhitespace = true;
 
-    return true;
+    while (1)
+    {
+        bool whitespace;
+        bool newline;
+        if (!obtenerCharacter(stream, &whitespace, &newline))
+        {
+            // termina la palabra corriente
+            if (!ultimoEstuvoWhitespace )
+            {
+                (*palabras)++;
+            }
+            break;
+        }
+
+        (*chars)++;
+
+        if (whitespace && !ultimoEstuvoWhitespace)
+        {
+            (*palabras)++;
+            ultimoEstuvoWhitespace = true;
+        }
+        if (!whitespace)
+        {
+            ultimoEstuvoWhitespace = false;
+        }
+
+        if (newline)
+        {
+            (*lineas)++;
+        }
+    }
+}
+
+void output(bool cFlag, bool wFlag, bool lFlag, uint32_t caracteres, uint32_t palabras, uint32_t lineas, const char *archivo)
+{
+    bool outputPrevio = false;
+    if (lFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", lineas);
+        outputPrevio = true;
+    }
+    if (wFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", palabras);
+        outputPrevio = true;
+    }
+    if (cFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", caracteres);
+        outputPrevio = true;
+    }
+    if (archivo != NULL)
+    {
+        printf("%s%s", outputPrevio ? "\t" : "", archivo);
+    }
+    printf("\n");
 }
 
 int main(int argc, char **argv)
@@ -154,34 +252,80 @@ int main(int argc, char **argv)
     }
 
     bool err = false;
+    uint32_t totalLineas = 0;
+    uint32_t totalPalabras = 0;
+    uint32_t totalcaracteres = 0;
+    uint32_t totalArchivos = 0;
 
     // si no hay archivos especificado usamos de stdin
     if (iValue == NULL && (optind >= argc))
     {
-        parseStdin(cFlag, wFlag, lFlag);
+        parseStream(stdin, &totalcaracteres, &totalPalabras, &totalLineas);
+        totalArchivos = 1;
+
+        output(cFlag, wFlag, lFlag, totalcaracteres, totalPalabras, totalLineas, NULL);
     }
     else
     {
         // primero el archivo especificado con -i (si hay uno)
         if (iValue != NULL)
         {
-            if (!parseFile(iValue, cFlag, wFlag, lFlag))
+            FILE *stream = fopen(iValue, "rb");
+            if (stream == NULL)
             {
-                // outptus su propio mensaje de error
+                fprintf(stderr, "%s: %s: No such file or directory\n", nuestroNombre, iValue);
                 err = true;
             }
+            else
+            {
+                uint32_t chars;
+                uint32_t palabras;
+                uint32_t lineas;
+                parseStream(stream, &chars, &palabras, &lineas);
+                fclose(stream);
+                output(cFlag, wFlag, lFlag, chars, palabras, lineas, iValue);
+
+                totalcaracteres    += chars;
+                totalPalabras       += palabras;
+                totalLineas         += lineas;
+            }
+
+            // conta el archivo si existe o no
+            totalArchivos++;
         }
 
         // después cada argumento que no es un opción
         int index;
         for (index = optind; index < argc; index++)
         {
-            if (!parseFile(argv[index], cFlag, wFlag, lFlag))
+            FILE *stream = fopen(argv[index], "rb");
+            if (stream == NULL)
             {
-                // outptus su propio mensaje de error
+                fprintf(stderr, "%s: %s: No such file or directory\n", nuestroNombre, argv[index]);
                 err = true;
             }
+            else
+            {
+                uint32_t chars;
+                uint32_t palabras;
+                uint32_t lineas;
+                parseStream(stream, &chars, &palabras, &lineas);
+                fclose(stream);
+                output(cFlag, wFlag, lFlag, chars, palabras, lineas, argv[index]);
+
+                totalcaracteres    += chars;
+                totalPalabras       += palabras;
+                totalLineas         += lineas;
+            }
+
+            // conta el archivo si existe o no
+            totalArchivos++;
         }
+    }
+
+    if (totalArchivos > 1)
+    {
+        output(cFlag, wFlag, lFlag, totalcaracteres, totalPalabras, totalLineas, "total");
     }
 
     // return 0 si no había errores, o 1 si había
