@@ -74,6 +74,8 @@ prueba: $(TARGET)
 	# stdin
 	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, -lwc)
 	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, )
+	# newlines
+	-$(call HACE_PRUEBA, cat pruebas/newlines.txt |, -lwm, -lwc)
 	@# Estoy poniendo esto aqui para estar cerca las otras pruebas
 	@# Estos están pruebas que no puedo automizar
 	# TODO manualmente
