@@ -6,8 +6,8 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#define MAJOR_VERSION   0
-#define MINOR_VERSION   1
+#define MAJOR_VERSION   1
+#define MINOR_VERSION   0
 
 static const struct option long_options[] =
 {
