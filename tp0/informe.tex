@@ -1,0 +1,801 @@
+\documentclass[a4paper]{article}
+
+\usepackage[toc,page]{appendix}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{xcolor}
+\usepackage{minted}
+
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+
+
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={210mm,297mm},
+ left=22mm,
+ right=19.1mm,
+ top=25.4mm,
+ bottom=25.4mm,
+ }
+
+ \lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=C
+}
+
+
+\begin{document}
+\begin{figure}
+\centering
+\includegraphics[scale=1]{./img/logo-facu}
+\end{figure}
+
+\title{\large\textsc{66.20 - Organización de Computadoras}\\
+\large Trabajo Práctico 0 - Infraestructura Básica}
+
+\author{
+Nicolás Alvarez, Padrón 93503\\
+Nicolás Fernandez, Padrón 88599\\
+Andrew Parlane \hspace{2cm} \\
+}
+
+\maketitle
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Resumen}
+El objetivo de este trabajo se basa en familiarizarse con las herramientas de software que se utilizara en los trabajos futuros. Para simular el entorno de desarrollo que se utilizara en los trabajos, se usó el programa GXemul, el cual nos permite trabajar sobre una máquina MIPS que corre el sistema operativo NetBSD.
+
+\section{Introducción}
+Para este trabajo realizamos un programa en C que consiste en tomar un archivo de texto o bien stdin y generar una salida por stdout con cantidad de líneas, palabras y caracteres que contiene, junto con el nombre del archivo.
+Realizaremos varias ejecuciones con distintos archivos de prueba para evaluar los distintos resultados en las dos máquinas y compararlos.
+
+\section{Configuración entorno MIPS}
+Para configurar el emulador de MIPS GXEMUL (con la imagen descargada), los pasos que realizamos fueron los siguientes:
+\begin{itemize}
+	\item  En el directorio de la imagen ejecutamos el comando para extraerla
+    	\begin{minted}{bash}
+host# bzip2 -dc gxemul-6620.tar.bz2 | cpio --sparse -i -v
+		\end{minted}
+	\item Luego verificamos que tengamos ssh instalado, para poder realizar el tunel de SSH.
+	\item Iniciamos GXEMUL con el siguiente comando (parados en el directorio donde se extrajo):
+      	\begin{minted}{bash}
+host# ./gxemul -e 3max -d netbsd-pmax.img
+		\end{minted}
+		Luego nos logueamos con usuario root y el password proporcionado por la cátedra.
+	\item Configramos el loopback con el siguiente comando:
+		\begin{minted}{bash}
+host# sudo ifconfig lo:0 172.20.0.1
+		\end{minted}
+	\item Para conectarnos desde NetBSD con Linux utilizamos el siguiente comando:
+		\begin{minted}{bash}
+guest# ssh -R 2222:127.0.0.1:22 USER@172.20.0.1
+		\end{minted}
+		Donde USER es el usuario de Linux que utilizamos cada uno.
+	\item Para conectarnos desde Linux con NetBSD utilizamos el siguiente comando:
+		\begin{minted}{bash}
+host# ssh -p 2222 root@127.0.0.1
+		\end{minted}
+	\item Para pasar archivos de Linux a NetBSD utilizamos el siguiente comando:
+		\begin{minted}{bash}
+host# scp -P 2222 <ARCHIVO> root@127.0.0.1:/root/<CARPETA>
+		\end{minted}
+	\item Para pasar archivos de NetBSD a Linux utilizamos el siguiente comando:
+		\begin{minted}{bash}
+guest# scp -p 2222 ARCHIVO USER@172.20.0.1:/DIR/DONDE/QUIERO/COPIAR
+		\end{minted}
+\end{itemize}
+
+\pagebreak
+
+\section{Compilacion y ejecución del programa}
+Esta sección describe  los mecanismos para la compilación y ejecución del programa, tanto en entorno MIPS como en Linux.
+		   En una primera etapa compilamos y trabajamos en Linux para poder realizar las pruebas. 	Adicionalmente a esto utilizamos Valgrind para chequear que no tengamos problemas de leaks o free en nuestro código.\newline
+
+Para compilar manualmente:
+\begin{itemize}
+\item Estando parados en la carpeta donde se encuentran los archivos fuente, ejecutamos el siguiente comando:
+\begin{minted}{bash}
+gcc -Wall -o tp0 *.c
+\end{minted}
+\end{itemize}
+
+Para compilar usando el Makefile:
+\begin{itemize}
+\item Estando parados en la carpeta donde se encuentran los archivos fuente, ejecutamos el siguiente comando:
+\begin{minted}{bash}
+host# make
+\end{minted}
+Y para la machina de MIPS:
+\begin{minted}{bash}
+host# gmake
+\end{minted}
+\end{itemize}
+
+Para ejecutar:
+\begin{itemize}
+\item Estando parados en la carpeta donde se encuentran el archivo ejecutable, corremos para cada archivo o fragmento de prueba lo siguiente:
+\begin{minted}{bash}
+./tp0 [options] file
+\end{minted}
+\item Si se quiere ver el help, que especifica las opciones disponibles al momento de invocar el programa:
+\begin{minted}{bash}
+./tp0 -h
+\end{minted}
+\item Si se quiere ver la versión del programa:
+\begin{minted}{bash}
+./tp0 -V
+\end{minted}
+\end{itemize}
+\pagebreak
+
+\section{Implementación}
+\subsection{Implementación en C}
+
+Para la implementación del programa, se estructuró en un solo archivo:
+
+\begin{itemize}
+	\item \textbf{main.c} : Define el proceso principal de ejecución , la validación de los parámetros pasados al programa y además los métodos para parseo y salida del programa.
+\end{itemize}
+A continuación enumeramos las funciones definidas en el programa que se usarán luego de la verificacion y validación de los parámetros de entrada:
+\begin{itemize}
+\item \textbf{usage}\\
+	\begin{tabular}{ll}
+    parámetros: &const char *nombreDeLaAplicacion\\
+    &\\
+    descripción: &función que muestra el help de la aplicación.
+    \end{tabular}\\
+
+\item \textbf{output}\\
+	\begin{tabular}{ll}
+    parámetros:    &bool cFlag\\
+                   &bool wFlag\\
+                   &bool lFlag\\
+                   &uint32\_t caracteres\\
+                   &uint32\_t palabras\\
+                   &uint32\_t lineas\\
+                   &const char *nombreDelOutput\\
+	&\\
+    descripción: &función que muestra una linea de salida.
+    \end{tabular}\\
+
+\item \textbf{obtenerCharacter}\\
+	\begin{tabular}{ll}
+    parámetros:    &FILE *stream\\
+                   &bool *whitespace\\
+                   &bool *newline\\
+    &\\
+    descripción: &función que lee un carácter de ASCII o UTF8 desde un archivo.
+    \end{tabular}\\
+
+\item \textbf{parseStream}\\
+	\begin{tabular}{ll}
+    parámetros:     &FILE *stream\\
+    				&uint32\_t *chars\\
+                    &uint32\_t *palabras\\
+                    &uint32\_t *lineas\\
+    &\\
+    descripción: &función que cuenta las lineas, palabras y caracteres de un archivo.
+    \end{tabular}\\
+\end{itemize}
+\lstset{basicstyle=\footnotesize\ttfamily}
+\pagebreak
+
+\section{Pruebas}
+Realizamos las pruebas en GXEmul para cada uno de los archivos pedidos tomando los tiempos de ejecución para cada archivo.
+\begin{itemize}
+\item \textbf{alice.txt}
+\item \textbf{beowulf.txt}
+\item \textbf{cyclopedia.txt}
+\item \textbf{elquijote.txt}
+
+\end{itemize}
+
+
+\begin{minted}{bash}
+guest# time ./tp0 alice.txt
+4046    30355   177412  alice.txt
+
+real    0m0.324s
+user    0m0.324s
+sys     0m0.000s
+
+guest# time ./tp0 beowulf.txt
+4562    37048   224806  beowulf.txt
+
+real    0m0.430s
+user    0m0.379s
+sys     0m0.051s
+
+guest# time ./tp0 cyclopedia.txt
+17926   105582  658543  cyclopedia.txt
+
+real    0m1.246s
+user    0m1.211s
+sys     0m0.023s
+
+guest# Tp0# time ./tp0 elquijote.txt
+37862   384258  2155340 elquijote.txt
+
+real    0m3.875s
+user    0m3.844s
+sys     0m0.031s
+
+
+\end{minted}
+
+También se realizó una prueba para medir el tiempo que tarda el procesamiento de los 4 archivos juntos.
+\begin{minted}{bash}
+guest# time ./tp0 alice.txt beowulf.txt cyclopedia.txt elquijote.txt
+4046    30355   177412  alice.txt
+4562    37048   224806  beowulf.txt
+17926   105582  658543  cyclopedia.txt
+37862   384258  2155340 elquijote.txt
+64396   557243  3216101 total
+
+real    0m6.090s
+user    0m6.043s
+sys     0m0.031s
+\end{minted}
+
+\paragraph{}
+También se realizaron otras pruebas para aseguranos que todo funciona como se pide en el enunciado. Esas pruebas incluyen:
+\begin{itemize}
+\item Solo contar una de las lineas, palabras o los caracteres.
+\item Uso del flag -i para el input de la ruta de un archivo.
+\item Archivos en otros carpetas.
+\item Uso de wildcards en la ruta.
+\item Archivos que no existen.
+\item Archivos con nombres especiales: álíçé.txt, \textbackslash{}"\textbackslash{}".
+\item Archivos binarios.
+\item STDIN, usando cat y poniendo texto manualmente.
+\item Archivos infinitos como /dev/zero.
+
+
+\end{itemize}
+\pagebreak
+\section{Gráficos en función del tamaño de entrada}
+Teniendo en cuenta los archivos y los datos del apartado anterior generamos los siguientes gráficos:
+
+\includegraphics[scale=0.8]{./img/Grafico}
+
+Calculamos la regresión lineal a partir de los datos y obtuvimos esta función:  Y=-12.7545636573+0.00187008629677x
+
+\pagebreak
+
+\section{Comparación con WC}
+Realizamos las mismas pruebas en GXEmul usando WC.
+
+\begin{minted}{bash}
+guest# time wc -lwm alice.txt
+	4046   30355  177428 alice.txt
+
+real    0m0.281s
+user    0m0.273s
+sys     0m0.008s
+guest# time wc -lwm beowulf.txt
+    4562   37048  224839 beowulf.txt
+
+real    0m0.352s
+user    0m0.344s
+sys     0m0.008s
+guest# time wc -lwm cyclopedia.txt
+	17926  105582  658543 cyclopedia.txt
+
+real    0m1.090s
+user    0m1.047s
+sys     0m0.035s
+guest# time wc -lwm elquijote.txt
+   37862  384258 2198907 elquijote.txt
+
+real    0m3.402s
+user    0m3.375s
+sys     0m0.016s
+guest# time wc -lwm alice.txt beowulf.txt cyclopedia.txt elquijote.txt
+    4046   30355  177428 alice.txt
+    4562   37048  224839 beowulf.txt
+   17926  105582  658543 cyclopedia.txt
+   37862  384258 2198907 elquijote.txt
+   64396  557243 3259717 total
+
+real    0m5.293s
+user    0m5.250s
+sys     0m0.027s
+\end{minted}
+
+
+\begin{tabular}{ | l | r r r | r r r |}
+	\hline
+    	& \multicolumn{3}{ |c| }{tp0} & \multicolumn{3}{ |c| }{wc -lwm} \\ \hline
+    	archivo & lineas & palabras & tiempo real & lineas & palabras & tiempo real\\
+		alice.txt       & 4046    & 30355     & 0.324s    & 4046  & 30355     & 0.281s\\
+		beowulf.txt     & 4562    & 37048     & 0.430s    & 4562  & 37048     & 0.352s\\
+		cyclopedia.txt  & 17926   & 105582    & 1.246s    & 17926 & 105582    & 1.090s\\
+		elquijote.txt   & 37862   & 384258    & 3.875s    & 37862 & 384258    & 3.402s\\ \hline
+		todos           & 64396   & 557243    & 6.090s    & 64396 & 557243    & 5.293s\\
+    \hline
+\end{tabular}
+
+\paragraph{}
+Notar que no mostramos los resultados por caracteres porque el wc nativo en la maquina del guest no soporta caracteres, solo bytes.
+\paragraph{}
+Nuestra aplicación tp0 corre en promedio 15\% más lento que wc.
+
+\pagebreak
+
+\section{Conclusiones}
+	El desarrollo de este trabajo nos permitió familiarizarnos con el uso del GXemul para lograr levantar una máquina virtual de MIPS y poder trabajar en ella. Aprendimos cómo crear un túnel entre la máquina virtual del GXemul y una pc mediante el loopback, con el cual pudimos realizar traspasos de archivos de uno a otro. Con esto logramos modificar el programa en la computadora, pasarlo a la máquina virtual y compilarlo en ella.\\
+	En cuanto a los resultados, se puede observar que el tiempo que toma nuestro programa en procesar los archivos es mayor comparado con el tiempo de la funcion wc, ésto nos lleva a pensar que nuestro programa puede ser mejorable para poder alcanzar unos valores mas cercanos a wc.\\
+	Con el gráfico obtenido de los tiempos de corrida (en milisegundos) versus el tamaño de entrada (cantidad de caracteres) obtenemos que se parece a una recta.  Observando la recta de regresión se puede ver que posee una pendiente pequeña (menor a 1), advirtiendonos de que cada 100 caracteres aproximadamente el tiempo de ejecución aumentara una milésima de segundo, es decir por cada 100.000 de caracteres aproximadamente tardará 1 segundo en procesarlos.  Si bien la función wc posee mejores tiempos, nuestro programa posee un buen tiempo de ejecución.
+\pagebreak
+\section{Código C}
+\lstset{language=C}
+\subsection{main.c}
+
+\begin{lstlisting}[style=CStyle]
+#include <stdio.h>
+#include <unistd.h>
+#include <stdbool.h>
+#include <libgen.h>
+#include <getopt.h>
+#include <ctype.h>
+#include <stdint.h>
+
+#define MAJOR_VERSION   1
+#define MINOR_VERSION   0
+
+static const struct option long_options[] =
+{
+    {"help",        no_argument, 0, 'h' },
+    {"version",     no_argument, 0, 'V' },
+    {"lines",       no_argument, 0, 'l' },
+    {"words",       no_argument, 0, 'w' },
+    {"characters",  no_argument, 0, 'c' },
+    {0,         0,               0,  0  }
+};
+
+static void usage(const char *nombreDeLaAplicacion)
+{
+    printf("Usage:\n"
+           "  %s -h\n"
+           "  %s -V\n"
+           "  %s [options]... [file]...\n"
+           "Options:\n"
+           "  -V, --version     Print version and quit.\n"
+           "  -h, --help        Print this information.\n"
+           "  -l, --lines       Print number of lines in file.\n"
+           "  -w, --words       Print number of words in file.\n"
+           "  -c, --characters  Print number of characters in file.\n"
+           "  -i, --input       Path to input file.\n\n",
+           nombreDeLaAplicacion, nombreDeLaAplicacion, nombreDeLaAplicacion);
+    // necesitamos usar nombreDeLaAplicacion, nombreDeLaAplicacion, nombreDeLaAplicacion
+    // porque no soportamos %1$s
+}
+
+static bool obtenerCharacter(FILE *stream, bool *whitespace, bool *newline)
+{
+    *whitespace = false;
+    *newline = false;
+    while (1)
+    {
+        int c = fgetc(stream);
+        if (c == EOF)
+        {
+            return false;
+        }
+
+        uint8_t bytesMas;
+        // 0xxx_xxxx => 1 byte
+        // 110x_xxxx => 2 bytes
+        // 1110_xxxx => 3 bytes
+        // 1111_0xxx => 4 bytes
+        // 1111_1xxx => invalido
+        if (c < 128) // ascii
+        {
+            *whitespace = isspace(c);
+            *newline = (c == '\n');
+            return true;
+        }
+        else if (c < 0xE0)
+        {
+            bytesMas = 1;
+        }
+        else if (c < 0xF0)
+        {
+            bytesMas = 2;
+        }
+        else
+        {
+            bytesMas = 3;
+        }
+
+        int i;
+        for (i = 0; i < bytesMas; i++)
+        {
+            c = fgetc(stream);
+            if (c == EOF)
+            {
+                // invalido, no contamos
+                return false;
+            }
+            // TODO whitespace en UTF8?
+        }
+
+        return true;
+    }
+}
+
+static void parseStream(FILE *stream, uint32_t *chars, uint32_t *palabras, uint32_t *lineas)
+{
+    *chars = 0;
+    *palabras = 0;
+    *lineas = 0;
+    bool ultimoEstuvoWhitespace = true;
+
+    while (1)
+    {
+        bool whitespace;
+        bool newline;
+        if (!obtenerCharacter(stream, &whitespace, &newline))
+        {
+            // termina la palabra corriente
+            if (!ultimoEstuvoWhitespace )
+            {
+                (*palabras)++;
+            }
+            break;
+        }
+
+        (*chars)++;
+
+        if (whitespace && !ultimoEstuvoWhitespace)
+        {
+            (*palabras)++;
+            ultimoEstuvoWhitespace = true;
+        }
+        if (!whitespace)
+        {
+            ultimoEstuvoWhitespace = false;
+        }
+
+        if (newline)
+        {
+            (*lineas)++;
+        }
+    }
+}
+
+void output(bool cFlag, bool wFlag, bool lFlag, uint32_t caracteres, uint32_t palabras, uint32_t lineas, const char *nombreDelOutput)
+{
+    bool outputPrevio = false;
+    if (lFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", lineas);
+        outputPrevio = true;
+    }
+    if (wFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", palabras);
+        outputPrevio = true;
+    }
+    if (cFlag)
+    {
+        printf("%s%u", outputPrevio ? "\t" : "", caracteres);
+        outputPrevio = true;
+    }
+    if (nombreDelOutput != NULL)
+    {
+        printf("%s%s", outputPrevio ? "\t" : "", nombreDelOutput);
+    }
+    printf("\n");
+}
+
+int main(int argc, char **argv)
+{
+    // usamos argv[0] como el nombre del aplicacion
+    // pero solo queremos el archivo, no la ruta
+    const char *nuestroNombre = basename(argv[0]);
+
+    bool lFlag = false;
+    bool wFlag = false;
+    bool cFlag = false;
+    const char *iValue = NULL;
+
+    // clear errors
+    opterr = 0;
+
+    // parse short options
+    while (1)
+    {
+        // obtener el siguinete argumento
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "hVlwci:", long_options, &option_index);
+
+        if (c == -1)
+        {
+            // no hay mas
+            break;
+        }
+
+        switch (c)
+        {
+            case 'h':
+            {
+                usage(nuestroNombre);
+                // no siguimos desupes de -h
+                return 0;
+            }
+            case 'V':
+            {
+                printf("%s: Version %u.%u\n", nuestroNombre, MAJOR_VERSION, MINOR_VERSION);
+                // no siguimos desupes de -V
+                return 0;
+            }
+            case 'l':
+            {
+                lFlag = true;
+                break;
+            }
+            case 'w':
+            {
+                wFlag = true;
+                break;
+            }
+            case 'c':
+            {
+                cFlag = true;
+                break;
+            }
+            case 'i':
+            {
+                iValue = optarg;
+                break;
+            }
+            case '?':
+            {
+                if (optopt == 'i')
+                {
+                    fprintf(stderr, "Option '-%c' requires an argument.\n\n", optopt);
+                }
+                else if (isprint(optopt))
+                {
+                    // es un argumento, pero no es uno que esperamos
+                    fprintf (stderr, "Unknown option '-%c'.\n\n", optopt);
+                }
+                else
+                {
+                    // solo mostra el usage
+                }
+                usage(nuestroNombre);
+                return 1;
+            }
+            default:
+            {
+                // porque estamos aqui?
+                usage(nuestroNombre);
+                return 1;
+            }
+        }
+    }
+
+    // si ningun de -l -w o -c esta especificado usamos todos
+    if (!lFlag && !wFlag && !cFlag)
+    {
+        lFlag = true;
+        wFlag = true;
+        cFlag = true;
+    }
+
+    bool err = false;
+    uint32_t totalLineas = 0;
+    uint32_t totalPalabras = 0;
+    uint32_t totalcaracteres = 0;
+    uint32_t totalArchivos = 0;
+
+    // si no hay archivos especificado usamos de stdin
+    if (iValue == NULL && (optind >= argc))
+    {
+        parseStream(stdin, &totalcaracteres, &totalPalabras, &totalLineas);
+        totalArchivos = 1;
+
+        output(cFlag, wFlag, lFlag, totalcaracteres, totalPalabras, totalLineas, NULL);
+    }
+    else
+    {
+        // primero el archivo especificado con -i (si hay uno)
+        if (iValue != NULL)
+        {
+            FILE *stream = fopen(iValue, "rb");
+            if (stream == NULL)
+            {
+                fprintf(stderr, "%s: %s: No such file or directory\n", nuestroNombre, iValue);
+                err = true;
+            }
+            else
+            {
+                uint32_t chars;
+                uint32_t palabras;
+                uint32_t lineas;
+                parseStream(stream, &chars, &palabras, &lineas);
+                fclose(stream);
+                output(cFlag, wFlag, lFlag, chars, palabras, lineas, iValue);
+
+                totalcaracteres    += chars;
+                totalPalabras       += palabras;
+                totalLineas         += lineas;
+            }
+
+            // conta el archivo si existe o no
+            totalArchivos++;
+        }
+
+        // despues cada argumento que no es un opcion
+        int index;
+        for (index = optind; index < argc; index++)
+        {
+            FILE *stream = fopen(argv[index], "rb");
+            if (stream == NULL)
+            {
+                fprintf(stderr, "%s: %s: No such file or directory\n", nuestroNombre, argv[index]);
+                err = true;
+            }
+            else
+            {
+                uint32_t chars;
+                uint32_t palabras;
+                uint32_t lineas;
+                parseStream(stream, &chars, &palabras, &lineas);
+                fclose(stream);
+                output(cFlag, wFlag, lFlag, chars, palabras, lineas, argv[index]);
+
+                totalcaracteres    += chars;
+                totalPalabras       += palabras;
+                totalLineas         += lineas;
+            }
+
+            // conta el archivo si existe o no
+            totalArchivos++;
+        }
+    }
+
+    if (totalArchivos > 1)
+    {
+        output(cFlag, wFlag, lFlag, totalcaracteres, totalPalabras, totalLineas, "total");
+    }
+
+    // return 0 si no habia errores, o 1 si habia
+    return err ? 1 : 0;
+}
+\end{lstlisting}
+\pagebreak
+
+\section{Código Makefile}
+\subsection{Makefile}
+
+\begin{lstlisting}
+TARGET = tp0
+
+MACHINE = $(shell uname -m)
+
+LIBS =
+CC = gcc
+CFLAGS = -Wall
+SOLO_ASM_FLAGS = -O0 -S
+
+# solo podriamos usar mrnames en MIPS
+ifeq ($(MACHINE),pmax)
+	SOLO_ASM_FLAGS += -mrnames
+endif
+
+define HACE_PRUEBA
+	$(1) wc $(2) $(4) >> wc_out 2>&1
+	$(1) ./$(TARGET) $(3) $(4) >> tp0_out 2>&1
+endef
+
+default: $(TARGET)
+all: default
+
+OBJECTS = $(patsubst %.c, %.o, $(wildcard *.c))
+ASSEMBLER = $(patsubst %.c, %.s, $(wildcard *.c))
+HEADERS = $(wildcard *.h)
+
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+%.s: %.c $(HEADERS)
+	$(CC) $(CFLAGS) $(SOLO_ASM_FLAGS) -c $<
+
+$(TARGET): $(OBJECTS)
+	$(CC) $(OBJECTS) -Wall $(LIBS) -o $@
+
+asm: $(ASSEMBLER)
+
+prueba: $(TARGET)
+	-rm -f wc_out tp0_out
+	# archivos normales
+	-$(call HACE_PRUEBA, , -lwm, -i, pruebas/cyclopedia.txt)
+	-$(call HACE_PRUEBA, , -lwm, -lwc, pruebas/beowulf.txt)
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/elquijote.txt)
+	# solo lineas
+	-$(call HACE_PRUEBA, , -l, -l, pruebas/cyclopedia.txt)
+	-$(call HACE_PRUEBA, , -l, -li, pruebas/beowulf.txt)
+	-$(call HACE_PRUEBA, , -l, -l, pruebas/elquijote.txt)
+	# solo palabras
+	-$(call HACE_PRUEBA, , -w, -w, pruebas/cyclopedia.txt)
+	-$(call HACE_PRUEBA, , -w, -w, pruebas/beowulf.txt)
+	-$(call HACE_PRUEBA, , -w, -wi, pruebas/elquijote.txt)
+	# solo caracteres
+	-$(call HACE_PRUEBA, , -m, -c, pruebas/cyclopedia.txt)
+	-$(call HACE_PRUEBA, , -m, -c, pruebas/beowulf.txt)
+	-$(call HACE_PRUEBA, , -m, -c, pruebas/elquijote.txt)
+	# multiples archivos
+	-$(call HACE_PRUEBA, , -lwm, -i, pruebas/cyclopedia.txt pruebas/beowulf.txt pruebas/elquijote.txt)
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/cyclopedia.txt pruebas/beowulf.txt pruebas/elquijote.txt)
+	# wildcard
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/*.txt)
+	# archivos que no existe
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/esto/archivo/no.existe)
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/esto/archivo/no.existe este.tampoco)
+	# archivos / rutas con caracteres especiales
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/abc\ def)
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/\"\")
+	-$(call HACE_PRUEBA, , -lwm, , "pruebas/alice.txt")
+	# archivos binarios
+	-$(call HACE_PRUEBA, , -lwm, , pruebas/testBin)
+	# stdin
+	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, -lwc)
+	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, )
+	# newlines
+	-$(call HACE_PRUEBA, cat pruebas/newlines.txt |, -lwm, -lwc)
+	@# Estoy poniendo esto aqui para estar cerca las otras pruebas
+	@# Estos estan pruebas que no puedo automizar
+	# TODO manualmente
+	# Archivos infinitos
+	# ./tp0 /dev/zero
+	# stdin desde usario
+	# ./tp0
+
+clean:
+	-rm -f *.o
+	-rm -f *.s
+	-rm -f $(TARGET)
+	-rm -f wc_out tp0_out
+
+.PHONY: default all asm prueba clean
+\end{lstlisting}
+
+\pagebreak
+\section{Enunciado}
+\textit{*Ver hojas anexadas}
+\end{document}
