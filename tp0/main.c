@@ -19,7 +19,7 @@ static const struct option long_options[] =
     {0,         0,               0,  0  }
 };
 
-static void usage(const char *nombre)
+static void usage(const char *nombreDeLaAplicacion)
 {
     printf("Usage:\n"
            "  %s -h\n"
@@ -32,8 +32,8 @@ static void usage(const char *nombre)
            "  -w, --words       Print number of words in file.\n"
            "  -c, --characters  Print number of characters in file.\n"
            "  -i, --input       Path to input file.\n\n",
-           nombre, nombre, nombre);
-    // necesitamos usar nombre, nombre, nombre
+           nombreDeLaAplicacion, nombreDeLaAplicacion, nombreDeLaAplicacion);
+    // necesitamos usar nombreDeLaAplicacion, nombreDeLaAplicacion, nombreDeLaAplicacion
     // porque no soportamos %1$s
 }
 
@@ -130,7 +130,7 @@ static void parseStream(FILE *stream, uint32_t *chars, uint32_t *palabras, uint3
     }
 }
 
-void output(bool cFlag, bool wFlag, bool lFlag, uint32_t caracteres, uint32_t palabras, uint32_t lineas, const char *archivo)
+void output(bool cFlag, bool wFlag, bool lFlag, uint32_t caracteres, uint32_t palabras, uint32_t lineas, const char *nombreDelOutput)
 {
     bool outputPrevio = false;
     if (lFlag)
@@ -148,9 +148,9 @@ void output(bool cFlag, bool wFlag, bool lFlag, uint32_t caracteres, uint32_t pa
         printf("%s%u", outputPrevio ? "\t" : "", caracteres);
         outputPrevio = true;
     }
-    if (archivo != NULL)
+    if (nombreDelOutput != NULL)
     {
-        printf("%s%s", outputPrevio ? "\t" : "", archivo);
+        printf("%s%s", outputPrevio ? "\t" : "", nombreDelOutput);
     }
     printf("\n");
 }
