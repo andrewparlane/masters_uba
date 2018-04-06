@@ -68,9 +68,6 @@ prueba: $(TARGET)
 	-$(call HACE_PRUEBA, , -lwm, , pruebas/álíçé.txt)
 	# archivos binarios
 	-$(call HACE_PRUEBA, , -lwm, , pruebas/testBin)
-	# archivos con codificaciones differentest
-	# desde: https://github.com/stain/encoding-test-files
-	-$(call HACE_PRUEBA, , -lwm, , pruebas/encoding-test-files/*.txt)
 	# stdin
 	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, -lwc)
 	-$(call HACE_PRUEBA, cat pruebas/*.txt |, -lwm, )
