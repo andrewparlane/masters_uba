@@ -23,7 +23,7 @@ architecture synth of tp1 is
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               o:        out unsigned((WIDTH - 1) downto 0);
-              overflow: out std_logic);
+              atMax:    out std_logic);
     end component contador;
 
     component sevenSegmentDisplay is
@@ -40,6 +40,7 @@ architecture synth of tp1 is
 
     signal d0en1Hz, d0en1KHz:           std_logic;
     signal d0en, d1en, d2en, d3en:      std_logic;
+    signal d0atMax, d1atMax, d2atMax:   std_logic;
     signal d0out, d1out, d2out, d3out:  unsigned (3 downto 0);
     signal rst:                         std_logic;
 begin
@@ -51,6 +52,11 @@ begin
     -- KEY(1) es activa baja.
     -- usamos para acelerar el contador
     d0en <= d0en1Hz when (KEY(1) = '1') else d0en1KHz;
+    -- un dígito cuenta si el dígito anterior hace el transición 9 -> 0
+    -- (en and atMax)
+    d1en <= d0en and d0atMax;
+    d2en <= d1en and d1atMax;
+    d3en <= d2en and d2atMax;
 
     -- generar enable @ 1Hz desde 50MHz clk
     en1Hz_inst: contador
@@ -62,7 +68,7 @@ begin
                                 load => '0',
                                 loadData => to_unsigned(0, 26),
                                 -- o,
-                                overflow => d0en1Hz);
+                                atMax => d0en1Hz);
 
     -- generar enable @ 1KHz desde 50MHz clk
     en1KHz_inst: contador
@@ -74,7 +80,7 @@ begin
                                 load => '0',
                                 loadData => to_unsigned(0, 16),
                                 -- o,
-                                overflow => d0en1KHz);
+                                atMax => d0en1KHz);
 
     -- dígito 0, 0-9
     d0Contador_inst:    contador
@@ -86,7 +92,7 @@ begin
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
                                         o => d0out,
-                                        overflow => d1en);
+                                        atMax => d0atMax);
 
     d0Display_inst:     sevenSegmentDisplay
                         port map       (n => d0out,
@@ -102,7 +108,7 @@ begin
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
                                         o => d1out,
-                                        overflow => d2en);
+                                        atMax => d1atMax);
 
     d1Display_inst:     sevenSegmentDisplay
                         port map       (n => d1out,
@@ -118,7 +124,7 @@ begin
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
                                         o => d2out,
-                                        overflow => d3en);
+                                        atMax => d2atMax);
 
     d2Display_inst:     sevenSegmentDisplay
                         port map       (n => d2out,
@@ -134,7 +140,7 @@ begin
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
                                         o => d3out);
-                                        --overflow,
+                                        -- atMax,
 
     d3Display_inst:     sevenSegmentDisplay
                         port map       (n => d3out,
