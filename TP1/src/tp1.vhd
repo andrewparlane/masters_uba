@@ -22,7 +22,7 @@ architecture synth of tp1 is
               rst:      in  std_logic;
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
-              o:        out unsigned((WIDTH - 1) downto 0);
+              count:    out unsigned((WIDTH - 1) downto 0);
               atMax:    out std_logic);
     end component contador;
 
@@ -71,7 +71,7 @@ begin
                                 rst => rst,
                                 load => '0',
                                 loadData => to_unsigned(0, 26),
-                                -- o,
+                                -- count,
                                 atMax => d0en1Hz);
 
     -- generar enable @ 1KHz desde 50MHz clk
@@ -83,7 +83,7 @@ begin
                                 rst => rst,
                                 load => '0',
                                 loadData => to_unsigned(0, 16),
-                                -- o,
+                                -- count,
                                 atMax => d0en1KHz);
 
     -- dígito 0, 0-9
@@ -95,7 +95,7 @@ begin
                                         rst => rst,
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
-                                        o => d0out,
+                                        count => d0out,
                                         atMax => d0atMax);
 
     d0Display_inst:     sevenSegmentDisplay
@@ -111,7 +111,7 @@ begin
                                         rst => rst,
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
-                                        o => d1out,
+                                        count => d1out,
                                         atMax => d1atMax);
 
     d1Display_inst:     sevenSegmentDisplay
@@ -127,7 +127,7 @@ begin
                                         rst => rst,
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
-                                        o => d2out,
+                                        count => d2out,
                                         atMax => d2atMax);
 
     d2Display_inst:     sevenSegmentDisplay
@@ -143,7 +143,7 @@ begin
                                         rst => rst,
                                         load => '0',
                                         loadData => to_unsigned(0, 4),
-                                        o => d3out);
+                                        count => d3out);
                                         -- atMax,
 
     d3Display_inst:     sevenSegmentDisplay
