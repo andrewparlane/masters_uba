@@ -27,8 +27,8 @@ architecture synth of tp1 is
     end component contador;
 
     component sevenSegmentDisplay is
-        port (n:        in  unsigned(3 downto 0);
-              o:        out std_logic_vector(6 downto 0));
+        port (bcd:                  in  unsigned(3 downto 0);
+              sevenSegmentOutput:   out std_logic_vector(6 downto 0));
     end component sevenSegmentDisplay;
 
     -- Tenemos CLOCK_DIVIDER así que el banco de prueba
@@ -99,8 +99,8 @@ begin
                                         atMax => d0atMax);
 
     d0Display_inst:     sevenSegmentDisplay
-                        port map       (n => d0out,
-                                        o => HEX0);
+                        port map       (bcd => d0out,
+                                        sevenSegmentOutput => HEX0);
 
     -- dígito 1, 0-9
     d1Contador_inst:    contador
@@ -115,8 +115,8 @@ begin
                                         atMax => d1atMax);
 
     d1Display_inst:     sevenSegmentDisplay
-                        port map       (n => d1out,
-                                        o => HEX1);
+                        port map       (bcd => d1out,
+                                        sevenSegmentOutput => HEX1);
 
     -- dígito 2, 0-9
     d2Contador_inst:    contador
@@ -131,8 +131,8 @@ begin
                                         atMax => d2atMax);
 
     d2Display_inst:     sevenSegmentDisplay
-                        port map       (n => d2out,
-                                        o => HEX2);
+                        port map       (bcd => d2out,
+                                        sevenSegmentOutput => HEX2);
 
     -- dígito 3, 0-9
     d3Contador_inst:    contador
@@ -147,7 +147,7 @@ begin
                                         -- atMax,
 
     d3Display_inst:     sevenSegmentDisplay
-                        port map       (n => d3out,
-                                        o => HEX3);
+                        port map       (bcd => d3out,
+                                        sevenSegmentOutput => HEX3);
 
 end architecture synth;
