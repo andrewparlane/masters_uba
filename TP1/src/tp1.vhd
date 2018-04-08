@@ -34,7 +34,7 @@ architecture synth of tp1 is
     -- Tenemos CLOCK_DIVIDER así que el banco de prueba
     -- no necesita simular 50.000.000 ticks para incrementar
     -- dígito 0 una vez.
-    -- Usamos -1 aquí por que 0 - 50.000.000 - 0 es 50.000.001 ticks
+    -- Usamos -1 aquí por que 0,1,2,3,4,5,0 es 6 ticks
     constant    ONE_HZ_EN_MAX:  natural := (50000000 / CLOCK_DIVIDER) - 1;
     constant    ONE_KHZ_EN_MAX: natural := (50000 / CLOCK_DIVIDER) - 1;
 
@@ -42,16 +42,20 @@ architecture synth of tp1 is
     signal d0en, d1en, d2en, d3en:      std_logic;
     signal d0atMax, d1atMax, d2atMax:   std_logic;
     signal d0out, d1out, d2out, d3out:  unsigned (3 downto 0);
+
     signal rst:                         std_logic;
+    signal fast:                        std_logic;
 begin
 
-    -- KEY(0) es activa baja.
-    -- usamos para reset
+    -- KEY(0) es nRESET (activa baja).
+    -- KEY(1) es para contar más rápido (activa baja).
     rst <= not KEY(0);
+    fast <= not KEY(1);
 
-    -- KEY(1) es activa baja.
-    -- usamos para acelerar el contador
-    d0en <= d0en1Hz when (KEY(1) = '1') else d0en1KHz;
+    -- el primer dígito cuenta a 1Hz en modo normal,
+    -- y 1KHz en modo rápido.
+    d0en <= d0en1KHz when (fast = '1') else d0en1Hz;
+
     -- un dígito cuenta si el dígito anterior hace el transición 9 -> 0
     -- (en and atMax)
     d1en <= d0en and d0atMax;
