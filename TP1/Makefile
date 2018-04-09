@@ -9,9 +9,12 @@
 .DEFAULT_GOAL := all
 
 # some variables to use later
-VLIB_DIR 	= ./sim/work
-VLIB_NAME	= work
-VCOM_FLAGS 	= -work $(VLIB_NAME) -2008
+VLIB_DIR 		= ./sim/work
+VLIB_NAME		= work
+MODELSIM_FLAG 	= -modelsimini sim/modelsim.ini
+VCOM_FLAGS 		= $(MODELSIM_FLAG) \
+				  -work $(VLIB_NAME) \
+				  -2008
 
 # VSIM args to log waves
 # Use DEBUG=1 to log all waves
@@ -30,7 +33,7 @@ VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
 								quit -f
 
 # flags to pass to VSIM_CMD
-VSIM_FLAGS					=	-modelsimini sim/modelsim.ini \
+VSIM_FLAGS					=	$(MODELSIM_FLAG) \
 								-sv_seed random \
 								-novopt \
 								$(EXTRA_VSIM_FLAGS) \
@@ -59,7 +62,7 @@ all: $(VLIB_DIR) srcs
 # create the questaSim library if it's not already there
 $(VLIB_DIR):
 	vlib $(VLIB_DIR)
-	vmap $(VLIB_NAME) $(VLIB_DIR)
+	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
 
 # create targets for all our sources
