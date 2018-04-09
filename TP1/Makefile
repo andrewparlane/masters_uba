@@ -87,6 +87,6 @@ view_saved_waves:
 
 # delete the library and all compiled files
 clean:
-	if [ -d $(VLIB_DIR) ]; then vdel -lib $(VLIB_DIR) -all; fi;
+	-rm -rf $(VLIB_DIR)
 
 .PHONY: clean all srcs contador tp1 view_saved_waves
