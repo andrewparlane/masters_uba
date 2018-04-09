@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity tp1_tb is
 end entity tp1_tb;
 
-architecture synth of tp1_tb is
+architecture sim of tp1_tb is
 
     component tp1 is
         generic (CLOCK_DIVIDER:  natural);
@@ -18,36 +18,139 @@ architecture synth of tp1_tb is
     end component tp1;
 
     signal clk:         std_logic   := '0';
-    signal rst_key:     std_logic   := '1';     -- keys son activa baja
-    signal fast_key:    std_logic   := '1';
-    signal key:         std_logic_vector(1 downto 0);
+    signal nRst:        std_logic   := '0';
+    signal nFast:       std_logic   := '1';
+    signal key:         std_logic_vector(1 downto 0) := "00";
+
+    -- usamos esto por los outputs de los contadores
+    type countsArray is array (3 downto 0) of unsigned(3 downto 0);
+    signal counts: countsArray;
 
 begin
-
-    dut:    tp1 generic map    (CLOCK_DIVIDER => 10000)   -- incrementar el primer dígito cada 5000 ticks
-                port map       (CLOCK_50 => clk,
-                                KEY => key);
 
     -- clk = 50MHz => periodo = 20ns
     clk <= not clk after 10 ns;
 
     -- key
-    key <= fast_key & rst_key;
+    key <= nFast & nRst;
+
+    dut:    tp1 generic map    (CLOCK_DIVIDER => 10000)   -- incrementar el primer dígito cada 5000 ticks
+                port map       (CLOCK_50 => clk,
+                                KEY => key);
+
+    -- leer las salidas de las contadores en tp1.
+    counts(0) <= <<signal dut.d0out: unsigned(3 downto 0)>>;
+    counts(1) <= <<signal dut.d1out: unsigned(3 downto 0)>>;
+    counts(2) <= <<signal dut.d2out: unsigned(3 downto 0)>>;
+    counts(3) <= <<signal dut.d3out: unsigned(3 downto 0)>>;
+
+    -- pruebas con PSL
+    -- ---------------
+    -- psl default clock is rising_edge(clk);
+    --
+    enRstGenerate: for c in 0 to 3 generate
+        type ticksEntreCambioArray is array (0 to 3) of natural;
+        constant fastTicksEntreCambio: ticksEntreCambioArray
+                                    := (5, 50, 500, 5000);
+        constant normalTicksEntreCambio: ticksEntreCambioArray
+                                    := (5000, 50000, 500000, 5000000);
+    begin
+        -- ----------------------------------------------------------
+        -- si estamos en rst todo los counts debería estar 0
+        -- ----------------------------------------------------------
+        -- psl enRst:
+        --      assert always (nRst = '0') ->
+        --                    (counts(c) = 0)
+        --      report "Error: counts(c) != 0 cuando en reset";
+        -- ----------------------------------------------------------
+        --
+        -- ----------------------------------------------------------
+        -- en modo rápido cada fastTicksEntreCambio(c) counts(c)
+        -- deberia incrementar
+        -- ----------------------------------------------------------
+        -- psl fastCount:
+        --      assert forall i in {0 to 8}:
+        --          always ((counts(c) = i) and
+        --                  (nFast = '0') and
+        --                  (nRst = '1'))
+        --          -> next[fastTicksEntreCambio(c)]
+        --             (counts(c) = i + 1)
+        --             abort ((nRst = '0') or
+        --                    (nFast = '1'))
+        --      report "Error: counts(c) modo rápido no cuenta correcto";
+        -- ----------------------------------------------------------
+        --
+        -- ----------------------------------------------------------
+        -- en modo rápido si counts(c) es 9, en
+        -- fastTicksEntreCambio(c) ticks count(c)
+        -- debería estar 0
+        -- ----------------------------------------------------------
+        -- psl fastOverflow:
+        --      assert always ((counts(c) = 9) and
+        --                     (nFast = '0') and
+        --                     (nRst = '1'))
+        --             -> next[fastTicksEntreCambio(c)]
+        --                (counts(c) = 0)
+        --                abort ((nRst = '0') or
+        --                       (nFast = '1'))
+        --      report "Error: counts(c) modo rápido no hizo overflow";
+        -- ----------------------------------------------------------
+        --
+        -- ----------------------------------------------------------
+        -- en modo normal cada normalTicksEntreCambio(c) counts(c)
+        -- deberia incrementar
+        -- ----------------------------------------------------------
+        -- psl normalCount:
+        --      assert forall i in {0 to 8}:
+        --          always ((counts(c) = i) and
+        --                  (nFast = '1') and
+        --                  (nRst = '1'))
+        --          -> next[normalTicksEntreCambio(c)]
+        --             (counts(c) = i + 1)
+        --             abort ((nRst = '0') or
+        --                    (nFast = '0'))
+        --      report "Error: counts(c) modo normal no cuenta correcto";
+        -- ----------------------------------------------------------
+        --
+        -- ----------------------------------------------------------
+        -- en modo rápido si counts(c) es 9, en
+        -- fastTicksEntreCambio(c) ticks count(c)
+        -- debería estar 0
+        -- ----------------------------------------------------------
+        -- psl normalOverflow:
+        --      assert always ((counts(c) = 9) and
+        --                     (nFast = '1') and
+        --                     (nRst = '1'))
+        --             -> next[normalTicksEntreCambio(c)]
+        --                (counts(c) = 0)
+        --                abort ((nRst = '0') or
+        --                       (nFast = '0'))
+        --      report "Error: counts(c) modo normal no hizo overflow";
+        -- ----------------------------------------------------------
+    end generate;
 
     process
     begin
         -- recuerdes que los keys son activa baja
-        rst_key <= '0';
+        -- reset
+        nRst <= '0';
         wait for 100 ns;
-        rst_key <= '1';
-        wait for 1100 ms;
-        rst_key <= '0';
-        wait for 500 ns;
-        rst_key <= '1';
-        fast_key <= '0';
+
+        -- no es suficiente a overflow 9999 -> 0000
+        -- pero es bastante para mostrar que funciona bien
+        -- en modo normal. Y podríamos comprobar los dígitos
+        -- altos y el overflow en modo rapido
+        -- 10 * 5,000 ticks * 20ns = 1ms
+        nRst <= '1';
+        nFast <= '1';
+        wait for 1100 us;
+
+        -- hacemos una prueba más completo en modo rápido
+        -- 10,000 * 5 tics * 20ns = 1ms
+        nFast <= '0';
         wait for 1100 us;
 
         std.env.stop;
     end process;
 
-end architecture synth;
+end architecture sim;
