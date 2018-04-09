@@ -30,7 +30,8 @@ VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
 								quit -f
 
 # flags to pass to VSIM_CMD
-VSIM_FLAGS					=	-sv_seed random \
+VSIM_FLAGS					=	-modelsimini sim/modelsim.ini \
+								-sv_seed random \
 								-novopt \
 								$(EXTRA_VSIM_FLAGS) \
 								-do "$(VSIM_DO_CMDS)"
