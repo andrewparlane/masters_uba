@@ -9,7 +9,11 @@ entity tp1 is
           HEX0:     out std_logic_vector(6 downto 0);
           HEX1:     out std_logic_vector(6 downto 0);
           HEX2:     out std_logic_vector(6 downto 0);
-          HEX3:     out std_logic_vector(6 downto 0));
+          HEX3:     out std_logic_vector(6 downto 0);
+          HEX4:     out std_logic_vector(6 downto 0);
+          HEX5:     out std_logic_vector(6 downto 0);
+          HEX6:     out std_logic_vector(6 downto 0);
+          HEX7:     out std_logic_vector(6 downto 0));
 end entity tp1;
 
 architecture synth of tp1 is
@@ -46,6 +50,12 @@ architecture synth of tp1 is
     signal rst:                         std_logic;
     signal fast:                        std_logic;
 begin
+
+    -- HEX4,5,6,7 siempre están apagado
+    HEX4 <= (others => '1');
+    HEX5 <= (others => '1');
+    HEX6 <= (others => '1');
+    HEX7 <= (others => '1');
 
     -- KEY(0) es nRESET (activa baja).
     -- KEY(1) es para contar más rápido (activa baja).
