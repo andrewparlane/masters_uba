@@ -11,7 +11,7 @@
 # some variables to use later
 VLIB_DIR 	= ./sim/work
 VLIB_NAME	= work
-VCOM_FLAGS 	= -work $(VLIB_NAME)
+VCOM_FLAGS 	= -work $(VLIB_NAME) -2008
 
 # VSIM args to log waves
 # Use DEBUG=1 to log all waves
