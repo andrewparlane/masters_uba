@@ -26,6 +26,7 @@ endif
 # run for max of 5s
 VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
 								run 5000000000; \
+								assertion report -recursive *; \
 								quit -f
 
 # flags to pass to VSIM_CMD
