@@ -88,6 +88,5 @@ view_saved_waves:
 # delete the library and all compiled files
 clean:
 	if [ -d $(VLIB_DIR) ]; then vdel -lib $(VLIB_DIR) -all; fi;
-	if [ -e modelsim.in ]; then rm modelsim.ini; fi;
 
 .PHONY: clean all srcs contador tp1 view_saved_waves
