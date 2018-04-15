@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity contador_tb is
 end entity contador_tb;
 
-architecture synth of contador_tb is
+architecture sim of contador_tb is
 
     component contador is
         generic (WIDTH: natural;
@@ -146,4 +146,4 @@ begin
         std.env.stop;
     end process;
 
-end architecture synth;
+end architecture sim;
