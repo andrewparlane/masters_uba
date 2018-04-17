@@ -1,4 +1,8 @@
-sim/
 transcript
 vsim.wlf
-quartus/
+**/sim/*work
+**/quartus/incremental_db/
+**/quartus/output_files/
+**/quartus/db/
+**/quartus/*.qws
+
