@@ -51,8 +51,7 @@ VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
 include ../herramientas/helper.mk
 
 # src files directory
-SRCS				= $(wildcard src/*.vhd) \
-					  $(wildcard src/*.vhdl)
+SRCS				= $(wildcard src/*.vhd)
 
 # default rule is to create the library, and compile all the components
 all: $(VLIB_DIR) srcs
