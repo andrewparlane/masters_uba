@@ -174,4 +174,4 @@ helper_clean:
 # PHONY
 # ----------------------------------------------------------------------------------
 
-.PHONY: helper_clean srcs view_saved_waves
+.PHONY: helper_clean srcs tb_srcs view
