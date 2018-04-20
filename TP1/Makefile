@@ -14,7 +14,6 @@ VLIB_NAME		= work
 MODELSIM_FLAG 	= -modelsimini sim/modelsim.ini
 VCOM_FLAGS 		= $(MODELSIM_FLAG) \
 				  -work $(VLIB_NAME) \
-				  -2008
 
 # VSIM args to log waves
 # Use DEBUG=1 to log all waves
@@ -35,7 +34,6 @@ VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
 # flags to pass to VSIM_CMD
 VSIM_FLAGS					=	$(MODELSIM_FLAG) \
 								-sv_seed random \
-								-novopt \
 								$(EXTRA_VSIM_FLAGS) \
 								-do "$(VSIM_DO_CMDS)"
 
