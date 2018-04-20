@@ -46,10 +46,10 @@ begin
                                     count => count,
                                     atMax => atMax);
 
-    process (count)
-    begin
-        report "count changed to " & integer'image(to_integer(count));
-    end process;
+    --process (count)
+    --begin
+    --    report "count changed to " & integer'image(to_integer(count));
+    --end process;
 
     -- pruebas con PSL
     -- ---------------
