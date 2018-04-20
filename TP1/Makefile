@@ -27,7 +27,7 @@ endif
 # commands to run once vsim starts
 # run for max of 5s
 VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
-								run 5000000000; \
+								run 5 sec; \
 								assertion report -recursive *; \
 								quit -f
 
