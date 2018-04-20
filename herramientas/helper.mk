@@ -1,4 +1,4 @@
-# Some common macros and variables for use with compiling .sv files
+# Some common macros and variables for use with compiling VHDL
 # using vcom which is packaged as part of QuestaSim
 #-----------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ COLOURIZE = (set -o pipefail; $(1) 2> >($(COLOURIZE_SED_ALL) >&2) | $(COLOURIZE_
 # ----------------------------------------------------------------------------------
 
 # When we compile a file using vcom, we create a flag file
-# which can be used as a dependency for each .sv file.
+# which can be used as a dependency for each .vhd file.
 # As make can compare the timestamps of the source file and the
 # flag file. In older versions of questaSim vcom created a
 # unique file per package/interface/module automaticaly
