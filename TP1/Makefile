@@ -30,11 +30,9 @@ include ../herramientas/helper.mk
 all: srcs
 
 contador: srcs
-	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, contador_tb)
 
 tp1: srcs
-	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, tp1_tb)
 
 # delete the library and all compiled files

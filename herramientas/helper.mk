@@ -116,18 +116,29 @@ VSIM_DO_CMDS				=	log -r /*; \
 
 # flags to pass to VSIM_CMD
 VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
-								-sv_seed random \
-								$(EXTRA_VSIM_FLAGS) \
-								-do "$(VSIM_DO_CMDS)"
+								-sv_seed random
 
 # the run the test command.
 #	Takes one arguments:
 #		1) Top level module name
-VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
+define VSIM_CMD
+	@echo -e "$(COLOUR_GREEN)Running simulation of $(1).$(COLOUR_NONE)\n"
+	$(call COLOURIZE, \
+		vsim $(VSIM_FLAGS) \
+			 -wlf $(1).wlf \
+			 -do "$(VSIM_DO_CMDS)" \
+			 $(1))
+endef
 
 # A generic rule to open questasim and show us the saved waves
-view_saved_waves:
-	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
+view:
+	@if [ -z $(WLF)"" ]; then \
+		echo -e "$(COLOUR_RED)usage: make WLF=abc.wlf view$(COLOUR_NONE)\n"; \
+	elif [ ! -e $(WLF) ]; then \
+		echo -e "$(COLOUR_RED)$(WLF) does not exist. $(COLOUR_NONE)\n"; \
+	else \
+		questasim $(MODELSIM_FLAG) -do "vsim -view $(WLF); $(ADD_DEBUG_WAVES)"; \
+	fi
 
 # ----------------------------------------------------------------------------------
 # Cleaning
