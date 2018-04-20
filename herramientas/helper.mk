@@ -52,15 +52,52 @@ COLOURIZE = (set -o pipefail; $(1) 2> >($(COLOURIZE_SED_ALL) >&2) | $(COLOURIZE_
 # ----------------------------------------------------------------------------------
 # Library
 # ----------------------------------------------------------------------------------
-# create the questaSim library if it's not already there
+# Macros and rules for creating work dirs and mapping them to library names
+# Variables:
+# VLIB_NAME:		Name for this work. Defaults to work
+#					if not overwritten by parent.
+#
+# VLIB_DIR:			Directory for this work.
+# 					Defaults to $(SIM_DIR)/$(VLIB_NAME)
+#					if not overwritten by parent.
+#
+# Rules:
+#	get_vlib_dir:	echos $(VLIB_DIR) this is so we can access it from
+#					outside of the projects.
+#
+# 	$(VLIB_DIR): 	If the vlib dir doesn't exist it is created
+#
+# Macros:
+#	MAP_VLIB_CMD 	Map another work directory into our modelsim.ini
 # ----------------------------------------------------------------------------------
 
+ifndef VLIB_NAME
+VLIB_NAME	= work
+endif
+
+ifndef VLIB_DIR
 VLIB_DIR 	= $(SIM_DIR)/$(VLIB_NAME)
+endif
+
+get_vlib_dir:
+	@echo $(VLIB_DIR)
 
 $(VLIB_DIR):
 	vlib $(VLIB_DIR)
 	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
+
+# Macro te map the work in a folder to our modelsim.ini
+#	Takes two arguments:
+#		1) relative folder path -
+#			folder should contain a Makefile that
+#			includes this helper.mk
+#		2) library name to use
+define MAP_VLIB_CMD
+	$(eval OTHER_VLIB_DIR = $(shell make -f $(1)/Makefile get_vlib_dir))
+	vmap $(MODELSIM_FLAG) $(2) $(1)/$(OTHER_VLIB_DIR)
+	@echo -e "$(COLOUR_GREEN)Mapping $(2) to $(1)/$(OTHER_VLIB_DIR)$(COLOUR_NONE)\n"
+endef
 
 # ----------------------------------------------------------------------------------
 # Compilation
@@ -115,8 +152,11 @@ VSIM_ALL_WAVES		=	-r /*
 VSIM_DUT_WAVES		=	dut/*
 
 # flags to pass to VSIM_CMD
+# -error 3473 causes simulation to end if a component
+# 		 	  instance isn't bound
 VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
-								-sv_seed random
+								-sv_seed random \
+								-error 3473
 
 # the run the test command.
 #	Takes one arguments:
@@ -162,7 +202,6 @@ endef
 view:
 	$(call VSIM_VIEW_WAVES_WLF, $(WLF), $(VSIM_ALL_WAVES))
 
-
 # ----------------------------------------------------------------------------------
 # Cleaning
 # ----------------------------------------------------------------------------------
@@ -174,4 +213,4 @@ helper_clean:
 # PHONY
 # ----------------------------------------------------------------------------------
 
-.PHONY: helper_clean srcs tb_srcs view
+.PHONY: helper_clean srcs tb_srcs view get_vlib_dir
