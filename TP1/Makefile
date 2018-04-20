@@ -14,9 +14,12 @@ VLIB_NAME		= work
 # Directories
 SIM_DIR			= sim
 SRC_DIR			= src
+TB_SRC_DIR		= $(SRC_DIR)/tb
 
 # src files
 SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+# tb files
+TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd)
 
 # Extra arguments beyond the defaults in helper.mk
 VCOM_FLAGS		=
@@ -27,12 +30,12 @@ VSIM_FLAGS		=
 include ../herramientas/helper.mk
 
 # default rule is to create the library, and compile all the components
-all: srcs
+all: srcs tb_srcs
 
-contador: srcs
+contador: srcs tb_srcs
 	@$(call VSIM_CMD, contador_tb)
 
-tp1: srcs
+tp1: srcs tb_srcs
 	@$(call VSIM_CMD, tp1_tb)
 
 # delete the library and all compiled files

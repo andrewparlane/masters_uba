@@ -77,12 +77,22 @@ $(VLIB_DIR):
 FLAGS_DIR	= $(VLIB_DIR)/flags
 
 # List of flags from list of sources
-FLAGS 	= $(patsubst $(SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
+FLAGS 		= $(patsubst $(SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
+TB_FLAGS 	= $(patsubst $(TB_SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(TB_SRCS))
 
-VCOM_FLAGS 		:= $(MODELSIM_FLAG) \
-				   -work $(VLIB_NAME)
+VCOM_FLAGS 			:= $(MODELSIM_FLAG) \
+					   -work $(VLIB_NAME)
+
+# Flags to use with modules we will synthesise (IE not testbenches)
+NON_TB_VCOM_FLAGS	:= -check_synthesis
 
 $(FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.vhd
+	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
+	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $(NON_TB_VCOM_FLAGS) $<)
+	@mkdir -p $(FLAGS_DIR)
+	@touch $@
+
+$(TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
