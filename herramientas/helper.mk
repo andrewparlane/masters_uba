@@ -101,28 +101,18 @@ $(TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
 srcs: $(VLIB_DIR) $(FLAGS)
 	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
 
+tb_srcs: $(VLIB_DIR) $(TB_FLAGS)
+	@echo -e "$(COLOUR_GREEN)Compiled all testbenches.$(COLOUR_NONE)\n"
+
 # ----------------------------------------------------------------------------------
 # Simulation
 # ----------------------------------------------------------------------------------
 #
 # ----------------------------------------------------------------------------------
 
-# VSIM args to log waves
-# Use DEBUG=1 to log all waves
-# otherwise it just logs the waves in the top level module
-ifeq ($(DEBUG),1)
-ADD_DEBUG_WAVES				=	add wave -r /*
-else
-ADD_DEBUG_WAVES				=	add wave dut/*
-endif
-
-# commands to run once vsim starts
-# run for max of 5s
-VSIM_DO_CMDS				=	log -r /*; \
-								$(ADD_DEBUG_WAVES); \
-								run 5 sec; \
-								assertion report -recursive *; \
-								quit -f
+# sample vsim commands to log waves
+VSIM_ALL_WAVES		=	-r /*
+VSIM_DUT_WAVES		=	dut/*
 
 # flags to pass to VSIM_CMD
 VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
@@ -133,22 +123,45 @@ VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
 #		1) Top level module name
 define VSIM_CMD
 	@echo -e "$(COLOUR_GREEN)Running simulation of $(1).$(COLOUR_NONE)\n"
+	@mkdir -p $(WAVES_DIR)
 	$(call COLOURIZE, \
 		vsim $(VSIM_FLAGS) \
-			 -wlf $(1).wlf \
-			 -do "$(VSIM_DO_CMDS)" \
+			 -wlf $(WAVES_DIR)/$(strip $(1)).wlf \
+			 -do "log -r /*; \
+				  run 5 sec; \
+				  assertion report -recursive *; \
+				  quit -f" \
 			 $(1))
 endef
 
+# A macro to open questasim and show us the saved waves
+#	Takes one arguments:
+#		1) .wlf file path
+#		2) Waves to record - see VSIM_DUT_WAVES and VSIM_ALL_WAVES for format
+define VSIM_VIEW_WAVES_WLF
+	@if [ ! -e $(1) ]; then \
+		echo -e "$(COLOUR_RED)$(1) does not exist. $(COLOUR_NONE)\n"; \
+	else \
+		questasim $(MODELSIM_FLAG) \
+				  -do "vsim -view $(1); \
+					   add wave $(2)"; \
+	fi
+endef
+
+# A macro to open questasim and show us the saved waves
+#	Takes one arguments:
+#		1) Top level module name
+#		2) Waves to record - see VSIM_DUT_WAVES and VSIM_ALL_WAVES for format
+define VSIM_VIEW_WAVES_TLM
+	$(eval WLF = $(WAVES_DIR)/$(strip $(1)).wlf)
+	$(call VSIM_VIEW_WAVES_WLF, $(WLF), $(2))
+endef
+
+
 # A generic rule to open questasim and show us the saved waves
 view:
-	@if [ -z $(WLF)"" ]; then \
-		echo -e "$(COLOUR_RED)usage: make WLF=abc.wlf view$(COLOUR_NONE)\n"; \
-	elif [ ! -e $(WLF) ]; then \
-		echo -e "$(COLOUR_RED)$(WLF) does not exist. $(COLOUR_NONE)\n"; \
-	else \
-		questasim $(MODELSIM_FLAG) -do "vsim -view $(WLF); $(ADD_DEBUG_WAVES)"; \
-	fi
+	$(call VSIM_VIEW_WAVES_WLF, $(WLF), $(VSIM_ALL_WAVES))
+
 
 # ----------------------------------------------------------------------------------
 # Cleaning
