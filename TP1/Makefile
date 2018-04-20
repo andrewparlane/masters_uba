@@ -8,9 +8,10 @@
 # set the default target to be all. Otherwise it's the first target it finds
 .DEFAULT_GOAL := all
 
-# some variables to use later
+# Our work directory
 VLIB_DIR 		= ./sim/work
 VLIB_NAME		= work
+
 MODELSIM_FLAG 	= -modelsimini sim/modelsim.ini
 VCOM_FLAGS 		= $(MODELSIM_FLAG) \
 				  -work $(VLIB_NAME) \
@@ -37,21 +38,19 @@ VSIM_FLAGS					=	$(MODELSIM_FLAG) \
 								$(EXTRA_VSIM_FLAGS) \
 								-do "$(VSIM_DO_CMDS)"
 
-
 # the run the test command.
 #	Takes one arguments:
 #		1) Top level module name
 VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
 
+# src files directory
+SRCS	= $(wildcard src/*.vhd)
 
 # pull in some macros
 # this has: colour codes for outputting messages in colour
 #			a macro to turn the source path into the object path
 #			a macro to create a target based on a source file name
 include ../herramientas/helper.mk
-
-# src files directory
-SRCS				= $(wildcard src/*.vhd)
 
 # default rule is to create the library, and compile all the components
 all: $(VLIB_DIR) srcs
@@ -62,16 +61,8 @@ $(VLIB_DIR):
 	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
 
-# create targets for all our sources
-# this loops through all of our source files in the $(SRCS) var
-# and foreach one evaluates as makefile rules the results of calling
-# the create_target_for macro on the source file.
-# this macro is in the helper.mk file
-# note with this method we can't set dependencies within a single directory
-$(foreach src,$(SRCS),$(eval $(call create_target_for, $(src))))
-
 # define a phony target per directory so we can specify compile order
-srcs: $(VLIB_DIR) $(call src2obj, $(SRCS))
+srcs: $(VLIB_DIR) $(FLAGS)
 	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
 
 contador: srcs

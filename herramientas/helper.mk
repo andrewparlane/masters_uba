@@ -45,44 +45,27 @@ COLOURIZE_SED_ALL ?= sed -r $(call GENERATE_COLOURIZE_SED,(Error:|UVM_ERROR|UVM_
 #	Finally we pipe it in to the COLOURIZE_SED_ALL again, which makes it also run on stdout
 COLOURIZE = (set -o pipefail; $(1) 2> >($(COLOURIZE_SED_ALL) >&2) | $(COLOURIZE_SED_ALL))
 
-# ----------------------------------------------------------------------------------
-# end colourization
-# ----------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------
+# Compilation
+# ----------------------------------------------------------------------------------
 # When we compile a file using vcom, we create a flag file
 # which can be used as a dependency for each .vhd file.
 # As make can compare the timestamps of the source file and the
 # flag file. In older versions of questaSim vcom created a
 # unique file per package/interface/module automaticaly
 # however in the later versions it does not.
+# ----------------------------------------------------------------------------------
 
 # directory where we store the flags
-FLAGS_DIR	= $(VLIB_DIR)/flags/
+FLAGS_DIR	= $(VLIB_DIR)/flags
 
-# Macro to turn source file path into the flag file path
-#	Takes one argument:
-#		1) source file path
-src2obj		= $(addsuffix .flag, $(addprefix $(FLAGS_DIR), $(basename $(notdir $(1)))))
+# List of flags from list of sources
+FLAGS 	= $(patsubst src/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
 
-# macro to create a target for a given source file
-# it takes two arguments:
-# 1) the path and name of the source file
-# 2) any dependencies
-# It then creates a traget on the relevant flag file
-# with a dependency on the source file, and any other passed in dependencies
-# If compilation is successfull we create the flag file
-define create_target_for
-
-$$(info create_target_for called on $(1))
-$$(info creating target $(call src2obj, $(1)))
-$$(info with dependencies $(VLIB_DIR) $(1) $(2))
-$$(info )
-$(call src2obj, $(1)): $(1) $(2)
-	@echo -e "$(COLOUR_BLUE)compiling $(1) because of changes in: $$? $(COLOUR_NONE)\n"
-	@# double dollar here, so the call gets executed at run time, not at eval time
-	@$$(call COLOURIZE ,vcom $(VCOM_FLAGS) $(1))
-	@# if the compile was successfull touch our flag file
+$(FLAGS): $(FLAGS_DIR)/%.flag : src/%.vhd
+	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
+	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
-	@touch $(call src2obj, $(1))
+	@touch $@
 
-endef
