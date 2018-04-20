@@ -5,6 +5,10 @@
 # we use the bash shell, so we can use process substitution
 SHELL			:= /bin/bash
 
+# Most questasim tools require the path to the modelsim.ini file
+# We have ours in the $(SIM_DIR)
+MODELSIM_FLAG 	= -modelsimini $(SIM_DIR)/modelsim.ini
+
 # ----------------------------------------------------------------------------------
 # colourization
 # ----------------------------------------------------------------------------------
@@ -45,6 +49,18 @@ COLOURIZE_SED_ALL ?= sed -r $(call GENERATE_COLOURIZE_SED,(Error:|UVM_ERROR|UVM_
 #	Finally we pipe it in to the COLOURIZE_SED_ALL again, which makes it also run on stdout
 COLOURIZE = (set -o pipefail; $(1) 2> >($(COLOURIZE_SED_ALL) >&2) | $(COLOURIZE_SED_ALL))
 
+# ----------------------------------------------------------------------------------
+# Library
+# ----------------------------------------------------------------------------------
+# create the questaSim library if it's not already there
+# ----------------------------------------------------------------------------------
+
+VLIB_DIR 	= $(SIM_DIR)/$(VLIB_NAME)
+
+$(VLIB_DIR):
+	vlib $(VLIB_DIR)
+	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
+	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
 
 # ----------------------------------------------------------------------------------
 # Compilation
@@ -63,9 +79,65 @@ FLAGS_DIR	= $(VLIB_DIR)/flags
 # List of flags from list of sources
 FLAGS 	= $(patsubst src/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
 
+VCOM_FLAGS 		:= $(MODELSIM_FLAG) \
+				   -work $(VLIB_NAME)
+
 $(FLAGS): $(FLAGS_DIR)/%.flag : src/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
 	@touch $@
 
+srcs: $(VLIB_DIR) $(FLAGS)
+	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
+
+# ----------------------------------------------------------------------------------
+# Simulation
+# ----------------------------------------------------------------------------------
+#
+# ----------------------------------------------------------------------------------
+
+# VSIM args to log waves
+# Use DEBUG=1 to log all waves
+# otherwise it just logs the waves in the top level module
+ifeq ($(DEBUG),1)
+ADD_DEBUG_WAVES				=	add wave -r /*
+else
+ADD_DEBUG_WAVES				=	add wave dut/*
+endif
+
+# commands to run once vsim starts
+# run for max of 5s
+VSIM_DO_CMDS				=	log -r /*; \
+								$(ADD_DEBUG_WAVES); \
+								run 5 sec; \
+								assertion report -recursive *; \
+								quit -f
+
+# flags to pass to VSIM_CMD
+VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
+								-sv_seed random \
+								$(EXTRA_VSIM_FLAGS) \
+								-do "$(VSIM_DO_CMDS)"
+
+# the run the test command.
+#	Takes one arguments:
+#		1) Top level module name
+VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
+
+# A generic rule to open questasim and show us the saved waves
+view_saved_waves:
+	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
+
+# ----------------------------------------------------------------------------------
+# Cleaning
+# ----------------------------------------------------------------------------------
+
+helper_clean:
+	-rm -rf $(VLIB_DIR)
+
+# ----------------------------------------------------------------------------------
+# PHONY
+# ----------------------------------------------------------------------------------
+
+.PHONY: helper_clean srcs view_saved_waves

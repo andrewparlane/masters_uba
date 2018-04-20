@@ -8,62 +8,26 @@
 # set the default target to be all. Otherwise it's the first target it finds
 .DEFAULT_GOAL := all
 
-# Our work directory
-VLIB_DIR 		= ./sim/work
+# Which library do we want to put our work in
 VLIB_NAME		= work
 
-MODELSIM_FLAG 	= -modelsimini sim/modelsim.ini
-VCOM_FLAGS 		= $(MODELSIM_FLAG) \
-				  -work $(VLIB_NAME) \
+# Directories
+SIM_DIR			= sim
+SRC_DIR			= src
 
-# VSIM args to log waves
-# Use DEBUG=1 to log all waves
-# otherwise it just logs the waves in the top level module
-ifeq ($(DEBUG),1)
-ADD_DEBUG_WAVES				=	add wave -r /*
-else
-ADD_DEBUG_WAVES				=	add wave dut/*
-endif
+# src files
+SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
 
-# commands to run once vsim starts
-# run for max of 5s
-VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
-								run 5 sec; \
-								assertion report -recursive *; \
-								quit -f
+# Extra arguments beyond the defaults in helper.mk
+VCOM_FLAGS		=
+VSIM_FLAGS		=
 
-# flags to pass to VSIM_CMD
-VSIM_FLAGS					=	$(MODELSIM_FLAG) \
-								-sv_seed random \
-								$(EXTRA_VSIM_FLAGS) \
-								-do "$(VSIM_DO_CMDS)"
-
-# the run the test command.
-#	Takes one arguments:
-#		1) Top level module name
-VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
-
-# src files directory
-SRCS	= $(wildcard src/*.vhd)
-
-# pull in some macros
-# this has: colour codes for outputting messages in colour
-#			a macro to turn the source path into the object path
-#			a macro to create a target based on a source file name
+# Now include our helper.mk which has all the rules we need
+# to create our library, compile and simulate our test benches
 include ../herramientas/helper.mk
 
 # default rule is to create the library, and compile all the components
-all: $(VLIB_DIR) srcs
-
-# create the questaSim library if it's not already there
-$(VLIB_DIR):
-	vlib $(VLIB_DIR)
-	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
-	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
-
-# define a phony target per directory so we can specify compile order
-srcs: $(VLIB_DIR) $(FLAGS)
-	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
+all: srcs
 
 contador: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
@@ -73,11 +37,7 @@ tp1: srcs
 	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
 	@$(call VSIM_CMD, tp1_tb)
 
-view_saved_waves:
-	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
-
 # delete the library and all compiled files
-clean:
-	-rm -rf $(VLIB_DIR)
+clean: helper_clean
 
-.PHONY: clean all srcs contador tp1 view_saved_waves
+.PHONY: clean all contador tp1
