@@ -77,12 +77,12 @@ $(VLIB_DIR):
 FLAGS_DIR	= $(VLIB_DIR)/flags
 
 # List of flags from list of sources
-FLAGS 	= $(patsubst src/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
+FLAGS 	= $(patsubst $(SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
 
 VCOM_FLAGS 		:= $(MODELSIM_FLAG) \
 				   -work $(VLIB_NAME)
 
-$(FLAGS): $(FLAGS_DIR)/%.flag : src/%.vhd
+$(FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
