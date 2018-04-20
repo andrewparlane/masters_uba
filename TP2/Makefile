@@ -5,87 +5,60 @@
 #	Each test bench must call std.env.stop when it's finished testing.
 # ----------------------------------------------------------------------------------
 
+ifndef WLF
 # set the default target to be all. Otherwise it's the first target it finds
 .DEFAULT_GOAL := all
-
-# some variables to use later
-VLIB_DIR 		= ./sim/work
-VLIB_NAME		= work
-MODELSIM_FLAG 	= -modelsimini sim/modelsim.ini
-VCOM_FLAGS 		= $(MODELSIM_FLAG) \
-				  -work $(VLIB_NAME) \
-				  -2008
-
-# VSIM args to log waves
-# Use DEBUG=1 to log all waves
-# otherwise it just logs the waves in the top level module
-ifeq ($(DEBUG),1)
-ADD_DEBUG_WAVES				=	add wave -r /*
 else
-ADD_DEBUG_WAVES				=	add wave dut/*
+.DEFAULT_GOAL := view
 endif
 
-# commands to run once vsim starts
-# run for max of 5s
-VSIM_DO_CMDS				=	log -r /*; $(ADD_DEBUG_WAVES); \
-								run 5000000000; \
-								assertion report -recursive *; \
-								quit -f
+# Directories
+SIM_DIR			= sim
+WAVES_DIR		= $(SIM_DIR)/waves
+SRC_DIR			= src
+TB_SRC_DIR		= $(SRC_DIR)/tb
+COMMON_DIR		= ../common
 
-# flags to pass to VSIM_CMD
-VSIM_FLAGS					=	$(MODELSIM_FLAG) \
-								-sv_seed random \
-								-novopt \
-								$(EXTRA_VSIM_FLAGS) \
-								-do "$(VSIM_DO_CMDS)"
+# Common Lib name
+# Add the following to your .vhd files that need
+# to use something from the common/ directory
+# 	library common;
+#	use common.all;
+COMMON_LIB		= common
 
+# src files
+SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+# tb files
+TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd)
 
-# the run the test command.
-#	Takes one arguments:
-#		1) Top level module name
-VSIM_CMD = $(call COLOURIZE, vsim $(VSIM_FLAGS) $(1))
+# Extra arguments beyond the defaults in helper.mk
+VCOM_FLAGS		=
+VSIM_FLAGS		=
 
-
-# pull in some macros
-# this has: colour codes for outputting messages in colour
-#			a macro to turn the source path into the object path
-#			a macro to create a target based on a source file name
+# Now include our helper.mk which has all the rules we need
+# to create our library, compile and simulate our test benches
 include ../herramientas/helper.mk
 
-# src files directory
-SRCS				= $(wildcard src/*.vhd) \
-					  $(wildcard src/*.vhdl)
+common:
+	@# Build all the sources, but not the testbenches
+	@make -C $(COMMON_DIR) srcs
+	@# Add the common lib to our modelsim.ini
+	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
 # default rule is to create the library, and compile all the components
-all: $(VLIB_DIR) srcs
+all: common srcs tb_srcs
 
-# create the questaSim library if it's not already there
-$(VLIB_DIR):
-	vlib $(VLIB_DIR)
-	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
-	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
+tp2: all
+	@$(call VSIM_CMD, tp2_tb)
 
-# create targets for all our sources
-# this loops through all of our source files in the $(SRCS) var
-# and foreach one evaluates as makefile rules the results of calling
-# the create_target_for macro on the source file.
-# this macro is in the helper.mk file
-# note with this method we can't set dependencies within a single directory
-$(foreach src,$(SRCS),$(eval $(call create_target_for, $(src))))
-
-# define a phony target per directory so we can specify compile order
-srcs: $(VLIB_DIR) $(call src2obj, $(SRCS))
-	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
-
-#contador: srcs
-#	@echo -e "$(COLOUR_GREEN)Running simulation.$(COLOUR_NONE)\n"
-#	@$(call VSIM_CMD, contador_tb)
-
-view_saved_waves:
-	@questasim -do "vsim -view vsim.wlf; $(ADD_DEBUG_WAVES)"
+view_tp1:
+	@$(call VSIM_VIEW_WAVES_TLM, tp2_tb, $(VSIM_DUT_WAVES))
 
 # delete the library and all compiled files
-clean:
-	-rm -rf $(VLIB_DIR)
+clean: helper_clean
+	$(call DEL_VLIB_CMD, $(COMMON_LIB))
 
-.PHONY: clean all srcs view_saved_waves
+distclean: clean
+	make -C $(COMMON_DIR) clean
+
+.PHONY: clean distclean all tp2 view_tp2
