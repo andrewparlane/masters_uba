@@ -5,8 +5,12 @@
 #	Each test bench must call std.env.stop when it's finished testing.
 # ----------------------------------------------------------------------------------
 
+ifndef WLF
 # set the default target to be all. Otherwise it's the first target it finds
 .DEFAULT_GOAL := all
+else
+.DEFAULT_GOAL := view
+endif
 
 # Which library do we want to put our work in
 VLIB_NAME		= work
