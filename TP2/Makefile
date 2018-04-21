@@ -29,7 +29,8 @@ COMMON_LIB		= common
 # src files
 SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
-TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd)
+TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
+		  $(wildcard $(TB_SRC_DIR)/*.sv)
 
 # Extra arguments beyond the defaults in helper.mk
 VCOM_FLAGS		=

@@ -116,8 +116,10 @@ endef
 # ----------------------------------------------------------------------------------
 # Compilation
 # ----------------------------------------------------------------------------------
-# When we compile a file using vcom, we create a flag file
-# which can be used as a dependency for each .vhd file.
+# Supports compiling .vhd or .sv files
+#
+# When we compile a file using vcom or vlog, we create a flag file
+# which can be used as a dependency for each .vhd / .sv file.
 # As make can compare the timestamps of the source file and the
 # flag file. In older versions of questaSim vcom created a
 # unique file per package/interface/module automaticaly
@@ -128,31 +130,53 @@ endef
 FLAGS_DIR	= $(VLIB_DIR)/flags
 
 # List of flags from list of sources
-FLAGS 		= $(patsubst $(SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(SRCS))
-TB_FLAGS 	= $(patsubst $(TB_SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(TB_SRCS))
+VHDL_FLAGS 		= $(patsubst $(SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(filter %.vhd, $(SRCS)))
+VHDL_TB_FLAGS 	= $(patsubst $(TB_SRC_DIR)/%.vhd, $(FLAGS_DIR)/%.flag, $(filter %.vhd, $(TB_SRCS)))
+SV_FLAGS 		= $(patsubst $(SRC_DIR)/%.sv, $(FLAGS_DIR)/%.flag, $(filter %.sv, $(SRCS)))
+SV_TB_FLAGS 	= $(patsubst $(TB_SRC_DIR)/%.sv, $(FLAGS_DIR)/%.flag, $(filter %.sv, $(TB_SRCS)))
 
+# Flags for use with vcom (vhdl compiler)
 VCOM_FLAGS 			:= $(MODELSIM_FLAG) \
 					   -work $(VLIB_NAME)
 
 # Flags to use with modules we will synthesise (IE not testbenches)
 NON_TB_VCOM_FLAGS	:= -check_synthesis
 
-$(FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.vhd
+# Flags for use with vlog (verilog compiler)
+VLOG_FLAGS 			:= $(MODELSIM_FLAG) \
+					   -work $(VLIB_NAME)
+
+# Flags to use with modules we will synthesise (IE not testbenches)
+NON_TB_VLOG_FLAGS	:=
+
+$(VHDL_FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $(NON_TB_VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
 	@touch $@
 
-$(TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
+$(VHDL_TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $<)
 	@mkdir -p $(FLAGS_DIR)
 	@touch $@
 
-srcs: $(VLIB_DIR) $(FLAGS)
+$(SV_FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.sv
+	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
+	@$(call COLOURIZE ,vlog $(VLOG_FLAGS) $(NON_TB_VLOG_FLAGS) $<)
+	@mkdir -p $(FLAGS_DIR)
+	@touch $@
+
+$(SV_TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.sv
+	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
+	@$(call COLOURIZE ,vlog $(VLOG_FLAGS) $<)
+	@mkdir -p $(FLAGS_DIR)
+	@touch $@
+
+srcs: $(VLIB_DIR) $(VHDL_FLAGS) $(SV_FLAGS)
 	@echo -e "$(COLOUR_GREEN)Compiled all sources.$(COLOUR_NONE)\n"
 
-tb_srcs: $(VLIB_DIR) $(TB_FLAGS)
+tb_srcs: $(VLIB_DIR) $(VHDL_TB_FLAGS) $(SV_TB_FLAGS)
 	@echo -e "$(COLOUR_GREEN)Compiled all testbenches.$(COLOUR_NONE)\n"
 
 # ----------------------------------------------------------------------------------
