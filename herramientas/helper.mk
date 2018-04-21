@@ -69,6 +69,10 @@ COLOURIZE = (set -o pipefail; $(1) 2> >($(COLOURIZE_SED_ALL) >&2) | $(COLOURIZE_
 #
 # Macros:
 #	MAP_VLIB_CMD 	Map another work directory into our modelsim.ini
+#					Note if you use this you may want to add a call
+#					to DEL_VLIB_CMD in clean
+#
+#	DEL_VLIB_CMD	Deletes a library out of our modelsim.ini
 # ----------------------------------------------------------------------------------
 
 ifndef VLIB_NAME
@@ -87,6 +91,9 @@ $(VLIB_DIR):
 	vmap $(MODELSIM_FLAG) $(VLIB_NAME) $(VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Created the $(VLIB_DIR) library mapped to $(VLIB_NAME)$(COLOUR_NONE)\n"
 
+vlib_clean:
+	$(call DEL_VLIB_CMD, $(VLIB_NAME))
+
 # Macro te map the work in a folder to our modelsim.ini
 #	Takes two arguments:
 #		1) relative folder path -
@@ -97,6 +104,13 @@ define MAP_VLIB_CMD
 	$(eval OTHER_VLIB_DIR = $(shell make -f $(1)/Makefile get_vlib_dir))
 	vmap $(MODELSIM_FLAG) $(2) $(1)/$(OTHER_VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Mapping $(2) to $(1)/$(OTHER_VLIB_DIR)$(COLOUR_NONE)\n"
+endef
+
+# Macro te delete a lib from our modelsim.ini
+#	Takes one arguments:
+#		1) library name to use
+define DEL_VLIB_CMD
+	-vmap $(MODELSIM_FLAG) -del $(1)
 endef
 
 # ----------------------------------------------------------------------------------
@@ -206,11 +220,11 @@ view:
 # Cleaning
 # ----------------------------------------------------------------------------------
 
-helper_clean:
+helper_clean: vlib_clean
 	-rm -rf $(VLIB_DIR)
 
 # ----------------------------------------------------------------------------------
 # PHONY
 # ----------------------------------------------------------------------------------
 
-.PHONY: helper_clean srcs tb_srcs view get_vlib_dir
+.PHONY: helper_clean vlib_clean srcs tb_srcs view get_vlib_dir

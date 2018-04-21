@@ -56,6 +56,7 @@ view_tp1:
 
 # delete the library and all compiled files
 clean: helper_clean
+	$(call DEL_VLIB_CMD, $(COMMON_LIB))
 
 distclean: clean
 	make -C $(COMMON_DIR) clean
