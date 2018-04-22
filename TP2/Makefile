@@ -49,6 +49,12 @@ common:
 # default rule is to create the library, and compile all the components
 all: common srcs tb_srcs
 
+adv7123: all
+	@$(call VSIM_CMD, adv7123_tb)
+
+view_adv7123:
+	@$(call VSIM_VIEW_WAVES_TLM, adv7123_tb, $(VSIM_DUT_WAVES))
+
 tp2: all
 	@$(call VSIM_CMD, tp2_tb)
 
@@ -62,4 +68,4 @@ clean: helper_clean
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all tp2 view_tp2
+.PHONY: clean distclean all adv7123 view_adv7123 tp2 view_tp2
