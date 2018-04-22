@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Argumentos:
 #  $1 applicación
@@ -11,7 +11,7 @@ if [ $RES_CODE -eq $3 ]; then
     if [ $RES_CODE -ne 0 ]; then
         echo "  OK";
     else
-        diff -Z salida pruebas/esperados/$2 > /dev/null;
+        diff -w salida pruebas/esperados/$2 > /dev/null;
         if [ $? -eq 0 ]; then
             echo "  OK";
         else

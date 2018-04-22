@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 int transponer(unsigned int filas, unsigned int columnas, long long *entrada, long long *salida)
 {
