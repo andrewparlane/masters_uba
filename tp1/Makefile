@@ -85,5 +85,6 @@ clean:
 	-rm -f *.o
 	-rm -f $(C_TARGET)
 	-rm -f $(ASM_TARGET)
+	-rm -f salida stdout stderr
 
 .PHONY: default all C c ASM asm clean
