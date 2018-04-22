@@ -52,7 +52,7 @@ all: common srcs tb_srcs
 tp2: all
 	@$(call VSIM_CMD, tp2_tb)
 
-view_tp1:
+view_tp2:
 	@$(call VSIM_VIEW_WAVES_TLM, tp2_tb, $(VSIM_DUT_WAVES))
 
 # delete the library and all compiled files
