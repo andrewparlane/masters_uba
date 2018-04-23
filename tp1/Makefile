@@ -103,6 +103,7 @@ prueba: C ASM
 	-$(call HACE_PRUEBA, matrix_demasiado_negativo_int, 1)
 	-$(call HACE_PRUEBA, matrix_demasiado_negativo_int2, 1)
 	-$(call HACE_PRUEBA, matrix_no_suficiente_filas, 1)
+	-$(call HACE_PRUEBA, archivo_que_no_existe, 1)
 
 clean:
 	-rm -f *.o
