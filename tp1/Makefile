@@ -19,6 +19,21 @@ ASM_OBJECTS = main.c.o \
 
 HEADERS = $(wildcard *.h)
 
+ifeq ($(MACHINE), pmax)
+
+define HACE_PRUEBA_ASM
+	@echo Probando código ASM con pruebas/$(strip $(1))
+	@./pruebaScript.sh $(ASM_TARGET) $(strip $(1)) $(2)
+endef
+
+else
+
+define HACE_PRUEBA_ASM
+	@#Hace nada porque no estamos pmax
+endef
+
+endif
+
 # Macro con dos argumentos
 #  1) El nombre de archivo a probar en pruebas/
 #  2) Código de salida esperado
@@ -29,10 +44,10 @@ HEADERS = $(wildcard *.h)
 
 define HACE_PRUEBA
 
-	@echo Probando pruebas/$(strip $(1))
+	@echo Probando código C con pruebas/$(strip $(1))
 	@# Primero con salida a un archivo
 	@./pruebaScript.sh $(C_TARGET) $(strip $(1)) $(2)
-
+	$(call HACE_PRUEBA_ASM, $(1), $(2))
 endef
 
 
@@ -50,13 +65,21 @@ $(ASM_TARGET): $(ASM_OBJECTS)
 
 C: $(C_TARGET)
 
+ifeq ($(MACHINE), pmax)
+
 ASM: $(ASM_TARGET)
+
+else
+
+ASM:
+
+endif
 
 c: C
 
 asm: ASM
 
-prueba: C
+prueba: C ASM
 	@# Primero el básico
 	-$(call HACE_PRUEBA, matrix1, 0)
 	@# Con finales de líneas diferentes
