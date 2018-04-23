@@ -5,8 +5,8 @@ MACHINE = $(shell uname -m)
 
 LIBS =
 CC = gcc
-C_FLAGS = -Wall
-ASM_FLAGS = -Wall
+C_FLAGS = -Wall -g
+ASM_FLAGS = -Wall -g
 
 default: $(C_TARGET)
 all: default
