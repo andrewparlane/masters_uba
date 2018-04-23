@@ -45,7 +45,6 @@ endif
 define HACE_PRUEBA
 
 	@echo Probando código C con pruebas/$(strip $(1))
-	@# Primero con salida a un archivo
 	@./pruebaScript.sh $(C_TARGET) $(strip $(1)) $(2)
 	$(call HACE_PRUEBA_ASM, $(1), $(2))
 endef
