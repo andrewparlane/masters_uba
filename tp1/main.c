@@ -4,6 +4,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <errno.h>
 
