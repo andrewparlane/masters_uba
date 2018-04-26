@@ -46,7 +46,7 @@ static void usage(FILE *stream, const char *nuestroNombre)
 }
 
 // lea carácter por carácter deshaciendo whitespace
-// hasta encuentra [0-9-]. Después comenzar a leer números
+// hasta encontrar [0-9-]. Después comenzar a leer números
 // [0-9]. Para cuando obtenemos EOF, \n, \r, ' ', \t.
 // Es un error si encontramos algún otro carácter.
 // devolver no 0 si hay un error
@@ -88,7 +88,7 @@ bool leerLongLong(FILE *f, long long *ll, bool *OK, bool *eof, bool *newLine)
             }
             else if (comenzandoLeerInt)
             {
-                // solo podríamos estar aquí si leamos
+                // solo podríamos estar aquí si leemos
                 // un '-' y después nada, eso es un error
                 fprintf(stderr, "Found invalid entry \"-\"\n");
                 return false;
@@ -160,7 +160,7 @@ bool leerLongLong(FILE *f, long long *ll, bool *OK, bool *eof, bool *newLine)
                 }
                 else
                 {
-                    // solo podríamos estar aquí si leamos
+                    // solo podríamos estar aquí si leemos
                     // un '-' y después nada, eso es un error
                     fprintf(stderr, "Found invalid entry \"-\"\n");
                     return false;
@@ -210,11 +210,10 @@ bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
 
         if (OK)
         {
-            // leamos un integer
+            // leemos un integer
             if (count >= columnasEsperados)
             {
-                // error - quisimos columnasEsperados integers
-                // pero ya encontramos más.
+                // error - hay mas columnas de las esperadas
                 fprintf(stderr, "Too many entries on line. Expecting %u\n", columnasEsperados);
                 return false;
             }
@@ -227,8 +226,7 @@ bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
         {
             if (count != columnasEsperados)
             {
-                // error - quisimos columnasEsperados integers
-                // pero solo leamos count antes de eof
+                // error - hay menos columnas de las esperadas
                 fprintf(stderr, "Not enough entries on line. Expecting %u, found %u\n", columnasEsperados, count);
                 return false;
             }
@@ -246,8 +244,7 @@ bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
             }
             else if (count != columnasEsperados)
             {
-                // error - quisimos columnasEsperados integers
-                // pero solo leamos count antes de newLine.
+                // error - hay menos columnas de las epseradas.
                 fprintf(stderr, "Not enough entries on line. Expecting %u, found %u\n", columnasEsperados, count);
                 return false;
             }
@@ -282,8 +279,8 @@ long long *leerEntrada(const char *archivo, uint *filas, uint *columnas)
     long long *llColumnas = &primerLinea[1];
 
     // Validar filas y columnas
-    // no pueden ser menor de cero
-    // ni mas grande de 0xFFFFFFFF
+    // no pueden ser menor a cero
+    // ni mas grande que 0xFFFFFFFF
     if (*llFilas < 0 || *llColumnas < 0 ||
         *llFilas > 0xFFFFFFFF ||
         *llColumnas > 0xFFFFFFFF)
@@ -378,7 +375,7 @@ int main(int argc, char **argv)
     // pero solo queremos el archivo, no la ruta
     const char *nuestroNombre = basename(argv[0]);
 
-    // escribir la salida a un archivo si veamos -o (y el argumento no es -)
+    // escribir la salida a un archivo si vemos -o (y el argumento no es -)
     const char *oArchivo = NULL;
 
     // clear errors
@@ -387,7 +384,7 @@ int main(int argc, char **argv)
     // parse short options
     while (1)
     {
-        // obtener el siguinete argumento
+        // obtener el siguiente argumento
         int option_index = 0;
         int c = getopt_long(argc, argv, "hVo:", long_options, &option_index);
 
@@ -402,18 +399,18 @@ int main(int argc, char **argv)
             case 'h':
             {
                 usage(stdout, nuestroNombre);
-                // no siguimos desupes de -h
+                // no seguimos despues de -h
                 return 0;
             }
             case 'V':
             {
                 printf("%s: Version %u.%u\n", nuestroNombre, MAJOR_VERSION, MINOR_VERSION);
-                // no siguimos desupes de -V
+                // no seguimos despues de -V
                 return 0;
             }
             case 'o':
             {
-                // si veamos "-o -" la salida es stdout
+                // si vemos "-o -" la salida es stdout
                 // si no, la salida es el archivo en optarg
                 if (strcmp(optarg, "-") != 0)
                 {
@@ -434,14 +431,13 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    // solo mostra el usage
+                    // solo muestra el usage
                 }
                 usage(stderr, nuestroNombre);
                 return 1;
             }
             default:
             {
-                // porque estámos aquí?
                 usage(stderr, nuestroNombre);
                 return 1;
             }
@@ -491,7 +487,6 @@ int main(int argc, char **argv)
     }
 
     // escribir el resultado
-    // nota que intercambiamos columnas y filas
     bool res = escribirSalida(oArchivo, columnas, filas, salida);
     free(entrada);
     free(salida);
