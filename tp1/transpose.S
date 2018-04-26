@@ -43,8 +43,12 @@
 
 transponer:
     subu    sp, sp, 8
-    sw      gp, 0(sp)
+    sw      gp,  0(sp)
     sw      $fp, 4(sp)
+    sw      a0,  8(sp)
+    sw      a1, 12(sp)
+    sw      a2, 16(sp)
+    sw      a3, 20(sp)
 
     # a0 = filas
     # a1 = columnas
