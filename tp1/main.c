@@ -53,7 +53,7 @@ static void usage(FILE *stream, const char *nuestroNombre)
 // *OK = 1 -> hay un integer valido en *ll
 // *eof = 1 -> no hay más a leer
 // *newLine = 1 -> encontramos nueva línea
-bool leerLongLong(FILE *f, long long *ll, bool *OK, bool *eof, bool *newLine)
+static bool leerLongLong(FILE *f, long long *ll, bool *OK, bool *eof, bool *newLine)
 {
     *OK = false;
     *eof = false;
@@ -194,7 +194,7 @@ bool leerLongLong(FILE *f, long long *ll, bool *OK, bool *eof, bool *newLine)
     }
 }
 
-bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
+static bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
 {
     uint32_t count = 0;
     while (1)
@@ -257,7 +257,7 @@ bool leerLinea(FILE *f, long long *data, uint columnasEsperados, bool *eof)
     return true;
 }
 
-long long *leerEntrada(const char *archivo, uint *filas, uint *columnas)
+static long long *leerEntrada(const char *archivo, uint *filas, uint *columnas)
 {
     FILE *f = fopen(archivo, "r");
     if (f == NULL)
@@ -329,7 +329,7 @@ long long *leerEntrada(const char *archivo, uint *filas, uint *columnas)
     return entrada;
 }
 
-bool escribirSalida(const char *archivo, uint filas, uint columnas, long long *salida)
+static bool escribirSalida(const char *archivo, uint filas, uint columnas, long long *salida)
 {
     FILE *f;
 
