@@ -46,6 +46,27 @@ program adv7123_props #(parameter H_ACTIVE,
         $fell(sVSync) |=>
             $stable(sVSync) [*(V_SYNC*H_TOTAL)-1] ##1 $rose(sVSync));
 
+    integer f;
+    initial begin
+        // Generar un archivo para uso con
+        // https://ericeastwood.com/lab/vga-simulator/
+        $timeformat(-9, 0, " ns", 0);
+        f = $fopen("adv7123_out.txt", "w");
+        forever begin
+            @(posedge eClk);
+
+            // Escribir la línea
+            $fwrite(f, "%t: %b %b %b %b %b\n",
+                    $time, sHSync, sVSync,
+                    sR, sG, sB);
+        end
+    end
+
+    final begin
+        // cerrar el archivo a final de la simulación
+        $fclose(f);
+    end
+
 endprogram
 
 module adv7123_sva_wrapper;
