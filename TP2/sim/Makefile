@@ -13,11 +13,12 @@ else
 endif
 
 # Directories
-SIM_DIR			= sim
+SIM_DIR			= .
 WAVES_DIR		= $(SIM_DIR)/waves
-SRC_DIR			= src
+SRC_DIR			= ../src
+#/cygdrive/c/altera/13.0sp1/quartus/eda/sim_lib
 TB_SRC_DIR		= $(SRC_DIR)/tb
-COMMON_DIR		= ../common
+COMMON_DIR		= ../../common
 
 # Common Lib name
 # Add the following to your .vhd files that need
@@ -38,7 +39,7 @@ VSIM_FLAGS		=
 
 # Now include our helper.mk which has all the rules we need
 # to create our library, compile and simulate our test benches
-include ../herramientas/helper.mk
+include ../../herramientas/helper.mk
 
 common:
 	@# Build all the sources, but not the testbenches
