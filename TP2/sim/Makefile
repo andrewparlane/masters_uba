@@ -19,6 +19,7 @@ SRC_DIR			= ../src
 #/cygdrive/c/altera/13.0sp1/quartus/eda/sim_lib
 TB_SRC_DIR		= $(SRC_DIR)/tb
 COMMON_DIR		= ../../common
+QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 
 # Common Lib name
 # Add the following to your .vhd files that need
@@ -48,7 +49,18 @@ common:
 	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
 # default rule is to create the library, and compile all the components
-all: common srcs tb_srcs
+all: common altera_mf srcs tb_srcs
+
+$(SIM_DIR)/altera_mf_work:
+	vlib $(SIM_DIR)/altera_mf_work
+	vmap $(MODELSIM_FLAG) altera_mf $(SIM_DIR)/altera_mf_work
+
+$(SIM_DIR)/altera_mf_work/flag: $(SIM_DIR)/altera_mf_work
+	vcom $(MODELSIM_FLAG) -work altera_mf -2002 -explicit $(QUARTUS_DIR)/eda/sim_lib/altera_mf_components.vhd
+	vcom $(MODELSIM_FLAG) -work altera_mf -2002 -explicit $(QUARTUS_DIR)/eda/sim_lib/altera_mf.vhd
+	touch $(SIM_DIR)/altera_mf_work/flag
+
+altera_mf: $(SIM_DIR)/altera_mf_work/flag
 
 adv7123: all
 	@$(call VSIM_CMD, adv7123_tb)
@@ -59,8 +71,10 @@ view_adv7123:
 # delete the library and all compiled files
 clean: helper_clean
 	$(call DEL_VLIB_CMD, $(COMMON_LIB))
+	$(call DEL_VLIB_CMD, altera_mf)
+	rm -rf altera_mf_work
 
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all adv7123 view_adv7123
+.PHONY: clean distclean all altera_mf adv7123 view_adv7123
