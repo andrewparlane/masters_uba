@@ -100,15 +100,37 @@ begin
 
     sva:    adv7123_sva_wrapper;
 
+    process (all)
+    begin
+        if (rst = '1') then
+            r <= "1111111111";
+            g <= "1111111111";
+            b <= "1111111111";
+        else
+            g <= "0000000000";
+            b <= "0000000000";
+            if (pixel_y(0) = '0') then
+                if (pixel_x(0) = '0') then
+                    r <= "1111111111";
+                else
+                    r <= "0000000000";
+                end if;
+            else
+                if (pixel_x(0) = '0') then
+                    r <= "0000000000";
+                else
+                    r <= "1111111111";
+                end if;
+            end if;
+        end if;
+    end process;
+
     process
     begin
         report ("CLK_HZ " & integer'image(CLK_HZ) & "Hz" &
                 " -> periodo " & time'image(CLK_PERIOD) &
                 " -> " & integer'image(1000000000 / (getFrameTime(CLK_PERIOD) / 1 ns)) &
                 " cuadras cada segundo");
-        r <= "1111111111";
-        g <= "0000000000";
-        b <= "1010101010";
         rst <= '1';
         wait for 100 ns;
         rst <= '0';
