@@ -278,9 +278,9 @@ begin
     sBlank <= '0' when (not enRegionActiva)
                   else '1';
 
-    pixel_x <= resize(x, pixel_x'length) when (enRegionActiva)
+    pixel_x <= resize(x, pixel_x'length) when (enRegionActiva = '1')
                else to_unsigned(0, pixel_x'length);
-    pixel_y <= resize(y, pixel_x'length) when (enRegionActiva)
+    pixel_y <= resize(y, pixel_x'length) when (enRegionActiva = '1')
                else to_unsigned(0, pixel_y'length);
 
 end architecture synth;
