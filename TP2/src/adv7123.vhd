@@ -237,7 +237,8 @@ begin
                     vEstadoNext <= SYNC;
                 end if;
             when BP =>
-                if (yAtMax = '1') then
+                if ((yAtMax = '1') and
+                    (xAtMax = '1')) then
                     vEstadoNext <= ACTIVO;
                 else
                     vEstadoNext <= BP;
