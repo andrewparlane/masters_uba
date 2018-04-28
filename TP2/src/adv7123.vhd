@@ -87,7 +87,7 @@ architecture synth of adv7123 is
                                                V_SYNC +
                                                V_BACK_PORCH;
 
-    constant V_FRONT_PORCH_START:   natural := V_ACTIVE - 1;
+    constant V_FRONT_PORCH_START:   natural := V_ACTIVE;
     constant V_SYNC_START:          natural := V_FRONT_PORCH_START + V_FRONT_PORCH;
     constant V_BACK_PORCH_START:    natural := V_SYNC_START + V_SYNC;
 
