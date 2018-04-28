@@ -68,6 +68,9 @@ adv7123: all
 view_adv7123:
 	@$(call VSIM_VIEW_WAVES_TLM, adv7123_tb, $(VSIM_DUT_WAVES))
 
+adv7123_con_char_rom: all
+	@$(call VSIM_CMD, adv7123_con_char_rom_tb)
+
 # delete the library and all compiled files
 clean: helper_clean
 	$(call DEL_VLIB_CMD, $(COMMON_LIB))
@@ -77,4 +80,4 @@ clean: helper_clean
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all altera_mf adv7123 view_adv7123
+.PHONY: clean distclean all altera_mf adv7123 view_adv7123 adv7123_con_char_rom
