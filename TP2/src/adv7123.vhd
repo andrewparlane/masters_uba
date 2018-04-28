@@ -162,14 +162,14 @@ begin
             hEstado <= RESET;
             vEstado <= RESET;
         elsif (rising_edge(eClk)) then
-            if (hEstado /= hEstadoNext) then
-                report ("hEstado cambiando desde " & estado'image(hEstado) &
-                        " hasta " & estado'image(hEstadoNext));
-            end if;
-            if (vEstado /= vEstadoNext) then
-                report ("vEstado cambiando desde " & estado'image(vEstado) &
-                        " hasta " & estado'image(vEstadoNext));
-            end if;
+            --if (hEstado /= hEstadoNext) then
+            --    report ("hEstado cambiando desde " & estado'image(hEstado) &
+            --            " hasta " & estado'image(hEstadoNext));
+            --end if;
+            --if (vEstado /= vEstadoNext) then
+            --    report ("vEstado cambiando desde " & estado'image(vEstado) &
+            --            " hasta " & estado'image(vEstadoNext));
+            --end if;
             hEstado <= hEstadoNext;
             vEstado <= vEstadoNext;
         end if;
