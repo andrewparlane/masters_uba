@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 library common;
 use common.all;
+use common.type_pkg.all;
 
 entity tp1 is
     generic (CLOCK_DIVIDER: natural := 1);
@@ -33,6 +34,14 @@ architecture synth of tp1 is
               atMax:    out std_logic);
     end component contador;
 
+    component contador_bcd is
+        generic (CIFRAS: natural);
+        port (clk:      in  std_logic;
+              en:       in  std_logic;
+              rst:      in  std_logic;
+              dout:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
+    end component contador_bcd;
+
     component sevenSegmentDisplay is
         port (bcd:                  in  unsigned(3 downto 0);
               sevenSegmentOutput:   out std_logic_vector(6 downto 0));
@@ -45,13 +54,12 @@ architecture synth of tp1 is
     constant    ONE_HZ_EN_MAX:  natural := (50000000 / CLOCK_DIVIDER) - 1;
     constant    ONE_KHZ_EN_MAX: natural := (50000 / CLOCK_DIVIDER) - 1;
 
-    signal d0en1Hz, d0en1KHz:           std_logic;
-    signal d0en, d1en, d2en, d3en:      std_logic;
-    signal d0atMax, d1atMax, d2atMax:   std_logic;
-    signal d0out, d1out, d2out, d3out:  unsigned (3 downto 0);
+    signal d0en1Hz, d0en1KHz:   std_logic;
+    signal bcdEn:               std_logic;
+    signal bcdOut:              unsignedArray(3 downto 0)(3 downto 0);
 
-    signal rst:                         std_logic;
-    signal fast:                        std_logic;
+    signal rst:                 std_logic;
+    signal fast:                std_logic;
 begin
 
     -- HEX4,5,6,7 siempre están apagado
@@ -67,13 +75,7 @@ begin
 
     -- el primer dígito cuenta a 1Hz en modo normal,
     -- y 1KHz en modo rápido.
-    d0en <= d0en1KHz when (fast = '1') else d0en1Hz;
-
-    -- un dígito cuenta si el dígito anterior hace el transición 9 -> 0
-    -- (en and atMax)
-    d1en <= d0en and d0atMax;
-    d2en <= d1en and d1atMax;
-    d3en <= d2en and d2atMax;
+    bcdEn <= d0en1KHz when (fast = '1') else d0en1Hz;
 
     -- generar enable @ 1Hz desde 50MHz clk
     en1Hz_inst: contador
@@ -99,68 +101,28 @@ begin
                                 -- count,
                                 atMax => d0en1KHz);
 
-    -- dígito 0, 0-9
-    d0Contador_inst:    contador
-                        generic map    (WIDTH => 4,
-                                        MAX => 9)
-                        port map       (clk => CLOCK_50,
-                                        en => d0en,
-                                        rst => rst,
-                                        load => '0',
-                                        loadData => to_unsigned(0, 4),
-                                        count => d0out,
-                                        atMax => d0atMax);
+    -- El contador BCD de 4 cifras
+    contBcd_inst:       contador_bcd
+                        generic map     (CIFRAS => 4)
+                        port map        (clk => CLOCK_50,
+                                         en => bcdEn,
+                                         rst => rst,
+                                         dout => bcdOut);
 
     d0Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => d0out,
+                        port map       (bcd => bcdOut(0),
                                         sevenSegmentOutput => HEX0);
 
-    -- dígito 1, 0-9
-    d1Contador_inst:    contador
-                        generic map    (WIDTH => 4,
-                                        MAX => 9)
-                        port map       (clk => CLOCK_50,
-                                        en => d1en,
-                                        rst => rst,
-                                        load => '0',
-                                        loadData => to_unsigned(0, 4),
-                                        count => d1out,
-                                        atMax => d1atMax);
-
     d1Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => d1out,
+                        port map       (bcd => bcdOut(1),
                                         sevenSegmentOutput => HEX1);
 
-    -- dígito 2, 0-9
-    d2Contador_inst:    contador
-                        generic map    (WIDTH => 4,
-                                        MAX => 9)
-                        port map       (clk => CLOCK_50,
-                                        en => d2en,
-                                        rst => rst,
-                                        load => '0',
-                                        loadData => to_unsigned(0, 4),
-                                        count => d2out,
-                                        atMax => d2atMax);
-
     d2Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => d2out,
+                        port map       (bcd => bcdOut(2),
                                         sevenSegmentOutput => HEX2);
 
-    -- dígito 3, 0-9
-    d3Contador_inst:    contador
-                        generic map    (WIDTH => 4,
-                                        MAX => 9)
-                        port map       (clk => CLOCK_50,
-                                        en => d3en,
-                                        rst => rst,
-                                        load => '0',
-                                        loadData => to_unsigned(0, 4),
-                                        count => d3out);
-                                        -- atMax,
-
     d3Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => d3out,
+                        port map       (bcd => bcdOut(3),
                                         sevenSegmentOutput => HEX3);
 
 end architecture synth;
