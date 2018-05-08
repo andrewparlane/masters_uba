@@ -101,7 +101,7 @@ vlib_clean:
 #			includes this helper.mk
 #		2) library name to use
 define MAP_VLIB_CMD
-	$(eval OTHER_VLIB_DIR = $(shell make -f $(1)/Makefile get_vlib_dir))
+	$(eval OTHER_VLIB_DIR = $(shell make -s -C $(1) get_vlib_dir))
 	vmap $(MODELSIM_FLAG) $(2) $(1)/$(OTHER_VLIB_DIR)
 	@echo -e "$(COLOUR_GREEN)Mapping $(2) to $(1)/$(OTHER_VLIB_DIR)$(COLOUR_NONE)\n"
 endef
