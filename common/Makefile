@@ -19,7 +19,8 @@ SRC_DIR			= src
 TB_SRC_DIR		= $(SRC_DIR)/tb
 
 # src files
-SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+SRCS	= $(SRC_DIR)/type_pkg.vhd \
+		  $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd)
 
