@@ -42,9 +42,6 @@ set_global_assignment -name TOP_LEVEL_ENTITY tp1
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "10:45:29  MARCH 29, 2018"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
-set_global_assignment -name VHDL_FILE ../src/tp1.vhd
-set_global_assignment -name VHDL_FILE ../src/sevenSegmentDisplay.vhd
-set_global_assignment -name VHDL_FILE ../src/contador.vhd
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
@@ -485,4 +482,9 @@ set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
+set_global_assignment -name VHDL_FILE ../../common/src/sevenSegmentDisplay.vhd -library common
+set_global_assignment -name VHDL_FILE ../../common/src/contador.vhd -library common
+set_global_assignment -name VHDL_FILE ../../common/src/type_pkg.vhd -library common
+set_global_assignment -name VHDL_FILE ../../common/src/contador_bcd.vhd -library common
+set_global_assignment -name VHDL_FILE ../src/tp1.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
