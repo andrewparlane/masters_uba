@@ -78,9 +78,10 @@ architecture synth of adv7123 is
                                                H_SYNC +
                                                H_BACK_PORCH;
 
-    constant H_FRONT_PORCH_START:   natural := H_ACTIVE - 1;
-    constant H_SYNC_START:          natural := H_FRONT_PORCH_START + H_FRONT_PORCH;
-    constant H_BACK_PORCH_START:    natural := H_SYNC_START + H_SYNC;
+    -- fp -> hsync -> bp -> activo
+    constant H_SYNC_START:          natural := H_FRONT_PORCH;
+    constant H_BP_START:            natural := H_SYNC_START + H_SYNC;
+    constant H_ACTIVE_START:        natural := H_BP_START + H_BACK_PORCH;
 
     -- Vertical
     constant V_TOTAL:               natural := V_ACTIVE +
@@ -88,28 +89,10 @@ architecture synth of adv7123 is
                                                V_SYNC +
                                                V_BACK_PORCH;
 
-    constant V_FRONT_PORCH_START:   natural := V_ACTIVE;
-    constant V_SYNC_START:          natural := V_FRONT_PORCH_START + V_FRONT_PORCH;
-    constant V_BACK_PORCH_START:    natural := V_SYNC_START + V_SYNC;
-
-    -------------------------------------------------------------------------------------
-    -- señales por la machina de estados
-    -------------------------------------------------------------------------------------
-    -- Usamos una machina de estados para determinar
-    -- en que region estamos. Tenemos uno por lineas
-    -- y uno por pixeles.
-    -- Podríamos decir ACTIVE = (x < H_FRONT_PORCH_START)
-    -- y similar para las otras regiones. Pero creo
-    -- que una machina de estados usa menos recursos.
-    -------------------------------------------------------------------------------------
-
-    type estado is (RESET, ACTIVO, FP, SYNC, BP);
-    signal hEstado: estado;
-    signal vEstado: estado;
-    signal hEstadoNext: estado;
-    signal vEstadoNext: estado;
-
-    signal enRegionActiva:  std_logic;
+    -- fp -> hsync -> bp -> activo
+    constant V_SYNC_START:          natural := V_FRONT_PORCH;
+    constant V_BP_START:            natural := V_SYNC_START + V_SYNC;
+    constant V_ACTIVE_START:        natural := V_BP_START + V_BACK_PORCH;
 
     -------------------------------------------------------------------------------------
     -- señales por las contadoras
@@ -127,8 +110,12 @@ architecture synth of adv7123 is
     signal y: unsigned((COUNTER_Y_WIDTH - 1) downto 0);
 
     signal xAtMax: std_logic;
-    signal yAtMax: std_logic;
 
+    -------------------------------------------------------------------------------------
+    -- señales auxiliar
+    -------------------------------------------------------------------------------------
+    signal hSyncAux: std_logic;
+    signal vSyncAux: std_logic;
 begin
 
     -------------------------------------------------------------------------------------
@@ -154,101 +141,7 @@ begin
                                   loadData => to_unsigned(0, y'length),
                                   count => y,
                                   atZero => open,
-                                  atMax => yAtMax);
-
-    -------------------------------------------------------------------------------------
-    -- registro de estado
-    -------------------------------------------------------------------------------------
-    process (eClk, eRst)
-    begin
-        if (eRst = '1') then
-            hEstado <= RESET;
-            vEstado <= RESET;
-        elsif (rising_edge(eClk)) then
-            --if (hEstado /= hEstadoNext) then
-            --    report ("hEstado cambiando desde " & estado'image(hEstado) &
-            --            " hasta " & estado'image(hEstadoNext));
-            --end if;
-            --if (vEstado /= vEstadoNext) then
-            --    report ("vEstado cambiando desde " & estado'image(vEstado) &
-            --            " hasta " & estado'image(vEstadoNext));
-            --end if;
-            hEstado <= hEstadoNext;
-            vEstado <= vEstadoNext;
-        end if;
-    end process;
-
-    -------------------------------------------------------------------------------------
-    -- lógica de estado siguiente (hEstado)
-    -------------------------------------------------------------------------------------
-    siguinteEstadoH: process (all)
-    begin
-        case hEstado is
-            when RESET =>
-                hEstadoNext <= ACTIVO;
-            when ACTIVO =>
-                if (x = H_FRONT_PORCH_START) then
-                    hEstadoNext <= FP;
-                else
-                    hEstadoNext <= ACTIVO;
-                end if;
-            when FP =>
-                if (x = H_SYNC_START) then
-                    hEstadoNext <= SYNC;
-                else
-                    hEstadoNext <= FP;
-                end if;
-            when SYNC =>
-                if (x = H_BACK_PORCH_START) then
-                    hEstadoNext <= BP;
-                else
-                    hEstadoNext <= SYNC;
-                end if;
-            when BP =>
-                if (xAtMax = '1') then
-                    hEstadoNext <= ACTIVO;
-                else
-                    hEstadoNext <= BP;
-                end if;
-        end case;
-    end process siguinteEstadoH;
-
-    -------------------------------------------------------------------------------------
-    -- lógica de estado siguiente (vEstado)
-    -------------------------------------------------------------------------------------
-    siguinteEstadoV: process (all)
-    begin
-        case vEstado is
-            when RESET =>
-                vEstadoNext <= ACTIVO;
-            when ACTIVO =>
-                if (y = V_FRONT_PORCH_START) then
-                    vEstadoNext <= FP;
-                else
-                    vEstadoNext <= ACTIVO;
-                end if;
-            when FP =>
-                if (y = V_SYNC_START) then
-                    vEstadoNext <= SYNC;
-                else
-                    vEstadoNext <= FP;
-                end if;
-            when SYNC =>
-                if (y = V_BACK_PORCH_START) then
-                    vEstadoNext <= BP;
-                else
-                    vEstadoNext <= SYNC;
-                end if;
-            when BP =>
-                if ((yAtMax = '1') and
-                    (xAtMax = '1')) then
-                    vEstadoNext <= ACTIVO;
-                else
-                    vEstadoNext <= BP;
-                end if;
-        end case;
-    end process siguinteEstadoV;
-
+                                  atMax => open);
 
     -------------------------------------------------------------------------------------
     -- Salidas
@@ -256,34 +149,75 @@ begin
     -- El reloj de píxeles es el reloj de entrada
     sClk <= eClk;
 
-    -- Las salidas de RGB son las entradas
-    sR <= eR;
-    sG <= eG;
-    sB <= eB;
-
-    -- estamos en la región activa?
-    enRegionActiva <= '1' when ((hEstado = ACTIVO) and
-                                (vEstado = ACTIVO))
-                          else '0';
-
-    -- sHSync está activo (bajo) durante el hsync
-    sHsync <= '0' when (hEstado = SYNC) else '1';
-
-    -- sVSync está activo (bajo) durante el vsync
-    sVsync <= '0' when (vEstado = SYNC) else '1';
+    -- sVSync y sHSync están los auxiliares
+    sVSync <= vSyncAux;
+    sHSync <= hSyncAux;
 
     -- sSync está activo (bajo) durante vsync o hsync
-    sSync <= '0' when (hEstado = SYNC or
-                       vEstado = SYNC)
-                 else '1';
+    -- todos están activo bajo, así:
+    -- not ((not sVSync) or (not sHSync)) = a and b
+    -- por De Morgan
+    sSync <= vSyncAux and hSyncAux;
 
-    -- sBlank está activo (bajo) cuando no estamos ACTIVO
-    sBlank <= '0' when (not enRegionActiva)
-                  else '1';
+    process (eClk, eRst)
+    begin
+        if (eRst = '1') then
+            sR <= (others => '0');
+            sG <= (others => '0');
+            sB <= (others => '0');
+            hSyncAux <= '0';
+            vSyncAux <= '0';
+            sBlank <= '0';
+        elsif (rising_edge(eClk)) then
+            -- sHSync está activo (bajo) durante el hsync
+            if ((x >= H_SYNC_START) and
+                (x < H_BP_START)) then
+                hSyncAux <= '0';
+            else
+                hSyncAux <= '1';
+            end if;
 
-    pixel_x <= resize(x, pixel_x'length) when (enRegionActiva = '1')
-               else to_unsigned(0, pixel_x'length);
-    pixel_y <= resize(y, pixel_x'length) when (enRegionActiva = '1')
-               else to_unsigned(0, pixel_y'length);
+            -- sVSync está activo (bajo) durante el vsync
+            if ((y >= V_SYNC_START) and
+                (y < V_BP_START)) then
+                vSyncAux <= '0';
+            else
+                vSyncAux <= '1';
+            end if;
+
+            if ((x < H_ACTIVE_START) or
+                (y < V_ACTIVE_START)) then
+                -- sBlank está activo (bajo) cuando no estamos ACTIVO
+                sBlank <= '0';
+                sR <= (others => '0');
+                sG <= (others => '0');
+                sB <= (others => '0');
+            else
+                sBlank <= '1';
+                -- Las salidas de RGB son las entradas
+                sR <= eR;
+                sG <= eG;
+                sB <= eB;
+            end if;
+        end if;
+    end process;
+
+    process (all)
+    begin
+        if ((x < H_ACTIVE_START) or
+            (y < V_ACTIVE_START)) then
+            pixel_x <= (others => '0');
+        else
+            pixel_x <= resize(x - to_unsigned(H_ACTIVE_START, x'length),
+                              pixel_x'length);
+        end if;
+
+        if ((y < V_ACTIVE_START)) then
+            pixel_y <= (others => '0');
+        else
+            pixel_y <= resize(y - to_unsigned(V_ACTIVE_START, y'length),
+                              pixel_y'length);
+        end if;
+    end process;
 
 end architecture synth;
