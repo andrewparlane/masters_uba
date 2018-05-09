@@ -15,7 +15,7 @@ entity contador is
 end entity contador;
 
 architecture synth of contador is
-    signal countAux: unsigned((WIDTH - 1) downto 0);
+    signal countAux: unsigned((WIDTH - 1) downto 0) := (others => '0');
 begin
 
     process (clk, rst)
