@@ -16,6 +16,7 @@ architecture sim of contador_tb is
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
+              atZero:   out std_logic;
               atMax:    out std_logic);
     end component contador;
 
@@ -29,6 +30,7 @@ architecture sim of contador_tb is
     signal load:        std_logic := '0';
     signal loadData:    unsigned((WIDTH - 1) downto 0) := (others => '0');
     signal count:       unsigned((WIDTH - 1) downto 0);
+    signal atZero:      std_logic;
     signal atMax:       std_logic;
 
 begin
@@ -44,6 +46,7 @@ begin
                                     load => load,
                                     loadData => loadData,
                                     count => count,
+                                    atZero => atZero,
                                     atMax => atMax);
 
     --process (count)
@@ -62,6 +65,14 @@ begin
     -- psl preubaLoad:
     --      assert always (en and load) -> next count = loadData
     --      report "Failure: load error";
+    --
+    -- psl preubaCero:
+    --      assert always (count = 0) -> atZero
+    --      report "Failure: atZero error - atZero not set when it should be";
+    --
+    -- psl preubaNCero:
+    --      assert always (count /= 0) -> not atZero
+    --      report "Failure: atZero error - atZero set when it shouldn't be";
     --
     -- psl preubaMax:
     --      assert always (count = MAX) -> atMax

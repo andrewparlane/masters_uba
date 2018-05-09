@@ -11,6 +11,7 @@ entity contador is
           load:     in  std_logic;
           loadData: in  unsigned((WIDTH - 1) downto 0);
           count:    out unsigned((WIDTH - 1) downto 0);
+          atZero:   out std_logic;
           atMax:    out std_logic);
 end entity contador;
 
@@ -40,5 +41,6 @@ begin
 
     count <= countAux;
     atMax <= '1' when (countAux = MAX) else '0';
+    atZero <= '1' when (countAux = 0) else '0';
 
 end architecture synth;

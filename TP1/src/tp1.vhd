@@ -31,6 +31,7 @@ architecture synth of tp1 is
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
+              atZero:   out std_logic;
               atMax:    out std_logic);
     end component contador;
 
@@ -86,7 +87,8 @@ begin
                                 rst => rst,
                                 load => '0',
                                 loadData => to_unsigned(0, 26),
-                                -- count,
+                                count => open,
+                                atZero => open,
                                 atMax => d0en1Hz);
 
     -- generar enable @ 1KHz desde 50MHz clk
@@ -98,7 +100,8 @@ begin
                                 rst => rst,
                                 load => '0',
                                 loadData => to_unsigned(0, 16),
-                                -- count,
+                                count => open,
+                                atZero => open,
                                 atMax => d0en1KHz);
 
     -- El contador BCD de 4 cifras

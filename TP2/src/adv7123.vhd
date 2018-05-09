@@ -64,6 +64,7 @@ architecture synth of adv7123 is
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
+              atZero:   out std_logic;
               atMax:    out std_logic);
     end component contador;
 
@@ -141,6 +142,7 @@ begin
                                   load => '0',
                                   loadData => to_unsigned(0, x'length),
                                   count => x,
+                                  atZero => open,
                                   atMax => xAtMax);
 
     yCont:  contador    generic map (WIDTH => COUNTER_Y_WIDTH,
@@ -151,6 +153,7 @@ begin
                                   load => '0',
                                   loadData => to_unsigned(0, y'length),
                                   count => y,
+                                  atZero => open,
                                   atMax => yAtMax);
 
     -------------------------------------------------------------------------------------

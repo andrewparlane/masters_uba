@@ -23,6 +23,7 @@ architecture synth of contador_bcd is
               load:     in  std_logic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
+              atZero:   out std_logic;
               atMax:    out std_logic);
     end component contador;
 
@@ -51,6 +52,7 @@ begin
                                             load => '0',
                                             loadData => to_unsigned(0, 4),
                                             count => dout(c),
+                                            atZero => open,
                                             atMax => atMax(c));
     end generate;
 
