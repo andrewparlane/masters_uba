@@ -8,6 +8,7 @@ library common;
 use common.all;
 
 use work.adv7123_800_600_valores.all;
+use work.char_rom_pkg.all;
 
 entity adv7123_con_char_rom_tb is
 end entity adv7123_con_char_rom_tb;
@@ -47,7 +48,7 @@ architecture sim of adv7123_con_char_rom_tb is
     component char_rom is
         port (clk:  in  std_logic;
               rst:  in  std_logic;
-              char: in  std_logic_vector(6 downto 0);
+              char: in  charRomCharacter;
               offX: in  unsigned(3 downto 0);
               offY: in  unsigned(4 downto 0);
               px:   out std_logic);
@@ -63,7 +64,7 @@ architecture sim of adv7123_con_char_rom_tb is
     signal pixel_x:     unsigned((PIXEL_X_WIDTH - 1) downto 0);
     signal pixel_y:     unsigned((PIXEL_Y_WIDTH - 1) downto 0);
 
-    signal char: std_logic_vector(6 downto 0);
+    signal char: charRomCharacter;
     signal offX: unsigned(3 downto 0) := (others => '0');
     signal offY: unsigned(4 downto 0) := (others => '0');
     signal px:   std_logic;
@@ -109,41 +110,30 @@ begin
         b <= (others => px);
         if (bloqueY = to_unsigned(9, bloqueY'length)) then
             if (bloqueX = to_unsigned(19, bloqueX'length)) then
-                -- 'H'
-                char <= std_logic_vector(to_unsigned(40, char'length));
+                char <= 'H';
             elsif (bloqueX = to_unsigned(20, bloqueX'length)) then
-                -- 'e'
-                char <= std_logic_vector(to_unsigned(69, char'length));
+                char <= 'e';
             elsif (bloqueX = to_unsigned(21, bloqueX'length)) then
-                -- 'l'
-                char <= std_logic_vector(to_unsigned(76, char'length));
+                char <= 'l';
             elsif (bloqueX = to_unsigned(22, bloqueX'length)) then
-                -- 'l'
-                char <= std_logic_vector(to_unsigned(76, char'length));
+                char <= 'l';
             elsif (bloqueX = to_unsigned(23, bloqueX'length)) then
-                -- 'o'
-                char <= std_logic_vector(to_unsigned(79, char'length));
+                char <= 'o';
             elsif (bloqueX = to_unsigned(25, bloqueX'length)) then
-                -- 'W'
-                char <= std_logic_vector(to_unsigned(55, char'length));
+                char <= 'W';
             elsif (bloqueX = to_unsigned(26, bloqueX'length)) then
-                -- 'o'
-                char <= std_logic_vector(to_unsigned(79, char'length));
+                char <= 'o';
             elsif (bloqueX = to_unsigned(27, bloqueX'length)) then
-                -- 'r'
-                char <= std_logic_vector(to_unsigned(82, char'length));
+                char <= 'r';
             elsif (bloqueX = to_unsigned(28, bloqueX'length)) then
-                -- 'l'
-                char <= std_logic_vector(to_unsigned(76, char'length));
+                char <= 'l';
             elsif (bloqueX = to_unsigned(29, bloqueX'length)) then
-                -- 'd'
-                char <= std_logic_vector(to_unsigned(68, char'length));
+                char <= 'd';
             else
-                -- ' '
-                char <= std_logic_vector(to_unsigned(0, char'length));
+                char <= ' ';
             end if;
         else
-            char <= std_logic_vector(to_unsigned(0, char'length));
+            char <= ' ';
         end if;
     end process;
 
