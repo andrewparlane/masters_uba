@@ -101,4 +101,27 @@ package char_rom_pkg is
          '}',  -- 93
          '~'); -- 94
 
+    function bcdToCharacter (bcd: unsigned(3 downto 0)) return charRomCharacter;
+
 end package char_rom_pkg;
+
+package body char_rom_pkg is
+
+    function bcdToCharacter (bcd: unsigned(3 downto 0)) return charRomCharacter is
+    begin
+        case to_integer(bcd) is
+            when 0 => return '0';
+            when 1 => return '1';
+            when 2 => return '2';
+            when 3 => return '3';
+            when 4 => return '4';
+            when 5 => return '5';
+            when 6 => return '6';
+            when 7 => return '7';
+            when 8 => return '8';
+            when 9 => return '9';
+            when others => return ' ';
+        end case;
+    end function bcdToCharacter;
+
+end package body char_rom_pkg;
