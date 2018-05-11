@@ -29,7 +29,8 @@ QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 COMMON_LIB		= common
 
 # src files
-SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+SRCS	= $(SRC_DIR)/vga_timings_pkg.vhd \
+		  $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
 		  $(wildcard $(TB_SRC_DIR)/*.sv)
@@ -62,6 +63,12 @@ $(SIM_DIR)/altera_mf_work/flag: $(SIM_DIR)/altera_mf_work
 
 altera_mf: $(SIM_DIR)/altera_mf_work/flag
 
+vga: all
+	@$(call VSIM_CMD, vga_tb)
+
+view_vga:
+	@$(call VSIM_VIEW_WAVES_TLM, vga_tb, $(VSIM_DUT_WAVES))
+
 adv7123: all
 	@$(call VSIM_CMD, adv7123_tb)
 
@@ -86,4 +93,4 @@ clean: helper_clean
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all altera_mf adv7123 view_adv7123 adv7123_con_char_rom adc_tb view_adc
+.PHONY: clean distclean all altera_mf vga view_vga adv7123_con_char_rom adc_tb view_adc adv7123 view_adv7123

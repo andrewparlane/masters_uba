@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-package adv7123_apoyo_pkg is
+package vga_timings_helper_pkg is
     function getLineTime(clkPeriodo:        time;
                          H_ACTIVE:          natural;
                          H_FRONT_PORCH:     natural;
@@ -18,9 +18,9 @@ package adv7123_apoyo_pkg is
                           V_FRONT_PORCH:    natural;
                           V_SYNC:           natural;
                           V_BACK_PORCH:     natural) return time;
-end package adv7123_apoyo_pkg;
+end package vga_timings_helper_pkg;
 
-package body adv7123_apoyo_pkg is
+package body vga_timings_helper_pkg is
     function getLineTime(clkPeriodo:        time;
                          H_ACTIVE:          natural;
                          H_FRONT_PORCH:     natural;
@@ -54,7 +54,7 @@ package body adv7123_apoyo_pkg is
                            V_SYNC +
                            V_BACK_PORCH);
     end function getFrameTime;
-end package body adv7123_apoyo_pkg;
+end package body vga_timings_helper_pkg;
 
 
 library ieee;
@@ -66,7 +66,7 @@ use common.all;
 
 use work.all;
 
-package adv7123_800_600_valores is
+package vga_timings_800_600_pkg is
     constant H_ACTIVE:      natural := 800; -- ticks
     constant H_FRONT_PORCH: natural := 15;  -- ticks
     constant H_SYNC:        natural := 80;  -- ticks
@@ -82,12 +82,12 @@ package adv7123_800_600_valores is
 
     function getLineTime(clkPeriodo:  time) return time;
     function getFrameTime(clkPeriodo: time) return time;
-end package adv7123_800_600_valores;
+end package vga_timings_800_600_pkg;
 
-package body adv7123_800_600_valores is
+package body vga_timings_800_600_pkg is
     function getLineTime(clkPeriodo: time) return time is
     begin
-        return adv7123_apoyo_pkg.getLineTime(clkPeriodo,
+        return vga_timings_helper_pkg.getLineTime(clkPeriodo,
                                              H_ACTIVE,
                                              H_FRONT_PORCH,
                                              H_SYNC,
@@ -96,7 +96,7 @@ package body adv7123_800_600_valores is
 
     function getFrameTime(clkPeriodo: time) return time is
     begin
-        return adv7123_apoyo_pkg.getFrameTime(clkPeriodo,
+        return vga_timings_helper_pkg.getFrameTime(clkPeriodo,
                                               H_ACTIVE,
                                               H_FRONT_PORCH,
                                               H_SYNC,
@@ -106,7 +106,7 @@ package body adv7123_800_600_valores is
                                               V_SYNC,
                                               V_BACK_PORCH);
     end function getFrameTime;
-end package body adv7123_800_600_valores;
+end package body vga_timings_800_600_pkg;
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -117,7 +117,7 @@ use common.all;
 
 use work.all;
 
-package adv7123_10_10_valores is
+package vga_timings_10_10_pkg is
     constant H_ACTIVE:      natural := 10; -- ticks
     constant H_FRONT_PORCH: natural := 4;  -- ticks
     constant H_SYNC:        natural := 5;  -- ticks
@@ -133,12 +133,12 @@ package adv7123_10_10_valores is
 
     function getLineTime(clkPeriodo:  time) return time;
     function getFrameTime(clkPeriodo: time) return time;
-end package adv7123_10_10_valores;
+end package vga_timings_10_10_pkg;
 
-package body adv7123_10_10_valores is
+package body vga_timings_10_10_pkg is
     function getLineTime(clkPeriodo: time) return time is
     begin
-        return adv7123_apoyo_pkg.getLineTime(clkPeriodo,
+        return vga_timings_helper_pkg.getLineTime(clkPeriodo,
                                              H_ACTIVE,
                                              H_FRONT_PORCH,
                                              H_SYNC,
@@ -147,7 +147,7 @@ package body adv7123_10_10_valores is
 
     function getFrameTime(clkPeriodo: time) return time is
     begin
-        return adv7123_apoyo_pkg.getFrameTime(clkPeriodo,
+        return vga_timings_helper_pkg.getFrameTime(clkPeriodo,
                                               H_ACTIVE,
                                               H_FRONT_PORCH,
                                               H_SYNC,
@@ -157,4 +157,4 @@ package body adv7123_10_10_valores is
                                               V_SYNC,
                                               V_BACK_PORCH);
     end function getFrameTime;
-end package body adv7123_10_10_valores;
+end package body vga_timings_10_10_pkg;

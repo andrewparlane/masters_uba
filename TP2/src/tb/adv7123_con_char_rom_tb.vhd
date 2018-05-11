@@ -7,7 +7,7 @@ use std.textio.all;
 library common;
 use common.all;
 
-use work.adv7123_800_600_valores.all;
+use work.vga_timings_800_600_pkg.all;
 use work.char_rom_pkg.all;
 
 entity adv7123_con_char_rom_tb is
@@ -26,23 +26,21 @@ architecture sim of adv7123_con_char_rom_tb is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (eClk:      in  std_logic;
-              eRst:      in  std_logic;
-              eR:        in  std_logic_vector(9 downto 0);
-              eG:        in  std_logic_vector(9 downto 0);
-              eB:        in  std_logic_vector(9 downto 0);
-              -- salidas del componente
-              pixel_x:   out unsigned(utils.min_width(H_ACTIVE) - 1 downto 0);
-              pixel_y:   out unsigned(utils.min_width(V_ACTIVE) - 1 downto 0);
-              -- salidas del FPGA
-              sClk:      out std_logic;
-              sR:        out std_logic_vector(9 downto 0);
-              sG:        out std_logic_vector(9 downto 0);
-              sB:        out std_logic_vector(9 downto 0);
-              sBlank:    out std_logic;
-              sSync:     out std_logic;
-              sHSync:    out std_logic;
-              sVSync:    out std_logic);
+        port (clk:      in  std_logic;
+              rst:      in  std_logic;
+              rIn:      in  std_logic_vector(9 downto 0);
+              gIn:      in  std_logic_vector(9 downto 0);
+              bIn:      in  std_logic_vector(9 downto 0);
+              pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
+              pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
+              clkOut:   out std_logic;
+              rOut:     out std_logic_vector(9 downto 0);
+              gOut:     out std_logic_vector(9 downto 0);
+              bOut:     out std_logic_vector(9 downto 0);
+              nBlank:   out std_logic;
+              nSync:    out std_logic;
+              nHSync:   out std_logic;
+              nVSync:   out std_logic);
     end component adv7123;
 
     component char_rom is
@@ -61,8 +59,8 @@ architecture sim of adv7123_con_char_rom_tb is
     signal g: std_logic_vector(9 downto 0);
     signal b: std_logic_vector(9 downto 0);
 
-    signal pixel_x:     unsigned((PIXEL_X_WIDTH - 1) downto 0);
-    signal pixel_y:     unsigned((PIXEL_Y_WIDTH - 1) downto 0);
+    signal pixelX:     unsigned((PIXEL_X_WIDTH - 1) downto 0);
+    signal pixelY:     unsigned((PIXEL_Y_WIDTH - 1) downto 0);
 
     signal char: charRomCharacter;
     signal offX: unsigned(3 downto 0) := (others => '0');
@@ -97,11 +95,11 @@ begin
 
     clk <= not clk after (CLK_PERIOD/2);
 
-    bloqueX <= pixel_x((PIXEL_X_WIDTH - 1) downto 4);   -- /16
-    bloqueY <= pixel_y((PIXEL_Y_WIDTH - 1) downto 5);   -- /32
+    bloqueX <= pixelX((PIXEL_X_WIDTH - 1) downto 4);   -- /16
+    bloqueY <= pixelY((PIXEL_Y_WIDTH - 1) downto 5);   -- /32
 
-    offX <= pixel_x(3 downto 0);
-    offy <= pixel_y(4 downto 0);
+    offX <= pixelX(3 downto 0);
+    offy <= pixelY(4 downto 0);
 
     process (all)
     begin
@@ -145,23 +143,23 @@ begin
                                 V_FRONT_PORCH   => V_FRONT_PORCH,
                                 V_SYNC          => V_SYNC,
                                 V_BACK_PORCH    => V_BACK_PORCH)
-                    port map(eClk => clk,
-                             eRst => rst,
-                             eR => r,
-                             eG => g,
-                             eB => b,
+                    port map(clk => clk,
+                             rst => rst,
+                             rIn => r,
+                             gIn => g,
+                             bIn => b,
 
-                             pixel_x => pixel_x,
-                             pixel_y => pixel_y,
+                             pixelX => pixelX,
+                             pixelY => pixelY,
 
-                             sClk   => VGA_CLK,
-                             sR     => VGA_R,
-                             sG     => VGA_G,
-                             sB     => VGA_B,
-                             sBlank => VGA_BLANK,
-                             sSync  => VGA_SYNC,
-                             sHSync => VGA_HS,
-                             sVSync => VGA_VS);
+                             clkOut => VGA_CLK,
+                             rOut   => VGA_R,
+                             gOut   => VGA_G,
+                             bOut   => VGA_B,
+                             nBlank => VGA_BLANK,
+                             nSync  => VGA_SYNC,
+                             nHSync => VGA_HS,
+                             nVSync => VGA_VS);
 
     cRom: char_rom  port map(clk => clk,
                              rst => rst,
