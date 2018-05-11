@@ -60,7 +60,9 @@ architecture synth of adv7123 is
 
     end component vga;
 
-    signal inActive: std_ulogic;
+    signal inActive:    std_ulogic;
+    signal nHSyncAux:   std_ulogic;
+    signal nVSyncAux:   std_ulogic;
 begin
 
     vgaInst:    vga generic map (H_ACTIVE       => H_ACTIVE,
@@ -76,8 +78,8 @@ begin
                               pixelX => pixelX,
                               pixelY => pixelY,
                               inActive => inActive,
-                              nHSync => nHSync,
-                              nVSync => nVSync);
+                              nHSync => nHSyncAux,
+                              nVSync => nVSyncAux);
 
     -- inActive es activo alto
     -- blank <= not inActive
@@ -87,7 +89,10 @@ begin
     -- nSync es activo bajo
     -- cuando nHSync = 0 o nVSync = 0
     -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
-    nSync <= nHSync and nVSync;
+    nSync <= nHSyncAux and nVSyncAux;
+
+    nHSync <= nHSyncAux;
+    nVSync <= nVSyncAux;
 
     -- usamos el clkIn por ahora
     -- si queremos cambiar la tasa de cuadras
