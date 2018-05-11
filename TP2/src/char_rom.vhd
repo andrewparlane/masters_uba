@@ -5,20 +5,20 @@ use ieee.numeric_std.all;
 use work.char_rom_pkg.all;
 
 entity char_rom is
-    port (clk:  in  std_logic;
-          rst:  in  std_logic;
+    port (clk:  in  std_ulogic;
+          rst:  in  std_ulogic;
           char: in  charRomCharacter;
           offX: in  unsigned(3 downto 0);
           offY: in  unsigned(4 downto 0);
-          px:   out std_logic);
+          px:   out std_ulogic);
 end entity char_rom;
 
 architecture synth of char_rom is
 
     component altera_mf_rom is
-        port(address:   in  std_logic_vector (11 downto 0);
-             clock:     in  std_logic;
-             q:         out std_logic_vector (15 downto 0));
+        port(address:   in  std_ulogic_vector (11 downto 0);
+             clock:     in  std_ulogic;
+             q:         out std_ulogic_vector (15 downto 0));
     end component altera_mf_rom;
 
     constant NUM_CHARS:         natural := 95;
@@ -26,13 +26,13 @@ architecture synth of char_rom is
 
     -- max 2849 = 0xB21 -> 12 bits
     signal y:       unsigned(11 downto 0);
-    signal fila:    std_logic_vector(15 downto 0);
+    signal fila:    std_ulogic_vector(15 downto 0);
 
     signal uChar:   unsigned(6 downto 0);
 
 begin
 
-    rom_inst : altera_mf_rom port map (address => std_logic_vector(y),
+    rom_inst : altera_mf_rom port map (address => std_ulogic_vector(y),
                                        clock => clk,
                                        q => fila);
 

@@ -3,11 +3,11 @@ use ieee.std_logic_1164.all;
 
 entity flipFlopN_srst is
     generic (WIDTH: integer := 8);
-    port (clk:  in  std_logic;
-          d:    in  std_logic_vector((width - 1) downto 0);
-          en:   in  std_logic;
-          srst: in  std_logic;
-          q:    out std_logic_vector((width - 1) downto 0));
+    port (clk:  in  std_ulogic;
+          d:    in  std_ulogic_vector((width - 1) downto 0);
+          en:   in  std_ulogic;
+          srst: in  std_ulogic;
+          q:    out std_ulogic_vector((width - 1) downto 0));
 end entity flipFlopN_srst;
 
 architecture synth of flipFlopN_srst is

@@ -3,14 +3,14 @@ use ieee.std_logic_1164.all;
 
 entity contadorN is
     generic (WIDTH: natural);
-    port (clk:  in  std_logic;
-          rst:  in  std_logic;
-          q:    out std_logic_vector((WIDTH - 1) downto 0));
+    port (clk:  in  std_ulogic;
+          rst:  in  std_ulogic;
+          q:    out std_ulogic_vector((WIDTH - 1) downto 0));
 end entity contadorN;
 
 architecture synth of contadorN is
-    signal ff: std_logic_vector((WIDTH - 1) downto 0);
-    signal andBits0ToN: std_logic_vector((WIDTH - 2) downto 0);
+    signal ff: std_ulogic_vector((WIDTH - 1) downto 0);
+    signal andBits0ToN: std_ulogic_vector((WIDTH - 2) downto 0);
 begin
 
     -- andBits0ToN(i) = '1' si ff(i) and ff(i-1) and ... and ff(0)

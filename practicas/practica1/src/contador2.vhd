@@ -2,13 +2,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity contador2 is
-    port (clk:  in  std_logic;
-          rst:  in  std_logic;
-          q:    out std_logic_vector(1 downto 0));
+    port (clk:  in  std_ulogic;
+          rst:  in  std_ulogic;
+          q:    out std_ulogic_vector(1 downto 0));
 end entity contador2;
 
 architecture synth of contador2 is
-    signal ff: std_logic_vector(1 downto 0);
+    signal ff: std_ulogic_vector(1 downto 0);
 begin
     process (clk, rst)
     begin

@@ -8,16 +8,16 @@ use common.type_pkg.all;
 
 entity tp1 is
     generic (CLOCK_DIVIDER: natural := 1);
-    port (CLOCK_50: in  std_logic;
-          KEY:      in  std_logic_vector(1 downto 0);
-          HEX0:     out std_logic_vector(6 downto 0);
-          HEX1:     out std_logic_vector(6 downto 0);
-          HEX2:     out std_logic_vector(6 downto 0);
-          HEX3:     out std_logic_vector(6 downto 0);
-          HEX4:     out std_logic_vector(6 downto 0);
-          HEX5:     out std_logic_vector(6 downto 0);
-          HEX6:     out std_logic_vector(6 downto 0);
-          HEX7:     out std_logic_vector(6 downto 0));
+    port (CLOCK_50: in  std_ulogic;
+          KEY:      in  std_ulogic_vector(1 downto 0);
+          HEX0:     out std_ulogic_vector(6 downto 0);
+          HEX1:     out std_ulogic_vector(6 downto 0);
+          HEX2:     out std_ulogic_vector(6 downto 0);
+          HEX3:     out std_ulogic_vector(6 downto 0);
+          HEX4:     out std_ulogic_vector(6 downto 0);
+          HEX5:     out std_ulogic_vector(6 downto 0);
+          HEX6:     out std_ulogic_vector(6 downto 0);
+          HEX7:     out std_ulogic_vector(6 downto 0));
 end entity tp1;
 
 architecture synth of tp1 is
@@ -25,27 +25,27 @@ architecture synth of tp1 is
     component contador is
         generic (WIDTH: natural;
                  MAX: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
-              load:     in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
+              load:     in  std_ulogic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
-              atZero:   out std_logic;
-              atMax:    out std_logic);
+              atZero:   out std_ulogic;
+              atMax:    out std_ulogic);
     end component contador;
 
     component contador_bcd is
         generic (CIFRAS: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
               dout:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
     end component contador_bcd;
 
     component sevenSegmentDisplay is
         port (bcd:                  in  unsigned(3 downto 0);
-              sevenSegmentOutput:   out std_logic_vector(6 downto 0));
+              sevenSegmentOutput:   out std_ulogic_vector(6 downto 0));
     end component sevenSegmentDisplay;
 
     -- Tenemos CLOCK_DIVIDER así que el banco de prueba
@@ -55,12 +55,12 @@ architecture synth of tp1 is
     constant    ONE_HZ_EN_MAX:  natural := (50000000 / CLOCK_DIVIDER) - 1;
     constant    ONE_KHZ_EN_MAX: natural := (50000 / CLOCK_DIVIDER) - 1;
 
-    signal d0en1Hz, d0en1KHz:   std_logic;
-    signal bcdEn:               std_logic;
+    signal d0en1Hz, d0en1KHz:   std_ulogic;
+    signal bcdEn:               std_ulogic;
     signal bcdOut:              unsignedArray(3 downto 0)(3 downto 0);
 
-    signal rst:                 std_logic;
-    signal fast:                std_logic;
+    signal rst:                 std_ulogic;
+    signal fast:                std_ulogic;
 begin
 
     -- HEX4,5,6,7 siempre están apagado

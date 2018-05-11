@@ -9,14 +9,14 @@ end entity fullAdder_tb;
 
 architecture synth of fullAdder_tb is
     component fullAdder
-        port (a, b: in  std_logic;
-              cIn:  in  std_logic;
-              o:    out std_logic;
-              cOut: out std_logic);
+        port (a, b: in  std_ulogic;
+              cIn:  in  std_ulogic;
+              o:    out std_ulogic;
+              cOut: out std_ulogic);
     end component fullAdder;
 
-    signal inputs: std_logic_vector (2 downto 0);
-    signal output: std_logic_vector(1 downto 0);
+    signal inputs: std_ulogic_vector (2 downto 0);
+    signal output: std_ulogic_vector(1 downto 0);
 begin
 
     dut:    fullAdder port map (a => inputs(2),
@@ -26,20 +26,20 @@ begin
                                 cOut => output(1));
 
     process is
-        variable expectedOutput: std_logic_vector(1 downto 0);
+        variable expectedOutput: std_ulogic_vector(1 downto 0);
         variable errores: integer := 0;
     begin
         -- por todo los inputs posibles
         startloop: for i in 0 to ((2**inputs'length) - 1) loop
-            inputs <= std_logic_vector(to_unsigned(i,inputs'length));
+            inputs <= std_ulogic_vector(to_unsigned(i,inputs'length));
             wait for 100 ns;
-            expectedOutput := std_logic_vector(unsigned('0' & inputs(2 downto 2)) +
+            expectedOutput := std_ulogic_vector(unsigned('0' & inputs(2 downto 2)) +
                                                unsigned('0' & inputs(1 downto 1)) +
                                                unsigned('0' & inputs(0 downto 0)));
 
-            report  std_logic'image(inputs(2)) & " + " &
-                    std_logic'image(inputs(1)) & " + " &
-                    std_logic'image(inputs(0)) & " = " &
+            report  std_ulogic'image(inputs(2)) & " + " &
+                    std_ulogic'image(inputs(1)) & " + " &
+                    std_ulogic'image(inputs(0)) & " = " &
                     integer'image(to_integer(unsigned(output)));
 
             assert (expectedOutput = output)

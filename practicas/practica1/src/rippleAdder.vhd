@@ -5,25 +5,25 @@ use ieee.std_logic_1164.all;
 
 entity rippleAdder is
     generic(WIDTH: integer := 8);
-    port(a, b:  in  std_logic_vector((width - 1) downto 0);
-         cIn:   in  std_logic;
-         o:     out std_logic_vector((width - 1) downto 0);
-         cOut:  out std_logic);
+    port(a, b:  in  std_ulogic_vector((width - 1) downto 0);
+         cIn:   in  std_ulogic;
+         o:     out std_ulogic_vector((width - 1) downto 0);
+         cOut:  out std_ulogic);
 end entity rippleAdder;
 
 architecture synth of rippleAdder is
     component fullAdder
-        port(a, b:  in  std_logic;
-             cIn:   in  std_logic;
-             o:     out std_logic;
-             cOut:  out std_logic);
+        port(a, b:  in  std_ulogic;
+             cIn:   in  std_ulogic;
+             o:     out std_ulogic;
+             cOut:  out std_ulogic);
     end component fullAdder;
 
     -- usamos WIDTH señales de carry
     -- y asignamos cIn a carry(0)
     -- y asignamos carry(WIDTH) a cOut
     -- los otros conectan al siguiente cIn
-    signal carry: std_logic_vector(WIDTH downto 0);
+    signal carry: std_ulogic_vector(WIDTH downto 0);
 begin
     carry(0) <= Cin;
 

@@ -9,18 +9,18 @@ end entity flipFlopN_srst_tb;
 architecture synth of flipFlopN_srst_tb is
     component flipFlopN_srst
         generic (WIDTH: integer);
-        port (clk:  in  std_logic;
-              d:    in  std_logic_vector((WIDTH - 1) downto 0);
-              en:   in  std_logic;
-              srst: in  std_logic;
-              q:    out std_logic_vector((WIDTH - 1) downto 0));
+        port (clk:  in  std_ulogic;
+              d:    in  std_ulogic_vector((WIDTH - 1) downto 0);
+              en:   in  std_ulogic;
+              srst: in  std_ulogic;
+              q:    out std_ulogic_vector((WIDTH - 1) downto 0));
     end component flipFlopN_srst;
 
     constant WIDTH: integer := 4;
 
-    signal clk: std_logic := '0';
-    signal en, srst: std_logic;
-    signal d, q, expectedQ: std_logic_vector((WIDTH - 1) downto 0);
+    signal clk: std_ulogic := '0';
+    signal en, srst: std_ulogic;
+    signal d, q, expectedQ: std_ulogic_vector((WIDTH - 1) downto 0);
 begin
 
     -- clk period = 100ns

@@ -7,14 +7,14 @@ use ieee.math_real.all;
 
 entity contaCerosN is
     generic (WIDTH: integer := 8);
-    port (a: in  std_logic_vector((WIDTH - 1) downto 0);
+    port (a: in  std_ulogic_vector((WIDTH - 1) downto 0);
           o: out unsigned(integer(ceil(log2(real(WIDTH)))) downto 0));
 end entity contaCerosN;
 
 architecture synth of contaCerosN is
-    signal todoCeroHasta: std_logic_vector((WIDTH - 1) downto 0);
+    signal todoCeroHasta: std_ulogic_vector((WIDTH - 1) downto 0);
 
-    function conta(input: std_logic_vector) return integer is
+    function conta(input: std_ulogic_vector) return integer is
         variable bits: integer := 0;
     begin
         for i in input'range loop

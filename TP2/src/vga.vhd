@@ -20,13 +20,13 @@ entity vga is
              V_SYNC:        natural;    -- líneas
              V_BACK_PORCH:  natural);   -- líneas
 
-    port (clk:      in  std_logic;
-          rst:      in  std_logic;
+    port (clk:      in  std_ulogic;
+          rst:      in  std_ulogic;
           pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
           pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
-          inActive: out std_logic;
-          nHSync:   out std_logic;
-          nVSync:   out std_logic);
+          inActive: out std_ulogic;
+          nHSync:   out std_ulogic;
+          nVSync:   out std_ulogic);
 
 end entity vga;
 
@@ -36,14 +36,14 @@ architecture synth of vga is
     component contador is
         generic (WIDTH: natural;
                  MAX: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
-              load:     in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
+              load:     in  std_ulogic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
-              atZero:   out std_logic;
-              atMax:    out std_logic);
+              atZero:   out std_ulogic;
+              atMax:    out std_ulogic);
     end component contador;
 
     -------------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ architecture synth of vga is
     signal x: unsigned((COUNTER_X_WIDTH - 1) downto 0);
     signal y: unsigned((COUNTER_Y_WIDTH - 1) downto 0);
 
-    signal xAtMax: std_logic;
+    signal xAtMax: std_ulogic;
 begin
 
     -------------------------------------------------------------------------------------

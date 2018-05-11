@@ -9,18 +9,18 @@ architecture sim of tp1_tb is
 
     component tp1 is
         generic (CLOCK_DIVIDER:  natural);
-        port (CLOCK_50: in  std_logic;
-              KEY:      in  std_logic_vector(1 downto 0);
-              HEX0:     out std_logic_vector(6 downto 0);
-              HEX1:     out std_logic_vector(6 downto 0);
-              HEX2:     out std_logic_vector(6 downto 0);
-              HEX3:     out std_logic_vector(6 downto 0));
+        port (CLOCK_50: in  std_ulogic;
+              KEY:      in  std_ulogic_vector(1 downto 0);
+              HEX0:     out std_ulogic_vector(6 downto 0);
+              HEX1:     out std_ulogic_vector(6 downto 0);
+              HEX2:     out std_ulogic_vector(6 downto 0);
+              HEX3:     out std_ulogic_vector(6 downto 0));
     end component tp1;
 
-    signal clk:         std_logic   := '0';
-    signal nRst:        std_logic   := '0';
-    signal nFast:       std_logic   := '1';
-    signal key:         std_logic_vector(1 downto 0) := "00";
+    signal clk:         std_ulogic   := '0';
+    signal nRst:        std_ulogic   := '0';
+    signal nFast:       std_ulogic   := '1';
+    signal key:         std_ulogic_vector(1 downto 0) := "00";
 
     -- usamos esto por los outputs de los contadores
     type countsArray is array (3 downto 0) of unsigned(3 downto 0);

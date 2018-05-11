@@ -6,9 +6,9 @@ use work.all;
 
 entity contador_bcd is
     generic (CIFRAS: natural);
-    port (clk:      in  std_logic;
-          en:       in  std_logic;
-          rst:      in  std_logic;
+    port (clk:      in  std_ulogic;
+          en:       in  std_ulogic;
+          rst:      in  std_ulogic;
           dout:     out type_pkg.unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
 end entity contador_bcd;
 
@@ -17,17 +17,17 @@ architecture synth of contador_bcd is
     component contador is
         generic (WIDTH: natural;
                  MAX: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
-              load:     in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
+              load:     in  std_ulogic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
-              atZero:   out std_logic;
-              atMax:    out std_logic);
+              atZero:   out std_ulogic;
+              atMax:    out std_ulogic);
     end component contador;
 
-    type stdLogicArray is array ((CIFRAS - 1) downto 0) of std_logic;
+    type stdLogicArray is array ((CIFRAS - 1) downto 0) of std_ulogic;
     signal dEn: stdLogicArray;
     signal atMax: stdLogicArray;
 

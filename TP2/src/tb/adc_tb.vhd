@@ -11,19 +11,19 @@ end entity adc_tb;
 
 architecture sim of adc_tb is
     component adc is
-        port (clk:          in  std_logic;
-              rst:          in  std_logic;
-              dInDiff:      in  std_logic;
-              dout:         out std_logic;
+        port (clk:          in  std_ulogic;
+              rst:          in  std_ulogic;
+              dInDiff:      in  std_ulogic;
+              dout:         out std_ulogic;
               resultado:    out unsignedArray(2 downto 0)(3 downto 0));
     end component adc;
 
 
-    signal clk:         std_logic := '0';
-    signal rst:         std_logic := '1';
+    signal clk:         std_ulogic := '0';
+    signal rst:         std_ulogic := '1';
 
-    signal dInDiff:     std_logic := '1';
-    signal dOut:        std_logic;
+    signal dInDiff:     std_ulogic := '1';
+    signal dOut:        std_ulogic;
     signal resultado:   unsignedArray(2 downto 0)(3 downto 0);
 
     -- 50 MHz

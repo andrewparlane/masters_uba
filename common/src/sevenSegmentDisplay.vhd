@@ -4,11 +4,11 @@ use ieee.numeric_std.all;
 
 entity sevenSegmentDisplay is
     port (bcd:                  in  unsigned(3 downto 0);
-          sevenSegmentOutput:   out std_logic_vector(6 downto 0));
+          sevenSegmentOutput:   out std_ulogic_vector(6 downto 0));
 end entity sevenSegmentDisplay;
 
 architecture synth of sevenSegmentDisplay is
-    signal auxOut: std_logic_vector(6 downto 0);
+    signal auxOut: std_ulogic_vector(6 downto 0);
 begin
 
     -- los señales están activa baja.

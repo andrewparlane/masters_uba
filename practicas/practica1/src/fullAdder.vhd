@@ -4,10 +4,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity fullAdder is
-    port (a, b: in  std_logic;
-          cIn:  in  std_logic;
-          o:    out std_logic;
-          cOut: out std_logic);
+    port (a, b: in  std_ulogic;
+          cIn:  in  std_ulogic;
+          o:    out std_ulogic;
+          cOut: out std_ulogic);
 end entity fullAdder;
 
 architecture synth of fullAdder is

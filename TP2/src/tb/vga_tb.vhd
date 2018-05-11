@@ -22,28 +22,28 @@ architecture sim of vga_tb is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (clk:      in  std_logic;
-              rst:      in  std_logic;
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
               pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
               pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
-              inActive: out std_logic;
-              nHSync:   out std_logic;
-              nVSync:   out std_logic);
+              inActive: out std_ulogic;
+              nHSync:   out std_ulogic;
+              nVSync:   out std_ulogic);
 
     end component vga;
 
     component vga_sva_wrapper is
     end component vga_sva_wrapper;
 
-    signal clk:         std_logic := '0';
-    signal rst:         std_logic := '1';
+    signal clk:         std_ulogic := '0';
+    signal rst:         std_ulogic := '1';
 
     signal pixelX:      unsigned((PIXEL_X_WIDTH - 1) downto 0);
     signal pixelY:      unsigned((PIXEL_Y_WIDTH - 1) downto 0);
 
-    signal inActive:    std_logic;
-    signal nHSync:      std_logic;
-    signal nVSync:      std_logic;
+    signal inActive:    std_ulogic;
+    signal nHSync:      std_ulogic;
+    signal nVSync:      std_ulogic;
 
     -- 50 MHz
     constant CLK_HZ:        natural := 50 * 1000 * 1000;

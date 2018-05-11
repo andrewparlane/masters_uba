@@ -10,28 +10,28 @@ architecture sim of contador_tb is
     component contador is
         generic (WIDTH: natural;
                  MAX: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
-              load:     in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
+              load:     in  std_ulogic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
-              atZero:   out std_logic;
-              atMax:    out std_logic);
+              atZero:   out std_ulogic;
+              atMax:    out std_ulogic);
     end component contador;
 
     constant WIDTH: natural := 4;
     constant MAX: natural := 9;
 
     -- dut señales
-    signal clk:         std_logic := '0';
-    signal rst:         std_logic := '1';
-    signal en:          std_logic := '0';
-    signal load:        std_logic := '0';
+    signal clk:         std_ulogic := '0';
+    signal rst:         std_ulogic := '1';
+    signal en:          std_ulogic := '0';
+    signal load:        std_ulogic := '0';
     signal loadData:    unsigned((WIDTH - 1) downto 0) := (others => '0');
     signal count:       unsigned((WIDTH - 1) downto 0);
-    signal atZero:      std_logic;
-    signal atMax:       std_logic;
+    signal atZero:      std_ulogic;
+    signal atMax:       std_ulogic;
 
 begin
 

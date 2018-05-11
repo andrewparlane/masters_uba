@@ -5,14 +5,14 @@ use ieee.numeric_std.all;
 entity contador is
     generic (WIDTH: natural;
              MAX: natural);
-    port (clk:      in  std_logic;
-          en:       in  std_logic;
-          rst:      in  std_logic;
-          load:     in  std_logic;
+    port (clk:      in  std_ulogic;
+          en:       in  std_ulogic;
+          rst:      in  std_ulogic;
+          load:     in  std_ulogic;
           loadData: in  unsigned((WIDTH - 1) downto 0);
           count:    out unsigned((WIDTH - 1) downto 0);
-          atZero:   out std_logic;
-          atMax:    out std_logic);
+          atZero:   out std_ulogic;
+          atMax:    out std_ulogic);
 end entity contador;
 
 architecture synth of contador is

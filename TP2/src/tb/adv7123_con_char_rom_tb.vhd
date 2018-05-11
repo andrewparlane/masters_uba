@@ -26,38 +26,38 @@ architecture sim of adv7123_con_char_rom_tb is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (clk:      in  std_logic;
-              rst:      in  std_logic;
-              rIn:      in  std_logic_vector(9 downto 0);
-              gIn:      in  std_logic_vector(9 downto 0);
-              bIn:      in  std_logic_vector(9 downto 0);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              rIn:      in  std_ulogic_vector(9 downto 0);
+              gIn:      in  std_ulogic_vector(9 downto 0);
+              bIn:      in  std_ulogic_vector(9 downto 0);
               pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
               pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
-              clkOut:   out std_logic;
-              rOut:     out std_logic_vector(9 downto 0);
-              gOut:     out std_logic_vector(9 downto 0);
-              bOut:     out std_logic_vector(9 downto 0);
-              nBlank:   out std_logic;
-              nSync:    out std_logic;
-              nHSync:   out std_logic;
-              nVSync:   out std_logic);
+              clkOut:   out std_ulogic;
+              rOut:     out std_ulogic_vector(9 downto 0);
+              gOut:     out std_ulogic_vector(9 downto 0);
+              bOut:     out std_ulogic_vector(9 downto 0);
+              nBlank:   out std_ulogic;
+              nSync:    out std_ulogic;
+              nHSync:   out std_ulogic;
+              nVSync:   out std_ulogic);
     end component adv7123;
 
     component char_rom is
-        port (clk:  in  std_logic;
-              rst:  in  std_logic;
+        port (clk:  in  std_ulogic;
+              rst:  in  std_ulogic;
               char: in  charRomCharacter;
               offX: in  unsigned(3 downto 0);
               offY: in  unsigned(4 downto 0);
-              px:   out std_logic);
+              px:   out std_ulogic);
     end component char_rom;
 
     component adv7123_sva_wrapper is
     end component adv7123_sva_wrapper;
 
-    signal r: std_logic_vector(9 downto 0);
-    signal g: std_logic_vector(9 downto 0);
-    signal b: std_logic_vector(9 downto 0);
+    signal r: std_ulogic_vector(9 downto 0);
+    signal g: std_ulogic_vector(9 downto 0);
+    signal b: std_ulogic_vector(9 downto 0);
 
     signal pixelX:     unsigned((PIXEL_X_WIDTH - 1) downto 0);
     signal pixelY:     unsigned((PIXEL_Y_WIDTH - 1) downto 0);
@@ -65,7 +65,7 @@ architecture sim of adv7123_con_char_rom_tb is
     signal char: charRomCharacter;
     signal offX: unsigned(3 downto 0) := (others => '0');
     signal offY: unsigned(4 downto 0) := (others => '0');
-    signal px:   std_logic;
+    signal px:   std_ulogic;
 
     -- los carácteres son 16*32
     -- 800 / 16 = 50 (6 bits)
@@ -73,17 +73,17 @@ architecture sim of adv7123_con_char_rom_tb is
     -- 600 / 32 = 18.75 = 19 (5 bits)
     signal bloqueY: unsigned(4 downto 0);
 
-    signal clk: std_logic := '0';
-    signal rst: std_logic := '0';
+    signal clk: std_ulogic := '0';
+    signal rst: std_ulogic := '0';
 
-    signal VGA_R:      std_logic_vector(9 downto 0);
-    signal VGA_G:      std_logic_vector(9 downto 0);
-    signal VGA_B:      std_logic_vector(9 downto 0);
-    signal VGA_CLK:    std_logic;
-    signal VGA_BLANK:  std_logic;
-    signal VGA_HS:     std_logic;
-    signal VGA_VS:     std_logic;
-    signal VGA_SYNC:   std_logic;
+    signal VGA_R:      std_ulogic_vector(9 downto 0);
+    signal VGA_G:      std_ulogic_vector(9 downto 0);
+    signal VGA_B:      std_ulogic_vector(9 downto 0);
+    signal VGA_CLK:    std_ulogic;
+    signal VGA_BLANK:  std_ulogic;
+    signal VGA_HS:     std_ulogic;
+    signal VGA_VS:     std_ulogic;
+    signal VGA_SYNC:   std_ulogic;
 
     -- 50 MHz
     constant CLK_HZ:        natural := 50 * 1000 * 1000;

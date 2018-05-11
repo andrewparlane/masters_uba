@@ -7,10 +7,10 @@ use common.all;
 use common.type_pkg.all;
 
 entity adc is
-    port (clk:          in  std_logic;
-          rst:          in  std_logic;
-          dInDiff:      in  std_logic;
-          dOut:         out std_logic;
+    port (clk:          in  std_ulogic;
+          rst:          in  std_ulogic;
+          dInDiff:      in  std_ulogic;
+          dOut:         out std_ulogic;
           resultado:    out unsignedArray(2 downto 0)(3 downto 0));
 end entity adc;
 
@@ -20,29 +20,29 @@ architecture synth of adc is
     component contador is
         generic (WIDTH: natural;
                  MAX: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
-              load:     in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
+              load:     in  std_ulogic;
               loadData: in  unsigned((WIDTH - 1) downto 0);
               count:    out unsigned((WIDTH - 1) downto 0);
-              atZero:   out std_logic;
-              atMax:    out std_logic);
+              atZero:   out std_ulogic;
+              atMax:    out std_ulogic);
     end component contador;
 
     -- de lib common
     component contador_bcd is
         generic (CIFRAS: natural);
-        port (clk:      in  std_logic;
-              en:       in  std_logic;
-              rst:      in  std_logic;
+        port (clk:      in  std_ulogic;
+              en:       in  std_ulogic;
+              rst:      in  std_ulogic;
               dOut:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
     end component contador_bcd;
 
-    signal dOutAux:                 std_logic;
-    signal bcdRst:                  std_logic;
-    signal contadorBinarioZero:     std_logic;
-    signal contadorBinarioMax:      std_logic;
+    signal dOutAux:                 std_ulogic;
+    signal bcdRst:                  std_ulogic;
+    signal contadorBinarioZero:     std_ulogic;
+    signal contadorBinarioMax:      std_ulogic;
 
     signal bcdOut:      unsignedArray(4 downto 0)(3 downto 0);
 begin

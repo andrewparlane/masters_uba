@@ -7,14 +7,14 @@ end entity contador4_tb;
 
 architecture synth of contador4_tb is
     component contador4
-        port (clk:  in  std_logic;
-              rst:  in  std_logic;
-              q:    out std_logic_vector(3 downto 0));
+        port (clk:  in  std_ulogic;
+              rst:  in  std_ulogic;
+              q:    out std_ulogic_vector(3 downto 0));
     end component contador4;
 
-    signal clk: std_logic := '0';
-    signal rst: std_logic;
-    signal q:   std_logic_vector(3 downto 0);
+    signal clk: std_ulogic := '0';
+    signal rst: std_ulogic;
+    signal q:   std_ulogic_vector(3 downto 0);
 
     signal errores: integer := 0;
 begin
@@ -51,12 +51,12 @@ begin
                 end if;
 
                 last := unsigned(q);
-                assert  (q = std_logic_vector(expected))
+                assert  (q = std_ulogic_vector(expected))
                         report "q = " & integer'image(to_integer(unsigned(q))) &
                            " esperado " & integer'image(to_integer(expected))
                         severity error;
 
-                if (q /= std_logic_vector(expected)) then
+                if (q /= std_ulogic_vector(expected)) then
                     errores <= errores + 1;
                 end if;
 

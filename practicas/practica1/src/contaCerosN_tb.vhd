@@ -9,14 +9,14 @@ end entity contaCerosN_tb;
 architecture synth of contaCerosN_tb is
     component contaCerosN
         generic (WIDTH: integer := 8);
-        port (a: in  std_logic_vector((WIDTH - 1) downto 0);
+        port (a: in  std_ulogic_vector((WIDTH - 1) downto 0);
               o: out unsigned(integer(ceil(log2(real(WIDTH)))) downto 0));
     end component contaCerosN;
 
     constant WIDTH: integer     := 8;
     constant OUT_WIDTH: integer := integer(ceil(log2(real(WIDTH)))) + 1;
 
-    signal input: std_logic_vector ((WIDTH - 1) downto 0);
+    signal input: std_ulogic_vector ((WIDTH - 1) downto 0);
     signal output: unsigned((OUT_WIDTH - 1) downto 0);
 
 begin
@@ -31,7 +31,7 @@ begin
     begin
         -- por todo los inputs posibles
         startloop: for i in 0 to ((2 ** input'length) - 1) loop
-            input <= std_logic_vector(to_unsigned(i, input'length));
+            input <= std_ulogic_vector(to_unsigned(i, input'length));
             wait for 100 ns;
 
             -- ceil(log2(i+1)) es igual al numero de bits que

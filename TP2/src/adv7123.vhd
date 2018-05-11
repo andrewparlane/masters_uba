@@ -20,21 +20,21 @@ entity adv7123 is
              V_SYNC:        natural;    -- líneas
              V_BACK_PORCH:  natural);   -- líneas
 
-    port (clk:      in  std_logic;
-          rst:      in  std_logic;
-          rIn:      in  std_logic_vector(9 downto 0);
-          gIn:      in  std_logic_vector(9 downto 0);
-          bIn:      in  std_logic_vector(9 downto 0);
+    port (clk:      in  std_ulogic;
+          rst:      in  std_ulogic;
+          rIn:      in  std_ulogic_vector(9 downto 0);
+          gIn:      in  std_ulogic_vector(9 downto 0);
+          bIn:      in  std_ulogic_vector(9 downto 0);
           pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
           pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
-          clkOut:   out std_logic;
-          rOut:     out std_logic_vector(9 downto 0);
-          gOut:     out std_logic_vector(9 downto 0);
-          bOut:     out std_logic_vector(9 downto 0);
-          nBlank:   out std_logic;
-          nSync:    out std_logic;
-          nHSync:   out std_logic;
-          nVSync:   out std_logic);
+          clkOut:   out std_ulogic;
+          rOut:     out std_ulogic_vector(9 downto 0);
+          gOut:     out std_ulogic_vector(9 downto 0);
+          bOut:     out std_ulogic_vector(9 downto 0);
+          nBlank:   out std_ulogic;
+          nSync:    out std_ulogic;
+          nHSync:   out std_ulogic;
+          nVSync:   out std_ulogic);
 
 end entity adv7123;
 
@@ -50,17 +50,17 @@ architecture synth of adv7123 is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (clk:      in  std_logic;
-              rst:      in  std_logic;
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
               pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
               pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
-              inActive: out std_logic;
-              nHSync:   out std_logic;
-              nVSync:   out std_logic);
+              inActive: out std_ulogic;
+              nHSync:   out std_ulogic;
+              nVSync:   out std_ulogic);
 
     end component vga;
 
-    signal inActive: std_logic;
+    signal inActive: std_ulogic;
 begin
 
     vgaInst:    vga generic map (H_ACTIVE       => H_ACTIVE,

@@ -2,11 +2,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity flipFlop1_srst is
-    port (clk:  in  std_logic;
-          d:    in  std_logic;
-          en:   in  std_logic;
-          srst: in  std_logic;
-          q:    out std_logic);
+    port (clk:  in  std_ulogic;
+          d:    in  std_ulogic;
+          en:   in  std_ulogic;
+          srst: in  std_ulogic;
+          q:    out std_ulogic);
 end entity flipFlop1_srst;
 
 architecture synth of flipFlop1_srst is

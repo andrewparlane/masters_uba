@@ -42,16 +42,16 @@ USE altera_mf.all;
 ENTITY altera_mf_rom IS
 	PORT
 	(
-		address		: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
-		clock		: IN STD_LOGIC  := '1';
-		q		: OUT STD_LOGIC_VECTOR (15 DOWNTO 0)
+		address		: IN std_ulogic_vector (11 DOWNTO 0);
+		clock		: IN std_ulogic  := '1';
+		q		: OUT std_ulogic_vector (15 DOWNTO 0)
 	);
 END altera_mf_rom;
 
 
 ARCHITECTURE SYN OF altera_mf_rom IS
 
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (15 DOWNTO 0);
+	SIGNAL sub_wire0	: std_ulogic_vector (15 DOWNTO 0);
 
 
 
@@ -72,9 +72,9 @@ ARCHITECTURE SYN OF altera_mf_rom IS
 		width_byteena_a		: NATURAL
 	);
 	PORT (
-			address_a	: IN STD_LOGIC_VECTOR (11 DOWNTO 0);
-			clock0	: IN STD_LOGIC ;
-			q_a	: OUT STD_LOGIC_VECTOR (15 DOWNTO 0)
+			address_a	: IN std_ulogic_vector (11 DOWNTO 0);
+			clock0	: IN std_ulogic ;
+			q_a	: OUT std_ulogic_vector (15 DOWNTO 0)
 	);
 	END COMPONENT;
 

@@ -7,16 +7,16 @@ end entity flipFlop1_srst_tb;
 
 architecture synth of flipFlop1_srst_tb is
     component flipFlop1_srst
-        port (clk:  in  std_logic;
-              d:    in  std_logic;
-              en:   in  std_logic;
-              srst: in  std_logic;
-              q:    out std_logic);
+        port (clk:  in  std_ulogic;
+              d:    in  std_ulogic;
+              en:   in  std_ulogic;
+              srst: in  std_ulogic;
+              q:    out std_ulogic);
     end component flipFlop1_srst;
 
-    signal clk: std_logic := '0';
-    signal d, en, srst, q: std_logic;
-    signal expectedQ: std_logic;
+    signal clk: std_ulogic := '0';
+    signal d, en, srst, q: std_ulogic;
+    signal expectedQ: std_ulogic;
 begin
 
     -- clk period = 100ns
@@ -34,8 +34,8 @@ begin
         wait for 51 ns;
         loop
             assert  (q = expectedQ)
-                    report "q = " & std_logic'image(q) &
-                       " esperado " & std_logic'image(expectedQ)
+                    report "q = " & std_ulogic'image(q) &
+                       " esperado " & std_ulogic'image(expectedQ)
                     severity error;
 
             wait for 100 ns;

@@ -4,21 +4,21 @@ use ieee.std_logic_1164.all;
 
 entity twosComplement is
     generic (WIDTH: integer := 8);
-    port (a: in  std_logic_vector((WIDTH - 1) downto 0);
-          o: out std_logic_vector((WIDTH - 1) downto 0));
+    port (a: in  std_ulogic_vector((WIDTH - 1) downto 0);
+          o: out std_ulogic_vector((WIDTH - 1) downto 0));
 end entity twosComplement;
 
 architecture synth of twosComplement is
     component rippleAdder
         generic(WIDTH: integer := 8);
-        port(a, b:  in  std_logic_vector((WIDTH - 1) downto 0);
-             cIn:   in  std_logic;
-             o:     out std_logic_vector((WIDTH - 1) downto 0);
-             cOut:  out std_logic);
+        port(a, b:  in  std_ulogic_vector((WIDTH - 1) downto 0);
+             cIn:   in  std_ulogic;
+             o:     out std_ulogic_vector((WIDTH - 1) downto 0);
+             cOut:  out std_ulogic);
     end component rippleAdder;
 
-    signal notA: std_logic_vector((WIDTH - 1) downto 0);
-    signal zero: std_logic_vector((WIDTH - 1) downto 0);
+    signal notA: std_ulogic_vector((WIDTH - 1) downto 0);
+    signal zero: std_ulogic_vector((WIDTH - 1) downto 0);
 begin
 
     notA <= not A;

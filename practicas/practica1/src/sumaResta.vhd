@@ -17,37 +17,37 @@ use work.suma_resta_package.all;
 
 entity sumaResta is
     generic(WIDTH: integer := 8);
-    port(a, b:  in  std_logic_vector((WIDTH - 1) downto 0);
+    port(a, b:  in  std_ulogic_vector((WIDTH - 1) downto 0);
          op:    in  sumaRestaOP;
-         o:     out std_logic_vector((WIDTH - 1) downto 0);
-         cOut:  out std_logic);
+         o:     out std_ulogic_vector((WIDTH - 1) downto 0);
+         cOut:  out std_ulogic);
 end entity sumaResta;
 
 architecture synth of sumaResta is
     component rippleAdder
         generic (WIDTH: integer);
-        port(a, b:  in  std_logic_vector((WIDTH - 1) downto 0);
-             cIn:   in  std_logic;
-             o:     out std_logic_vector((WIDTH - 1) downto 0);
-             cOut:  out std_logic);
+        port(a, b:  in  std_ulogic_vector((WIDTH - 1) downto 0);
+             cIn:   in  std_ulogic;
+             o:     out std_ulogic_vector((WIDTH - 1) downto 0);
+             cOut:  out std_ulogic);
     end component;
 
     component twosComplement
         generic (WIDTH: integer := 8);
-        port (a: in  std_logic_vector((WIDTH - 1) downto 0);
-              o: out std_logic_vector((WIDTH - 1) downto 0));
+        port (a: in  std_ulogic_vector((WIDTH - 1) downto 0);
+              o: out std_ulogic_vector((WIDTH - 1) downto 0));
     end component twosComplement;
 
     -- usamos WIDTH+1 bits con el bit más significante por el signo
-    signal auxA:                std_logic_vector(WIDTH downto 0);
-    signal auxB:                std_logic_vector(WIDTH downto 0);
-    signal twosComplementAuxB:  std_logic_vector(WIDTH downto 0);
-    signal segundoArgumento:    std_logic_vector(WIDTH downto 0);
-    signal auxO:                std_logic_vector(WIDTH downto 0);
+    signal auxA:                std_ulogic_vector(WIDTH downto 0);
+    signal auxB:                std_ulogic_vector(WIDTH downto 0);
+    signal twosComplementAuxB:  std_ulogic_vector(WIDTH downto 0);
+    signal segundoArgumento:    std_ulogic_vector(WIDTH downto 0);
+    signal auxO:                std_ulogic_vector(WIDTH downto 0);
 begin
 
-    auxA <= std_logic_vector(resize(unsigned(a), auxA'length));
-    auxB <= std_logic_vector(resize(unsigned(b), auxB'length));
+    auxA <= std_ulogic_vector(resize(unsigned(a), auxA'length));
+    auxB <= std_ulogic_vector(resize(unsigned(b), auxB'length));
 
     -- el segundo argumento está auxB o twosComplementAuxB
     segundoArgumento <= auxB when (OP = SUMA) else twosComplementAuxB;
