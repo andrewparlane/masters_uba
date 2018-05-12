@@ -52,6 +52,8 @@ common:
 # default rule is to create the library, and compile all the components
 all: common altera_mf srcs tb_srcs
 
+.PHONY: common all
+
 $(SIM_DIR)/altera_mf_work:
 	vlib $(SIM_DIR)/altera_mf_work
 	vmap $(MODELSIM_FLAG) altera_mf $(SIM_DIR)/altera_mf_work
@@ -63,11 +65,15 @@ $(SIM_DIR)/altera_mf_work/flag: $(SIM_DIR)/altera_mf_work
 
 altera_mf: $(SIM_DIR)/altera_mf_work/flag
 
+.PHONY: altera_mf
+
 vga: all
 	@$(call VSIM_CMD, vga_tb)
 
 view_vga:
 	@$(call VSIM_VIEW_WAVES_TLM, vga_tb, $(VSIM_DUT_WAVES))
+
+.PHONY: vga view_vga
 
 adv7123: all
 	@$(call VSIM_CMD, adv7123_tb)
@@ -81,14 +87,20 @@ adv7123_2: all
 view_adv7123_2:
 	@$(call VSIM_VIEW_WAVES_TLM, adv7123_tb2, $(VSIM_DUT_WAVES))
 
+.PHONY: adv7123 adv7123_2 view_adv7123 view_adv7123_2
+
 adv7123_con_char_rom: all
 	@$(call VSIM_CMD, adv7123_con_char_rom_tb)
+
+.PHONY: adv7123_con_char_rom
 
 adc: all
 	@$(call VSIM_CMD, adc_tb)
 
 view_adc:
 	@$(call VSIM_VIEW_WAVES_TLM, adc_tb, $(VSIM_DUT_WAVES))
+
+.PHONY: adc view_adc
 
 # delete the library and all compiled files
 clean: helper_clean
@@ -99,4 +111,4 @@ clean: helper_clean
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all altera_mf vga view_vga adv7123_con_char_rom adc_tb view_adc adv7123 view_adv7123  adv7123_2 view_adv7123_2
+.PHONY: clean distclean
