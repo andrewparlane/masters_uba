@@ -125,6 +125,8 @@ begin
             nHSync <= '0';      -- activo bajo
             nVSync <= '0';      -- activo bajo
             inActive <= '0';    -- activo alto
+            pixelX <= (others => '0');
+            pixelY <= (others => '0');
         elsif (rising_edge(clk)) then
             -- nHSync está activo (bajo) durante el hsync
             if ((x >= H_SYNC_START) and
@@ -142,6 +144,21 @@ begin
                 nVSync <= '1';
             end if;
 
+            if ((x < H_ACTIVE_START) or
+                (y < V_ACTIVE_START)) then
+                pixelX <= (others => '0');
+            else
+                pixelX <= resize(x - to_unsigned(H_ACTIVE_START, x'length),
+                                  pixelX'length);
+            end if;
+
+            if ((y < V_ACTIVE_START)) then
+                pixelY <= (others => '0');
+            else
+                pixelY <= resize(y - to_unsigned(V_ACTIVE_START, y'length),
+                                  pixelY'length);
+            end if;
+
             -- estamos en la región activo?
             if ((x < H_ACTIVE_START) or
                 (y < V_ACTIVE_START)) then
@@ -149,24 +166,6 @@ begin
             else
                 inActive <= '1';
             end if;
-        end if;
-    end process;
-
-    process (all)
-    begin
-        if ((x < H_ACTIVE_START) or
-            (y < V_ACTIVE_START)) then
-            pixelX <= (others => '0');
-        else
-            pixelX <= resize(x - to_unsigned(H_ACTIVE_START, x'length),
-                              pixelX'length);
-        end if;
-
-        if ((y < V_ACTIVE_START)) then
-            pixelY <= (others => '0');
-        else
-            pixelY <= resize(y - to_unsigned(V_ACTIVE_START, y'length),
-                              pixelY'length);
         end if;
     end process;
 
