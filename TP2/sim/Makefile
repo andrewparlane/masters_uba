@@ -75,6 +75,12 @@ adv7123: all
 view_adv7123:
 	@$(call VSIM_VIEW_WAVES_TLM, adv7123_tb, $(VSIM_DUT_WAVES))
 
+adv7123_2: all
+	@$(call VSIM_CMD, adv7123_tb2)
+
+view_adv7123_2:
+	@$(call VSIM_VIEW_WAVES_TLM, adv7123_tb2, $(VSIM_DUT_WAVES))
+
 adv7123_con_char_rom: all
 	@$(call VSIM_CMD, adv7123_con_char_rom_tb)
 
@@ -93,4 +99,4 @@ clean: helper_clean
 distclean: clean
 	make -C $(COMMON_DIR) clean
 
-.PHONY: clean distclean all altera_mf vga view_vga adv7123_con_char_rom adc_tb view_adc adv7123 view_adv7123
+.PHONY: clean distclean all altera_mf vga view_vga adv7123_con_char_rom adc_tb view_adc adv7123 view_adv7123  adv7123_2 view_adv7123_2
