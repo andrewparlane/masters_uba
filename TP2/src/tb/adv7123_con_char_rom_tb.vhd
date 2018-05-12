@@ -107,29 +107,19 @@ begin
         g <= (others => px);
         b <= (others => px);
         if (bloqueY = to_unsigned(9, bloqueY'length)) then
-            if (bloqueX = to_unsigned(19, bloqueX'length)) then
-                char <= 'H';
-            elsif (bloqueX = to_unsigned(20, bloqueX'length)) then
-                char <= 'e';
-            elsif (bloqueX = to_unsigned(21, bloqueX'length)) then
-                char <= 'l';
-            elsif (bloqueX = to_unsigned(22, bloqueX'length)) then
-                char <= 'l';
-            elsif (bloqueX = to_unsigned(23, bloqueX'length)) then
-                char <= 'o';
-            elsif (bloqueX = to_unsigned(25, bloqueX'length)) then
-                char <= 'W';
-            elsif (bloqueX = to_unsigned(26, bloqueX'length)) then
-                char <= 'o';
-            elsif (bloqueX = to_unsigned(27, bloqueX'length)) then
-                char <= 'r';
-            elsif (bloqueX = to_unsigned(28, bloqueX'length)) then
-                char <= 'l';
-            elsif (bloqueX = to_unsigned(29, bloqueX'length)) then
-                char <= 'd';
-            else
-                char <= ' ';
-            end if;
+            case to_integer(bloqueX) is
+                when 19 => char <= 'H';
+                when 20 => char <= 'e';
+                when 21 => char <= 'l';
+                when 22 => char <= 'l';
+                when 23 => char <= 'o';
+                when 25 => char <= 'W';
+                when 26 => char <= 'o';
+                when 27 => char <= 'r';
+                when 28 => char <= 'l';
+                when 29 => char <= 'd';
+                when others => char <= ' ';
+            end case;
         else
             char <= ' ';
         end if;
