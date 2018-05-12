@@ -102,6 +102,14 @@ view_adc:
 
 .PHONY: adc view_adc
 
+tp2: all
+	@$(call VSIM_CMD, tp2_tb)
+
+view_tp2:
+	@$(call VSIM_VIEW_WAVES_TLM, tp2_tb, $(VSIM_DUT_WAVES))
+
+.PHONY: tp2 view_tp2
+
 # delete the library and all compiled files
 clean: helper_clean
 	$(call DEL_VLIB_CMD, $(COMMON_LIB))
