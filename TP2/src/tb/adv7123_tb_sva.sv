@@ -22,11 +22,37 @@ program adv7123_props #(parameter H_ACTIVE,
                         input logic nHSync,
                         input logic nVSync);
 
+    // Assume that the vga_tb_sva.sv assertions have passed
+    // so we don't care about the relations between hs, vs
+    // pixelX and pixelY.
+    // I'm going to ignore clkOut here, as it's just a simple
+    // connection.
 
-    parameter H_TOTAL = H_ACTIVE +
-              H_FRONT_PORCH +
-              H_SYNC +
-              H_BACK_PORCH;
+    default disable iff (rst);
+
+    // First check that Sync is 0 whenever HSync or VSync is 0
+    sync: assert property
+        (@(posedge clk)
+         (nSync === 0) ===
+            ((nHSync === 0) || (nVSync === 0)));
+
+    // whenever we are in blanking the output RGB should be 0s
+    blankingRGB: assert property
+        (@(posedge clk)
+         (nBlank === 0) |->
+            ((rOut === 0) &&
+             (gOut === 0) &&
+             (bOut === 0)));
+
+    // whenever we are not in blanking the output RGB should be
+    // the previous input RGB
+    notBlankingRGB: assert property
+        (@(posedge clk)
+         (nBlank === 1) |->
+            ((rOut === $past(rIn)) &&
+             (gOut === $past(gIn)) &&
+             (bOut === $past(bIn))));
+
 
     integer f;
     initial begin

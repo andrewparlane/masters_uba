@@ -81,19 +81,6 @@ begin
                               nHSync => nHSyncAux,
                               nVSync => nVSyncAux);
 
-    -- inActive es activo alto
-    -- blank <= not inActive
-    -- nBlank <= not blank <= inActive
-    nBlank <= inActive;
-
-    -- nSync es activo bajo
-    -- cuando nHSync = 0 o nVSync = 0
-    -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
-    nSync <= nHSyncAux and nVSyncAux;
-
-    nHSync <= nHSyncAux;
-    nVSync <= nVSyncAux;
-
     -- usamos el clkIn por ahora
     -- si queremos cambiar la tasa de cuadras
     -- tendremos que armar un PLL aquí
@@ -105,10 +92,33 @@ begin
             rOut <= (others => '0');
             gOut <= (others => '0');
             bOut <= (others => '0');
+            nBlank <= '0';
+            nSync  <= '0';
+            nHSync <= '0';
+            nVSync <= '0';
         elsif (rising_edge(clk)) then
-            rOut <= rIn;
-            gOut <= gIn;
-            bOut <= bIn;
+            -- inActive es activo alto
+            -- blank <= not inActive
+            -- nBlank <= not blank <= inActive
+            nBlank <= inActive;
+
+            -- nSync es activo bajo
+            -- cuando nHSync = 0 o nVSync = 0
+            -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
+            nSync <= nHSyncAux and nVSyncAux;
+
+            nHSync <= nHSyncAux;
+            nVSync <= nVSyncAux;
+
+            if (inActive = '1') then
+                rOut <= rIn;
+                gOut <= gIn;
+                bOut <= bIn;
+            else
+                rOut <= (others => '0');
+                gOut <= (others => '0');
+                bOut <= (others => '0');
+            end if;
         end if;
     end process;
 
