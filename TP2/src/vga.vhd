@@ -22,8 +22,8 @@ entity vga is
 
     port (clk:      in  std_ulogic;
           rst:      in  std_ulogic;
-          pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
-          pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
+          pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+          pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
           inActive: out std_ulogic;
           nHSync:   out std_ulogic;
           nVSync:   out std_ulogic);
@@ -81,8 +81,8 @@ architecture synth of vga is
     --          el valor de xCont está el máximo.
     -------------------------------------------------------------------------------------
 
-    constant COUNTER_X_WIDTH:   natural := utils.min_width(H_TOTAL - 1);
-    constant COUNTER_Y_WIDTH:   natural := utils.min_width(V_TOTAL - 1);
+    constant COUNTER_X_WIDTH:   natural := utils_pkg.min_width(H_TOTAL - 1);
+    constant COUNTER_Y_WIDTH:   natural := utils_pkg.min_width(V_TOTAL - 1);
 
     signal x: unsigned((COUNTER_X_WIDTH - 1) downto 0);
     signal y: unsigned((COUNTER_Y_WIDTH - 1) downto 0);

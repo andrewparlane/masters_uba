@@ -77,8 +77,8 @@ package vga_timings_800_600_pkg is
     constant V_SYNC:        natural := 3;   -- líneas
     constant V_BACK_PORCH:  natural := 21;  -- líneas
 
-    constant PIXEL_X_WIDTH: natural := utils.min_width(H_ACTIVE);
-    constant PIXEL_Y_WIDTH: natural := utils.min_width(V_ACTIVE);
+    constant PIXEL_X_WIDTH: natural := utils_pkg.min_width(H_ACTIVE);
+    constant PIXEL_Y_WIDTH: natural := utils_pkg.min_width(V_ACTIVE);
 
     function getLineTime(clkPeriodo:  time) return time;
     function getFrameTime(clkPeriodo: time) return time;
@@ -128,8 +128,8 @@ package vga_timings_10_10_pkg is
     constant V_SYNC:        natural := 2;   -- líneas
     constant V_BACK_PORCH:  natural := 3;  -- líneas
 
-    constant PIXEL_X_WIDTH: natural := utils.min_width(H_ACTIVE);
-    constant PIXEL_Y_WIDTH: natural := utils.min_width(V_ACTIVE);
+    constant PIXEL_X_WIDTH: natural := utils_pkg.min_width(H_ACTIVE);
+    constant PIXEL_Y_WIDTH: natural := utils_pkg.min_width(V_ACTIVE);
 
     function getLineTime(clkPeriodo:  time) return time;
     function getFrameTime(clkPeriodo: time) return time;

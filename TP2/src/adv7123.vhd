@@ -25,8 +25,8 @@ entity adv7123 is
           rIn:      in  std_ulogic_vector(9 downto 0);
           gIn:      in  std_ulogic_vector(9 downto 0);
           bIn:      in  std_ulogic_vector(9 downto 0);
-          pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
-          pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
+          pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+          pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
           clkOut:   out std_ulogic;
           rOut:     out std_ulogic_vector(9 downto 0);
           gOut:     out std_ulogic_vector(9 downto 0);
@@ -52,8 +52,8 @@ architecture synth of adv7123 is
 
         port (clk:      in  std_ulogic;
               rst:      in  std_ulogic;
-              pixelX:   out unsigned((utils.min_width(H_ACTIVE) - 1) downto 0);
-              pixelY:   out unsigned((utils.min_width(V_ACTIVE) - 1) downto 0);
+              pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+              pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
               inActive: out std_ulogic;
               nHSync:   out std_ulogic;
               nVSync:   out std_ulogic);

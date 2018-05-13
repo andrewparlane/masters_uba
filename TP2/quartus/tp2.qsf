@@ -537,13 +537,13 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to SW[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to KEY[0]
 set_instance_assignment -name IO_STANDARD LVDS -to DATA_VOLT_IN_DIFF
 set_location_assignment PIN_P18 -to "DATA_VOLT_IN_DIFF(n)"
-set_global_assignment -name VHDL_FILE ../src/vga_timings_pkg.vhd
-set_global_assignment -name VHDL_FILE ../src/vga.vhd
-set_global_assignment -name VHDL_FILE ../../common/src/utils.vhd -library common
+set_global_assignment -name VHDL_FILE ../../common/src/utils_pkg.vhd -library common
 set_global_assignment -name VHDL_FILE ../../common/src/contador.vhd -library common
 set_global_assignment -name VHDL_FILE ../../common/src/sevenSegmentDisplay.vhd -library common
 set_global_assignment -name VHDL_FILE ../../common/src/contador_bcd.vhd -library common
 set_global_assignment -name VHDL_FILE ../../common/src/type_pkg.vhd -library common
+set_global_assignment -name VHDL_FILE ../src/vga_timings_pkg.vhd
+set_global_assignment -name VHDL_FILE ../src/vga.vhd
 set_global_assignment -name VHDL_FILE ../src/char_rom_pkg.vhd
 set_global_assignment -name VHDL_FILE ../src/adc.vhd
 set_global_assignment -name VHDL_FILE ../src/char_rom.vhd
