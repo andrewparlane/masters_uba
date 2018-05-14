@@ -73,13 +73,13 @@ begin
     -----------------------------------------------------------------
     -- Contamos desde 0 a 25001 con un contador binario.
     -----------------------------------------------------------------
-    contBin:    contador    generic map (WIDTH => 15,
-                                         MAX => 25001)
+    contBin:    contador    generic map (WIDTH => 16,
+                                         MAX => 33001)
                             port map (clk => clk,
                                       rst => rst,
                                       en => '1',
                                       load => '0',
-                                      loadData => to_unsigned(0, 15),
+                                      loadData => to_unsigned(0, 16),
                                       count => open,
                                       atZero => contadorBinarioZero,
                                       atMax => contadorBinarioMax);

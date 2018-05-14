@@ -55,19 +55,19 @@ begin
 
     process
     begin
-        -- Resultado mámimo debería estar 2.50V
+        -- Resultado mámimo debería estar 3.30V
         rst <= '1';
         wait for CLK_PERIOD * 5;
         dInDiff <= '1';
         rst <= '0';
-        wait for CLK_PERIOD * 30000;
-        assert (resultado = (to_unsigned(2, 4),
-                             to_unsigned(5, 4),
+        wait for CLK_PERIOD * 35000;
+        assert (resultado = (to_unsigned(3, 4),
+                             to_unsigned(3, 4),
                              to_unsigned(0, 4)))
                 report "resultado " & natural'image(to_integer(resultado(2))) &
                        "." & natural'image(to_integer(resultado(1))) &
                              natural'image(to_integer(resultado(0))) &
-                       "V esperando 2.50V";
+                       "V esperando 3.30V";
 
         -- si dInDiff siempre es cero el resultado debería
         -- estar 0.00V
@@ -75,7 +75,7 @@ begin
         wait for CLK_PERIOD * 5;
         dInDiff <= '0';
         rst <= '0';
-        wait for CLK_PERIOD * 30000;
+        wait for CLK_PERIOD * 35000;
         assert (resultado = (to_unsigned(0, 4),
                              to_unsigned(0, 4),
                              to_unsigned(0, 4)))
@@ -84,21 +84,21 @@ begin
                              natural'image(to_integer(resultado(0))) &
                        "V esperando 0.00V";
 
-        -- Probamos 1.25V
+        -- Probamos 1.65V
         rst <= '1';
         wait for CLK_PERIOD * 5;
         dInDiff <= '1';
         rst <= '0';
-        wait for CLK_PERIOD * 12500;
+        wait for CLK_PERIOD * 16500;
         dInDiff <= '0';
-        wait for CLK_PERIOD * 15000;
+        wait for CLK_PERIOD * 17000;
         assert (resultado = (to_unsigned(1, 4),
-                             to_unsigned(2, 4),
+                             to_unsigned(6, 4),
                              to_unsigned(5, 4)))
                 report "resultado " & natural'image(to_integer(resultado(2))) &
                        "." & natural'image(to_integer(resultado(1))) &
                              natural'image(to_integer(resultado(0))) &
-                       "V esperando 1.25V";
+                       "V esperando 1.65V";
 
         -- Y 2.01V
         rst <= '1';
@@ -120,19 +120,19 @@ begin
         rst <= '1';
         wait for CLK_PERIOD * 5;
         rst <= '0';
-        for i in 0 to 7500 loop
+        for i in 0 to 9000 loop
             dInDiff <= '1';
             wait for CLK_PERIOD;
             dInDiff <= '0';
             wait for CLK_PERIOD * 3;
         end loop;
         assert (resultado = (to_unsigned(0, 4),
-                             to_unsigned(6, 4),
+                             to_unsigned(8, 4),
                              to_unsigned(2, 4)))
                 report "resultado " & natural'image(to_integer(resultado(2))) &
                        "." & natural'image(to_integer(resultado(1))) &
                              natural'image(to_integer(resultado(0))) &
-                       "V esperando 0.62V";
+                       "V esperando 0.82V";
 
         std.env.stop;
     end process;
