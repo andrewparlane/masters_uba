@@ -43,10 +43,14 @@ architecture synth of tp1 is
               dout:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
     end component contador_bcd;
 
-    component sevenSegmentDisplay is
-        port (bcd:                  in  unsigned(3 downto 0);
-              sevenSegmentOutput:   out std_ulogic_vector(6 downto 0));
-    end component sevenSegmentDisplay;
+    component multi_seven_seg_bcd is
+        generic (CIFRAS: natural);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              en:       in  std_ulogic_vector((CIFRAS - 1) downto 0);
+              bcd:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
+              display:  out slvArray((CIFRAS - 1) downto 0)(6 downto 0));
+    end component multi_seven_seg_bcd;
 
     -- Tenemos CLOCK_DIVIDER así que el banco de prueba
     -- no necesita simular 50.000.000 ticks para incrementar
@@ -62,12 +66,6 @@ architecture synth of tp1 is
     signal rst:                 std_ulogic;
     signal fast:                std_ulogic;
 begin
-
-    -- HEX4,5,6,7 siempre están apagado
-    HEX4 <= (others => '1');
-    HEX5 <= (others => '1');
-    HEX6 <= (others => '1');
-    HEX7 <= (others => '1');
 
     -- KEY(0) es nRESET (activa baja).
     -- KEY(1) es para contar más rápido (activa baja).
@@ -112,20 +110,23 @@ begin
                                          rst => rst,
                                          dout => bcdOut);
 
-    d0Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => bcdOut(0),
-                                        sevenSegmentOutput => HEX0);
-
-    d1Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => bcdOut(1),
-                                        sevenSegmentOutput => HEX1);
-
-    d2Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => bcdOut(2),
-                                        sevenSegmentOutput => HEX2);
-
-    d3Display_inst:     sevenSegmentDisplay
-                        port map       (bcd => bcdOut(3),
-                                        sevenSegmentOutput => HEX3);
+    multi7SegInst:
+    multi_seven_seg_bcd generic map (CIFRAS => 8)
+                        port map (clk => CLOCK_50,
+                                  rst => rst,
+                                  en => "00001111",
+                                  bcd(3 downto 0) => bcdOut,
+                                  bcd(7 downto 4) => (to_unsigned(0,4),
+                                                      to_unsigned(0,4),
+                                                      to_unsigned(0,4),
+                                                      to_unsigned(0,4)),
+                                  display(7) => HEX7,
+                                  display(6) => HEX6,
+                                  display(5) => HEX5,
+                                  display(4) => HEX4,
+                                  display(3) => HEX3,
+                                  display(2) => HEX2,
+                                  display(1) => HEX1,
+                                  display(0) => HEX0);
 
 end architecture synth;
