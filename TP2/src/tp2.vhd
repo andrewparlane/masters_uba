@@ -27,7 +27,16 @@ entity tp2 is
           VGA_BLANK:            out std_ulogic;
           VGA_HS:               out std_ulogic;
           VGA_VS:               out std_ulogic;
-          VGA_SYNC:             out std_ulogic);
+          VGA_SYNC:             out std_ulogic;
+          HEX0:                 out std_ulogic_vector(6 downto 0);
+          HEX1:                 out std_ulogic_vector(6 downto 0);
+          HEX2:                 out std_ulogic_vector(6 downto 0);
+          HEX3:                 out std_ulogic_vector(6 downto 0);
+          HEX4:                 out std_ulogic_vector(6 downto 0);
+          HEX5:                 out std_ulogic_vector(6 downto 0);
+          HEX6:                 out std_ulogic_vector(6 downto 0);
+          HEX7:                 out std_ulogic_vector(6 downto 0));
+
 
 end entity tp2;
 
@@ -77,6 +86,15 @@ architecture synth of tp2 is
               dOut:         out std_ulogic;
               resultado:    out unsignedArray(2 downto 0)(3 downto 0));
     end component adc;
+
+    component multi_seven_seg_bcd is
+        generic (CIFRAS: natural);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              en:       in  std_ulogic_vector((CIFRAS - 1) downto 0);
+              bcd:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
+              display:  out slvArray((CIFRAS - 1) downto 0)(6 downto 0));
+    end component multi_seven_seg_bcd;
 
     -- reset con KEY[0]
     signal rst: std_ulogic;
@@ -164,6 +182,27 @@ begin
                              offX => offX,
                              offY => offY,
                              px => px);
+
+    multi7SegInst:
+    multi_seven_seg_bcd generic map (CIFRAS => 8)
+                        port map (clk => CLOCK_50,
+                                  rst => rst,
+                                  en => "01110000",
+                                  bcd(6 downto 4) => muestra,
+                                  bcd(7) => to_unsigned(0,4),
+                                  bcd(3 downto 0) => (to_unsigned(0,4),
+                                                      to_unsigned(0,4),
+                                                      to_unsigned(0,4),
+                                                      to_unsigned(0,4)),
+                                  display(7) => HEX7,
+                                  display(6) => HEX6,
+                                  display(5) => HEX5,
+                                  display(4) => HEX4,
+                                  display(3) => HEX3,
+                                  display(2) => HEX2,
+                                  display(1) => HEX1,
+                                  display(0) => HEX0);
+
 
     -- Escribir la muestra corriente a la pantalla
     process (all)
