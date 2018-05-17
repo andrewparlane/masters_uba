@@ -1,6 +1,6 @@
 TARGET = tp2
 
-LIBS =
+LIBS = -lm
 CC = gcc
 CFLAGS = -Wall -g
 

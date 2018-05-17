@@ -81,9 +81,11 @@ static void init()
     _gAccessosTotal = 0;
     _gMisses = 0;
 
-    for (uint32_t via = 0; via < NUMERO_DE_VIAS; via++)
+    uint32_t via;
+    for (via = 0; via < NUMERO_DE_VIAS; via++)
     {
-        for (uint32_t linea = 0; linea < CONJUNTOS_EN_CACHE; linea++)
+        uint32_t linea;
+        for (linea = 0; linea < CONJUNTOS_EN_CACHE; linea++)
         {
             _gCache.via[via].linea[linea].valido = false;
         }
@@ -94,7 +96,8 @@ static void init()
 static void dumpCache()
 {
     printf("IDX    VIA1    VIA2    Ultimo\n");
-    for (int i = 0; i < (CONJUNTOS_EN_CACHE); i++)
+    int i;
+    for (i = 0; i < (CONJUNTOS_EN_CACHE); i++)
     {
         printf("%3X    ", i);
         if (_gCache.via[0].linea[i].valido)
