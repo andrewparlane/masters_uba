@@ -587,90 +587,91 @@ static int leerArchivo(const char *archivo)
                 break;
             }
         }
-
-        if (cmd == Comando_MR)
-        {
-            uint32_t mr = get_miss_rate();
-            printf("Miss Rate: %u%%\n", mr);
-        }
         else
         {
-            long long direccion;
-            bool OK;
-            bool newLine;
-            if (!leerLongLong(f, &direccion, &OK, &eof, &newLine))
+            if (cmd == Comando_MR)
             {
-                if (eof)
-                {
-                    fprintf(stderr, "EOF in middle of command");
-                    break;
-                }
-                fprintf(stderr, "Failed to read address\n");
-                if (!newLine)
-                {
-                    skipLine(f);
-                }
-                continue;
-            }
-            else if ((direccion < 0) ||
-                     (direccion > (TAMANO_DE_MEMORIA)))
-            {
-                fprintf(stderr, "Address out of bounds\n");
-                if (!newLine)
-                {
-                    skipLine(f);
-                }
-                continue;
-            }
-
-            if (cmd == Comando_R)
-            {
-#ifdef DEBUG
-                printf("R %u\n", direccion);
-#endif
-                read_byte((int)direccion);
+                uint32_t mr = get_miss_rate();
+                printf("Miss Rate: %u%%\n", mr);
             }
             else
             {
-                if (newLine)
-                {
-                    fprintf(stderr, "Comand ended too early");
-                    continue;
-                }
-
-                long long valor;
-                if (!leerLongLong(f, &valor, &OK, &eof, &newLine))
+                long long direccion;
+                bool OK;
+                bool newLine;
+                if (!leerLongLong(f, &direccion, &OK, &eof, &newLine))
                 {
                     if (eof)
                     {
                         fprintf(stderr, "EOF in middle of command");
                         break;
                     }
-                    fprintf(stderr, "Failed to read value\n");
+                    fprintf(stderr, "Failed to read address\n");
                     if (!newLine)
                     {
                         skipLine(f);
                     }
                     continue;
                 }
-                else if ((valor < 0) ||
-                         (valor > 0xFF))
+                else if ((direccion < 0) ||
+                         (direccion >= (TAMANO_DE_MEMORIA)))
                 {
-                    fprintf(stderr, "Value out of bounds\n");
+                    fprintf(stderr, "Address out of bounds\n");
                     if (!newLine)
                     {
                         skipLine(f);
                     }
                     continue;
                 }
+
+                if (cmd == Comando_R)
+                {
+#ifdef DEBUG
+                    printf("R %u\n", direccion);
+#endif
+                    read_byte((int)direccion);
+                }
+                else
+                {
+                    if (newLine)
+                    {
+                        fprintf(stderr, "Comand ended too early");
+                        continue;
+                    }
+
+                    long long valor;
+                    if (!leerLongLong(f, &valor, &OK, &eof, &newLine))
+                    {
+                        if (eof)
+                        {
+                            fprintf(stderr, "EOF in middle of command");
+                            break;
+                        }
+                        fprintf(stderr, "Failed to read value\n");
+                        if (!newLine)
+                        {
+                            skipLine(f);
+                        }
+                        continue;
+                    }
+                    else if ((valor < 0) ||
+                             (valor > 0xFF))
+                    {
+                        fprintf(stderr, "Value out of bounds\n");
+                        if (!newLine)
+                        {
+                            skipLine(f);
+                        }
+                        continue;
+                    }
 
 #ifdef DEBUG
-                printf("W %u, %u\n", direccion, valor);
+                    printf("W %u, %u\n", direccion, valor);
 #endif
-                write_byte((int)direccion, (uint8_t)valor);
+                    write_byte((int)direccion, (uint8_t)valor);
+                }
             }
         }
-
 #ifdef DEBUG
         dumpCache();
 #endif
