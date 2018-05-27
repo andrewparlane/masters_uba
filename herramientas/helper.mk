@@ -215,7 +215,7 @@ define VSIM_CMD
 endef
 
 # A macro to open questasim and show us the saved waves
-#	Takes one arguments:
+#	Takes two arguments:
 #		1) .wlf file path
 #		2) Waves to record - see VSIM_DUT_WAVES and VSIM_ALL_WAVES for format
 define VSIM_VIEW_WAVES_WLF
@@ -229,7 +229,7 @@ define VSIM_VIEW_WAVES_WLF
 endef
 
 # A macro to open questasim and show us the saved waves
-#	Takes one arguments:
+#	Takes two arguments:
 #		1) Top level module name
 #		2) Waves to record - see VSIM_DUT_WAVES and VSIM_ALL_WAVES for format
 define VSIM_VIEW_WAVES_TLM
