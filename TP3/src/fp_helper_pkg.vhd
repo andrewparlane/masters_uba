@@ -47,6 +47,14 @@ package fp_helper_pkg is
     function vect_to_fpType(vect: std_ulogic_vector((TOTAL_BITS - 1) downto 0)) return fpType;
     function fpType_to_vect(fp: fpType) return std_ulogic_vector;
 
+    function is_NaN(fp: fpType) return boolean;
+    function is_zero(fp: fpType) return boolean;
+    function is_infinity(fp: fpType) return boolean;
+
+    function set_NaN(sign: std_ulogic) return fpType;
+    function set_zero(sign: std_ulogic) return fpType;
+    function set_infinity(sign: std_ulogic) return fpType;
+
     function get_unbiased_exponent(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return signed;
 
     function significand_to_string(significand: std_ulogic_vector((SIGNIFICAND_BITS - 1) downto 0)) return string;
@@ -106,6 +114,51 @@ package body fp_helper_pkg is
     begin
         return fp.sign & fp.biasedExponent & fp.significand;
     end function fpType_to_vect;
+
+    function is_NaN(fp: fpType) return boolean is
+    begin
+        return fp.representation = fpRepresentation_NaN;
+    end function is_NaN;
+
+    function is_zero(fp: fpType) return boolean is
+    begin
+        return fp.representation = fpRepresentation_ZERO;
+    end function is_zero;
+
+    function is_infinity(fp: fpType) return boolean is
+    begin
+        return fp.representation = fpRepresentation_INFINITY;
+    end function is_infinity;
+
+    function set_NaN(sign: std_ulogic) return fpType is
+        variable fp: fpType;
+    begin
+        fp := (sign => sign,
+               biasedExponent => std_ulogic_vector(to_unsigned(EMAX + 1, EXPONENT_BITS)),
+               significand => std_ulogic_vector(to_unsigned(1, SIGNIFICAND_BITS)),
+               representation => fpRepresentation_NaN);
+        return fp;
+    end function set_NaN;
+
+    function set_zero(sign: std_ulogic) return fpType is
+        variable fp: fpType;
+    begin
+        fp := (sign => sign,
+               biasedExponent => std_ulogic_vector(to_unsigned(EMIN - 1, EXPONENT_BITS)),
+               significand => std_ulogic_vector(to_unsigned(0, SIGNIFICAND_BITS)),
+               representation => fpRepresentation_ZERO);
+        return fp;
+    end function set_zero;
+
+    function set_infinity(sign: std_ulogic) return fpType is
+        variable fp: fpType;
+    begin
+        fp := (sign => sign,
+               biasedExponent => std_ulogic_vector(to_unsigned(EMAX + 1, EXPONENT_BITS)),
+               significand => std_ulogic_vector(to_unsigned(0, SIGNIFICAND_BITS)),
+               representation => fpRepresentation_INFINITY);
+        return fp;
+    end function set_infinity;
 
     function get_unbiased_exponent(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return signed is
     begin
