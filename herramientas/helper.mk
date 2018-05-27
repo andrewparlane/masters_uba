@@ -197,13 +197,15 @@ VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
 								-error 3473
 
 # the run the test command.
-#	Takes one arguments:
+#	Takes two arguments:
 #		1) Top level module name
+#		2) Additional VSIM_FLAGS
 define VSIM_CMD
 	@echo -e "$(COLOUR_GREEN)Running simulation of $(1).$(COLOUR_NONE)\n"
 	@mkdir -p $(WAVES_DIR)
 	$(call COLOURIZE, \
 		vsim $(VSIM_FLAGS) \
+			 $(2) \
 			 -wlf $(WAVES_DIR)/$(strip $(1)).wlf \
 			 -do "log -r /*; \
 				  run 5 sec; \
