@@ -16,6 +16,7 @@ endif
 SIM_DIR			= sim
 WAVES_DIR		= $(SIM_DIR)/waves
 SRC_DIR			= src
+PKG_SRC_DIR		= $(SRC_DIR)/pkg
 TB_SRC_DIR		= $(SRC_DIR)/tb
 COMMON_DIR		= ../common
 QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
@@ -31,7 +32,8 @@ MULT_TEST_DIR	= $(TEST_DIR)/multiplicacion
 COMMON_LIB		= common
 
 # src files
-SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+SRCS	= $(wildcard $(PKG_SRC_DIR)/*.vhd) \
+		  $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
 		  $(wildcard $(TB_SRC_DIR)/*.sv)
