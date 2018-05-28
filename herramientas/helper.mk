@@ -152,7 +152,7 @@ NON_TB_VLOG_FLAGS	:=
 $(VHDL_FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.vhd
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vcom $(VCOM_FLAGS) $(NON_TB_VCOM_FLAGS) $<)
-	@mkdir -p $(FLAGS_DIR)
+	@mkdir -p $(dir $@)
 	@touch $@
 
 $(VHDL_TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
@@ -164,7 +164,7 @@ $(VHDL_TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.vhd
 $(SV_FLAGS): $(FLAGS_DIR)/%.flag : $(SRC_DIR)/%.sv
 	@echo -e "$(COLOUR_BLUE)compiling $< because of changes in: $? $(COLOUR_NONE)\n"
 	@$(call COLOURIZE ,vlog $(VLOG_FLAGS) $(NON_TB_VLOG_FLAGS) $<)
-	@mkdir -p $(FLAGS_DIR)
+	@mkdir -p $(dir $@)
 	@touch $@
 
 $(SV_TB_FLAGS): $(FLAGS_DIR)/%.flag : $(TB_SRC_DIR)/%.sv
