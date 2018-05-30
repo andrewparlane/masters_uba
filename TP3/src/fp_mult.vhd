@@ -229,7 +229,9 @@ begin
             (fpPkg.is_zero(fpB) and fpPkg.is_infinity(fpA))) then
             fpC <= fpPkg.set_NaN(newSign);
         elsif ((overflow = '1') or
-               newBiasedExponent = to_unsigned(fpPkg.EMAX + 1, EXPONENT_BITS+2)) then
+               (newBiasedExponent = to_unsigned(fpPkg.EMAX + 1, EXPONENT_BITS+2)) or
+               fpPkg.is_infinity(fpA) or
+               fpPkg.is_infinity(fpB)) then
             fpC <= fpPkg.set_infinity(newSign);
         elsif ((underflow = '1') or
                newBiasedExponent = to_unsigned(fpPkg.EMIN - 1, EXPONENT_BITS+2)) then
