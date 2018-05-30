@@ -88,6 +88,8 @@ begin
             wait for 100 ns;
 
             assert (C = expectedC) or
+                    (fpPkg.is_NaN(fpC) and
+                     fpPkg.is_NaN(fpExpectedC)) or
                    (NO_ASSERT_ON_ZERO_NEG_ZERO and
                     (fpPkg.is_zero(fpC)) and
                     (fpPkg.is_zero(fpExpectedC)))
