@@ -7,10 +7,13 @@ library common;
 use common.all;
 use common.type_pkg.all;
 
+use work.fp_rounding_pkg.all;
+
 entity fp_mult_tb is
     generic(TOTAL_BITS:     natural := 32;
             EXPONENT_BITS:  natural := 8;
-            TEST_FILE:      string  := "test_files/multiplicacion/test_mul_float_32_8.txt");
+            TEST_FILE:      string  := "test_files/multiplicacion/test_mul_float_32_8.txt";
+            ROUNDING_MODE:  RoundingMode);
 end entity fp_mult_tb;
 
 architecture sim of fp_mult_tb is
@@ -19,6 +22,7 @@ architecture sim of fp_mult_tb is
                  EXPONENT_BITS: natural);
         port (inA:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
               inB:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              roundingMode: RoundingMode;
               outC: out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
     end component fp_mult;
 
@@ -38,6 +42,7 @@ begin
                                  EXPONENT_BITS => EXPONENT_BITS)
                     port map (inA => A,
                               inB => B,
+                              roundingMode => ROUNDING_MODE,
                               outC => C);
 
     process
@@ -49,7 +54,8 @@ begin
         report "Starting test with parameters:" &
                " TOTAL_BITS = " & integer'image(TOTAL_BITS) &
                " EXPONENT_BITS = " & integer'image(EXPONENT_BITS) &
-               " TEST_FILE = " & TEST_FILE;
+               " TEST_FILE = " & TEST_FILE &
+               " ROUNDING_MODE = " & RoundingMode'image(ROUNDING_MODE);
 
         file_open(f, TEST_FILE,  read_mode);
 
