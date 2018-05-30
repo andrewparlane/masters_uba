@@ -10,10 +10,11 @@ use common.type_pkg.all;
 use work.fp_rounding_pkg.all;
 
 entity fp_mult_tb is
-    generic(TOTAL_BITS:     natural := 32;
-            EXPONENT_BITS:  natural := 8;
-            TEST_FILE:      string  := "test_files/multiplicacion/test_mul_float_32_8.txt";
-            ROUNDING_MODE:  RoundingMode);
+    generic(TOTAL_BITS:                 natural := 32;
+            EXPONENT_BITS:              natural := 8;
+            TEST_FILE:                  string  := "test_files/multiplicacion/test_mul_float_32_8.txt";
+            ROUNDING_MODE:              RoundingMode;
+            NO_ASSERT_ON_ZERO_NEG_ZERO: boolean := false);
 end entity fp_mult_tb;
 
 architecture sim of fp_mult_tb is
@@ -36,6 +37,14 @@ architecture sim of fp_mult_tb is
     signal C:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal expectedC:   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
 
+    -- convert the args and result to fpTypes
+    -- for debugging
+    signal fpA:         fpPkg.fpType;
+    signal fpB:         fpPkg.fpType;
+    signal fpC:         fpPkg.fpType;
+    signal fpExpectedC: fpPkg.fpType;
+
+
 begin
 
     dut: fp_mult    generic map (TOTAL_BITS => TOTAL_BITS,
@@ -44,6 +53,11 @@ begin
                               inB => B,
                               roundingMode => ROUNDING_MODE,
                               outC => C);
+
+    fpA         <= fpPkg.vect_to_fpType(A);
+    fpB         <= fpPkg.vect_to_fpType(B);
+    fpC         <= fpPkg.vect_to_fpType(C);
+    fpExpectedC <= fpPkg.vect_to_fpType(expectedC);
 
     process
         file     f:     text;
@@ -73,11 +87,14 @@ begin
 
             wait for 100 ns;
 
-            assert C = expectedC
-                report fpPkg.to_string(fpPkg.vect_to_fpType(A)) & " * " &
-                       fpPkg.to_string(fpPkg.vect_to_fpType(B)) & " = " &
-                       fpPkg.to_string(fpPkg.vect_to_fpType(C)) & " expecting " &
-                       fpPkg.to_string(fpPkg.vect_to_fpType(expectedC))
+            assert (C = expectedC) or
+                   (NO_ASSERT_ON_ZERO_NEG_ZERO and
+                    (fpPkg.is_zero(fpC)) and
+                    (fpPkg.is_zero(fpExpectedC)))
+                report fpPkg.to_string(fpA) & " * " &
+                       fpPkg.to_string(fpB) & " = " &
+                       fpPkg.to_string(fpC) & " expecting " &
+                       fpPkg.to_string(fpExpectedC)
                 severity failure;
         end loop;
 

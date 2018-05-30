@@ -68,8 +68,9 @@ fp_decode: all
 #		2) EXPONENT_BITS
 #		3) test/file/path.txt
 #		4) ROUNDING_MODE
+#		5) NO_ASSERT_ON_ZERO_NEG_ZERO
 define FP_MULT_TEST
-	@$(call VSIM_CMD, fp_mult_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4))
+	@$(call VSIM_CMD, fp_mult_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5))
 endef
 
 FP_MULT_TESTS = fp_mult_23_6 \
@@ -81,27 +82,27 @@ FP_MULT_TESTS = fp_mult_23_6 \
 
 fp_mult_23_6: all
 	# 23 bits total, 6 exponent
-	@$(call FP_MULT_TEST,23,6,$(MULT_TEST_DIR)/test_mul_float_23_6.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,23,6,$(MULT_TEST_DIR)/test_mul_float_23_6.txt,RoundingMode_0,true)
 
 fp_mult_24_6: all
 	# 24 bits total, 6 exponent
-	@$(call FP_MULT_TEST,24,6,$(MULT_TEST_DIR)/test_mul_float_24_6.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,24,6,$(MULT_TEST_DIR)/test_mul_float_24_6.txt,RoundingMode_0,true)
 
 fp_mult_25_7: all
 	# 25 bits total, 7 exponent
-	@$(call FP_MULT_TEST,25,7,$(MULT_TEST_DIR)/test_mul_float_25_7.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,25,7,$(MULT_TEST_DIR)/test_mul_float_25_7.txt,RoundingMode_0,true)
 
 fp_mult_26_7: all
 	# 26 bits total, 7 exponent
-	@$(call FP_MULT_TEST,26,7,$(MULT_TEST_DIR)/test_mul_float_26_7.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,26,7,$(MULT_TEST_DIR)/test_mul_float_26_7.txt,RoundingMode_0,true)
 
 fp_mult_30_8: all
 	# 30 bits total, 8 exponent
-	@$(call FP_MULT_TEST,30,8,$(MULT_TEST_DIR)/test_mul_float_30_8.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,30,8,$(MULT_TEST_DIR)/test_mul_float_30_8.txt,RoundingMode_0,true)
 
 fp_mult_32_8: all
 	# 32 bits total, 8 exponent
-	@$(call FP_MULT_TEST,32,8,$(MULT_TEST_DIR)/test_mul_float_32_8.txt,RoundingMode_0)
+	@$(call FP_MULT_TEST,32,8,$(MULT_TEST_DIR)/test_mul_float_32_8.txt,RoundingMode_0,true)
 
 fp_mult_all: $(FP_MULT_TESTS)
 
