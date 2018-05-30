@@ -108,14 +108,36 @@ fp_mult_32_8: all
 	# 32 bits total, 8 exponent
 	@$(call FP_MULT_TEST,32,8,$(MULT_TEST_DIR)/test_mul_float_32_8.txt,RoundingMode_0,true)
 
-fp_mult_c: all test_file_gen
-	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -n 10000 -o $(FP_GEN_PATH)/out.txt
-	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
-
 fp_mult_tp_all: $(FP_MULT_TP_TESTS)
 
-.PHONY: $(FP_MULT_TESTS) fp_mult_c
+FP_MULT_C_TESTS = fp_mult_c_round_zero \
+				  fp_mult_c_round_down \
+				  fp_mult_c_round_up \
+				  fp_mult_c_round_nearest
+
+fp_mult_c_round_zero: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 0 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
+
+fp_mult_c_round_down: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 1 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
+
+fp_mult_c_round_up: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 2 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
+
+fp_mult_c_round_nearest: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 3 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
+
+fp_mult_c_all: $(FP_MULT_C_TESTS)
+
+.PHONY: $(FP_MULT_TESTS) fp_mult_tp_all $(FP_MULT_C_TESTS) fp_mult_c_all
 
 # delete the library and all compiled files
 clean: helper_clean
