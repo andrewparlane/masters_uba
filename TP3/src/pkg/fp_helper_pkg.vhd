@@ -54,6 +54,7 @@ package fp_helper_pkg is
     function set_NaN(sign: std_ulogic) return fpType;
     function set_zero(sign: std_ulogic) return fpType;
     function set_infinity(sign: std_ulogic) return fpType;
+    function set_max(sign: std_ulogic) return fpType;
 
     function get_unbiased_exponent(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return signed;
 
@@ -159,6 +160,16 @@ package body fp_helper_pkg is
                representation => fpRepresentation_INFINITY);
         return fp;
     end function set_infinity;
+
+    function set_max(sign: std_ulogic) return fpType is
+        variable fp: fpType;
+    begin
+        fp := (sign => sign,
+               biasedExponent => std_ulogic_vector(to_unsigned(EMAX, EXPONENT_BITS)),
+               significand => std_ulogic_vector(to_unsigned((2**SIGNIFICAND_BITS) - 1, SIGNIFICAND_BITS)),
+               representation => fpRepresentation_NORMAL);
+        return fp;
+    end function set_max;
 
     function get_unbiased_exponent(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return signed is
     begin
