@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+#include <fenv.h>
 
 #define MAJOR_VERSION   (0)
 #define MINOR_VERSION   (1)
@@ -19,17 +20,17 @@
 
 #warning TODO add options for operation type
 #warning TODO add options for size
-#warning TODO add options for rounding mode
 // see fesetround()
 
 static const struct option _gLongOptions[] =
 {
-    {"help",        no_argument,        0, 'h' },
-    {"version",     no_argument,        0, 'V' },
-    {"num_tests",   required_argument,  0, 'n' },
-    {"no_denormal", no_argument,        0, 'd' },
-    {"output",      required_argument,  0, 'o' },
-    {0,             0,                  0,  0  }
+    {"help",            no_argument,        0, 'h' },
+    {"version",         no_argument,        0, 'V' },
+    {"num_tests",       required_argument,  0, 'n' },
+    {"no_denormal",     no_argument,        0, 'd' },
+    {"rounding_mode",   required_argument,  0, 'r' },
+    {"output",          required_argument,  0, 'o' },
+    {0,                 0,                  0,  0  }
 };
 
 typedef enum
@@ -42,6 +43,16 @@ typedef enum
 
     NUM_ARGUMENT_TYPES
 } ArgumentType;
+
+typedef enum
+{
+    RoundingMode_ZERO = 0,
+    RoundingMode_NEG_INF = 1,
+    RoundingMode_POS_INF = 2,
+    RoundingMode_NEAREST = 3,
+
+    NUM_ROUNDING_MODES
+} RoundingMode;
 
 
 // How likely is each argument type?
@@ -63,20 +74,29 @@ static void usage(FILE *stream, const char *ourName)
 {
     fprintf(stream,
            "Usage:\n"
-           "  %1$s -h\n"
+           "  %s -h\n"
            "  %1$s -V\n"
            "  %1$s [options]\n"
            "Options:\n"
-           "  -h, --help Prints usage information.\n"
-           "  -V, --version Prints version information.\n"
-           "  -n, --num_tests Number of tests to output.\n"
-           "  -d, --no_denormal Don't include denormals.\n"
-           "  -o, --output Path to output file.\n"
+           "  -h, --help                Prints usage information.\n"
+           "  -V, --version             Prints version information.\n"
+           "  -n, --num_tests NUM       Number of tests to output.\n"
+           "  -d, --no_denormal         Don't include denormals.\n"
+           "  -r, --rounding_mode MODE  Set the rounding mode.\n"
+           "                                MODE = %u round towards zero (truncate).\n"
+           "                                MODE = %u round towards negative infinity.\n"
+           "                                MODE = %u round towards positive infinity.\n"
+           "                                MODE = %u round to nearest, ties even (default).\n"
+           "  -o, --output              Path to output file.\n"
            "\n"
            "Examples:\n"
-           "  %1$s -n 10000 -o -\n"
+           "  %1$s -n 10000 -d -r 0 -o -\n"
            "\n",
-           ourName);
+           ourName,
+           RoundingMode_ZERO,
+           RoundingMode_NEG_INF,
+           RoundingMode_POS_INF,
+           RoundingMode_NEAREST);
 }
 
 static uint32_t rand32()
@@ -103,6 +123,18 @@ static const char *getArgString(ArgumentType argType)
     }
 }
 #endif
+
+static const char *getRoundingModeString(RoundingMode roundingMode)
+{
+    switch (roundingMode)
+    {
+        case RoundingMode_ZERO:     return "zero";
+        case RoundingMode_NEG_INF:  return "negative infinity";
+        case RoundingMode_POS_INF:  return "positive infinity";
+        case RoundingMode_NEAREST:  return "nearest";
+        default:                    return "unknown";
+    }
+}
 
 static uint32_t generateArgument()
 {
@@ -205,6 +237,10 @@ int main(int argc, char **argv)
     // number of test cases to generate.
     uint32_t num_tests = 5000;
 
+    // rounding mode to use
+    // default is nearest
+    RoundingMode roundingMode = RoundingMode_NEAREST;
+
     // if no output file is passed or - is pased, use stdout
     const char *outputFile = NULL;
 
@@ -219,7 +255,7 @@ int main(int argc, char **argv)
     while (1)
     {
         int option_index = 0;
-        int c = getopt_long(argc, argv, "hVn:o:", _gLongOptions, &option_index);
+        int c = getopt_long(argc, argv, "hVn:r:o:", _gLongOptions, &option_index);
 
         if (c == -1)
         {
@@ -253,10 +289,24 @@ int main(int argc, char **argv)
                 num_tests = strtoul(optarg, NULL, 10);
                 if (num_tests == 0)
                 {
-                    fprintf(stderr, "The argument for '-n' must be an integer > 0.\n\n", optopt);
+                    fprintf(stderr, "The argument for '-n' must be an integer > 0.\n\n");
                     usage(stderr, ourName);
                     return 1;
                 }
+                break;
+            }
+            case 'r':
+            {
+                // rounding mode
+                roundingMode = strtoul(optarg, NULL, 10);
+                if ((roundingMode < 0) ||
+                    (roundingMode >= NUM_ROUNDING_MODES))
+                {
+                    fprintf(stderr, "The argument for '-r' must be an integer between 0 and %u.\n\n", NUM_ROUNDING_MODES - 1);
+                    usage(stderr, ourName);
+                    return 1;
+                }
+
                 break;
             }
             case 'o':
@@ -272,7 +322,8 @@ int main(int argc, char **argv)
             case '?':
             {
                 if ((optopt == 'o') ||
-                    (optopt == 'n'))
+                    (optopt == 'n') ||
+                    (optopt == 'r'))
                 {
                     fprintf(stderr, "Option '-%c' requires an argument.\n\n", optopt);
                 }
@@ -315,6 +366,22 @@ int main(int argc, char **argv)
     {
         _gARG_TYPE_DENORMAL_IF_LESS_THAN  = _gARG_TYPE_INF_IF_LESS_THAN + ARG_TYPE_DENORMAL_WEIGHT;
         _gARG_TYPE_NORMAL_IF_LESS_THAN    = _gARG_TYPE_DENORMAL_IF_LESS_THAN + ARG_TYPE_NORMAL_WEIGHT;
+    }
+
+    // set up the rounding mode
+    int round;
+    switch (roundingMode)
+    {
+        case RoundingMode_ZERO:     round = FE_TOWARDZERO;  break;
+        case RoundingMode_NEG_INF:  round = FE_DOWNWARD;    break;
+        case RoundingMode_POS_INF:  round = FE_UPWARD;      break;
+        case RoundingMode_NEAREST:
+        default:                    round = FE_TONEAREST;   break;
+    }
+    if (fesetround(round) != 0)
+    {
+        fprintf(stderr, "Failed to set rounding mode to %s\n", getRoundingModeString(roundingMode));
+        return 3;
     }
 
     // open the output file
