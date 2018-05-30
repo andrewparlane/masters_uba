@@ -234,7 +234,9 @@ begin
                fpPkg.is_infinity(fpB)) then
             fpC <= fpPkg.set_infinity(newSign);
         elsif ((underflow = '1') or
-               newBiasedExponent = to_unsigned(fpPkg.EMIN - 1, EXPONENT_BITS+2)) then
+               (newBiasedExponent = to_unsigned(fpPkg.EMIN - 1, EXPONENT_BITS+2)) or
+               fpPkg.is_zero(fpA) or
+               fpPkg.is_zero(fpB)) then
             fpC <= fpPkg.set_zero(newSign);
         else
             fpC.sign <= newSign;
