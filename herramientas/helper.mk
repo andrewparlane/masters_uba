@@ -192,9 +192,13 @@ VSIM_DUT_WAVES		=	dut/*
 # flags to pass to VSIM_CMD
 # -error 3473 causes simulation to end if a component
 # 		 	  instance isn't bound
+# -error 3351 causes simulation to end if a generic is invalid
+#			  probably would have to be passed over the cmd line
+#			  with -g
 VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
 								-sv_seed random \
-								-error 3473
+								-error 3473 \
+								-error 3351
 
 # the run the test command.
 #	Takes two arguments:
