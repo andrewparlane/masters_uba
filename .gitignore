@@ -1,8 +1,11 @@
 transcript
 vsim.wlf
 **/sim/*work
+**/sim/waves
 **/quartus/incremental_db/
 **/quartus/output_files/
 **/quartus/db/
 **/quartus/*.qws
+**/quartus/*.dpf
+**/quartus/*.srf
 
