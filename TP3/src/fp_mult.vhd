@@ -107,9 +107,13 @@ begin
                          else sumOfBiasedExponentsPlus1;
 
     -- check if we overflowed or underflowed
-    overflow <= newBiasedExponent(EXPONENT_BITS) xor
-                newBiasedExponent(EXPONENT_BITS+1);
     underflow <= newBiasedExponent(EXPONENT_BITS+1);
+    overflow <= '1' when
+                ((underflow = '0') and
+                 ((newBiasedExponent(EXPONENT_BITS) = '1') or
+                  (newBiasedExponent = to_unsigned(fpPkg.EMAX+1,
+                                                   EXPONENT_BITS+2))))
+                else '0';
 
     -- multiply the mantissas (includes the implicit "1.")
     -- This gives us 2 bits of integer +
@@ -228,11 +232,21 @@ begin
             (fpPkg.is_zero(fpA) and fpPkg.is_infinity(fpB)) or
             (fpPkg.is_zero(fpB) and fpPkg.is_infinity(fpA))) then
             fpC <= fpPkg.set_NaN(newSign);
-        elsif ((overflow = '1') or
-               (newBiasedExponent = to_unsigned(fpPkg.EMAX + 1, EXPONENT_BITS+2)) or
-               fpPkg.is_infinity(fpA) or
+        elsif (fpPkg.is_infinity(fpA) or
                fpPkg.is_infinity(fpB)) then
             fpC <= fpPkg.set_infinity(newSign);
+        elsif (overflow = '1') then
+            if (roundingMode = RoundingMode_0) then
+                fpC <= fpPkg.set_max(newSign);
+            elsif ((roundingMode = RoundingMode_NEG_INF) and
+                   (newSign = '0')) then
+                fpC <= fpPkg.set_max(newSign);
+            elsif ((roundingMode = RoundingMode_POS_INF) and
+                   (newSign = '1')) then
+                fpC <= fpPkg.set_max(newSign);
+            else
+                fpC <= fpPkg.set_infinity(newSign);
+            end if;
         elsif ((underflow = '1') or
                (newBiasedExponent = to_unsigned(fpPkg.EMIN - 1, EXPONENT_BITS+2)) or
                fpPkg.is_zero(fpA) or
