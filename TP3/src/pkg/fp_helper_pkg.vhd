@@ -135,7 +135,7 @@ package body fp_helper_pkg is
     begin
         fp := (sign => sign,
                biasedExponent => std_ulogic_vector(to_unsigned(EMAX + 1, EXPONENT_BITS)),
-               significand => std_ulogic_vector(to_unsigned(1, SIGNIFICAND_BITS)),
+               significand => '1' & std_ulogic_vector(to_unsigned(0, SIGNIFICAND_BITS - 1)),
                representation => fpRepresentation_NaN);
         return fp;
     end function set_NaN;
