@@ -23,6 +23,7 @@ QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 
 TEST_DIR		= test_files
 MULT_TEST_DIR	= $(TEST_DIR)/multiplicacion
+FP_GEN_PATH		= c/test_file_gen
 
 # Common Lib name
 # Add the following to your .vhd files that need
@@ -52,10 +53,13 @@ common:
 	@# Add the common lib to our modelsim.ini
 	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
+test_file_gen:
+	@make -C $(FP_GEN_PATH)
+
 # default rule is to create the library, and compile all the components
 all: common srcs tb_srcs
 
-.PHONY: common all
+.PHONY: common test_file_gen all
 
 fp_decode: all
 	@$(call VSIM_CMD, fp_decode_tb)
@@ -73,12 +77,12 @@ define FP_MULT_TEST
 	@$(call VSIM_CMD, fp_mult_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5))
 endef
 
-FP_MULT_TESTS = fp_mult_23_6 \
-                fp_mult_24_6 \
-                fp_mult_25_7 \
-                fp_mult_26_7 \
-                fp_mult_30_8 \
-                fp_mult_32_8
+FP_MULT_TP_TESTS = fp_mult_23_6 \
+                   fp_mult_24_6 \
+                   fp_mult_25_7 \
+                   fp_mult_26_7 \
+                   fp_mult_30_8 \
+                   fp_mult_32_8
 
 fp_mult_23_6: all
 	# 23 bits total, 6 exponent
@@ -104,9 +108,14 @@ fp_mult_32_8: all
 	# 32 bits total, 8 exponent
 	@$(call FP_MULT_TEST,32,8,$(MULT_TEST_DIR)/test_mul_float_32_8.txt,RoundingMode_0,true)
 
-fp_mult_all: $(FP_MULT_TESTS)
+fp_mult_c: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -n 10000 -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
 
-.PHONY: $(FP_MULT_TESTS)
+fp_mult_tp_all: $(FP_MULT_TP_TESTS)
+
+.PHONY: $(FP_MULT_TESTS) fp_mult_c
 
 # delete the library and all compiled files
 clean: helper_clean
