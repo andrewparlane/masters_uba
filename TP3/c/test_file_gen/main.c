@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <libgen.h>
 #include <getopt.h>
@@ -26,6 +27,7 @@ static const struct option _gLongOptions[] =
     {"help",        no_argument,        0, 'h' },
     {"version",     no_argument,        0, 'V' },
     {"num_tests",   required_argument,  0, 'n' },
+    {"no_denormal", no_argument,        0, 'd' },
     {"output",      required_argument,  0, 'o' },
     {0,             0,                  0,  0  }
 };
@@ -55,6 +57,8 @@ static uint32_t _gARG_TYPE_INF_IF_LESS_THAN;
 static uint32_t _gARG_TYPE_DENORMAL_IF_LESS_THAN;
 static uint32_t _gARG_TYPE_NORMAL_IF_LESS_THAN;
 
+static bool     _gNoDenormals = false;
+
 static void usage(FILE *stream, const char *ourName)
 {
     fprintf(stream,
@@ -66,6 +70,7 @@ static void usage(FILE *stream, const char *ourName)
            "  -h, --help Prints usage information.\n"
            "  -V, --version Prints version information.\n"
            "  -n, --num_tests Number of tests to output.\n"
+           "  -d, --no_denormal Don't include denormals.\n"
            "  -o, --output Path to output file.\n"
            "\n"
            "Examples:\n"
@@ -236,6 +241,12 @@ int main(int argc, char **argv)
                 // exit now
                 return 0;
             }
+            case 'd':
+            {
+                // don't output tests with denormals
+                _gNoDenormals = true;
+                break;
+            }
             case 'n':
             {
                 // number of test cases
@@ -295,9 +306,16 @@ int main(int argc, char **argv)
     _gARG_TYPE_ZERO_IF_LESS_THAN      = ARG_TYPE_ZERO_WEIGHT;
     _gARG_TYPE_NaN_IF_LESS_THAN       = _gARG_TYPE_ZERO_IF_LESS_THAN + ARG_TYPE_NaN_WEIGHT;
     _gARG_TYPE_INF_IF_LESS_THAN       = _gARG_TYPE_NaN_IF_LESS_THAN + ARG_TYPE_INF_WEIGHT;
-    _gARG_TYPE_DENORMAL_IF_LESS_THAN  = _gARG_TYPE_INF_IF_LESS_THAN + ARG_TYPE_DENORMAL_WEIGHT;
-    _gARG_TYPE_NORMAL_IF_LESS_THAN    = _gARG_TYPE_DENORMAL_IF_LESS_THAN + ARG_TYPE_NORMAL_WEIGHT;
-
+    if (_gNoDenormals)
+    {
+        _gARG_TYPE_DENORMAL_IF_LESS_THAN  = 0;
+        _gARG_TYPE_NORMAL_IF_LESS_THAN    = _gARG_TYPE_INF_IF_LESS_THAN + ARG_TYPE_NORMAL_WEIGHT;
+    }
+    else
+    {
+        _gARG_TYPE_DENORMAL_IF_LESS_THAN  = _gARG_TYPE_INF_IF_LESS_THAN + ARG_TYPE_DENORMAL_WEIGHT;
+        _gARG_TYPE_NORMAL_IF_LESS_THAN    = _gARG_TYPE_DENORMAL_IF_LESS_THAN + ARG_TYPE_NORMAL_WEIGHT;
+    }
 
     // open the output file
     FILE *f = stdout;
@@ -320,8 +338,16 @@ int main(int argc, char **argv)
         float floatArg2 = *(float *)&intArg2;
 
         float floatRes = floatArg1 * floatArg2;
-
         uint32_t intRes = *(uint32_t *)&floatRes;
+
+        if (_gNoDenormals &&
+            ((intRes & EXPONENT_MASK) == 0) &&
+            ((intRes & SIGNIFICAND_MASK) != 0))
+        {
+            // denormal and we don't support denormals
+            i--;
+            continue;
+        }
 
 #ifdef DEBUG
         printf("%G * %G = %G\n", floatArg1, floatArg2, floatRes);
