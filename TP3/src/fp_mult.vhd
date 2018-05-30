@@ -160,7 +160,7 @@ begin
     -- If we support rounding then it's possible we'll need to
     -- add 1 to the mantissa.
 
-    mantissaBeforeRoundingPlus1 <= mantissaForMsb1 +
+    mantissaBeforeRoundingPlus1 <= mantissaBeforeRounding +
                                    to_unsigned(1, MANTISSA_BITS + 1);
 
 
