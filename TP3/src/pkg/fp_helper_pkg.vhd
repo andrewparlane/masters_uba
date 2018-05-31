@@ -50,6 +50,7 @@ package fp_helper_pkg is
     function is_NaN(fp: fpType) return boolean;
     function is_zero(fp: fpType) return boolean;
     function is_infinity(fp: fpType) return boolean;
+    function is_denormal(fp: fpType) return boolean;
 
     function set_NaN(sign: std_ulogic) return fpType;
     function set_zero(sign: std_ulogic) return fpType;
@@ -130,6 +131,11 @@ package body fp_helper_pkg is
     begin
         return fp.representation = fpRepresentation_INFINITY;
     end function is_infinity;
+
+    function is_denormal(fp: fpType) return boolean is
+    begin
+        return fp.representation = fpRepresentation_DENORMAL;
+    end function is_denormal;
 
     function set_NaN(sign: std_ulogic) return fpType is
         variable fp: fpType;
