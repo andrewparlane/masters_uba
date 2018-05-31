@@ -18,7 +18,6 @@
 #define EXPONENT_MASK       (0x7F800000)
 #define SIGNIFICAND_MASK    (~((EXPONENT_MASK) | (SIGN_MASK)))
 
-#warning TODO add options for operation type
 #warning TODO add options for size
 // see fesetround()
 
@@ -29,6 +28,9 @@ static const struct option _gLongOptions[] =
     {"num_tests",       required_argument,  0, 'n' },
     {"no_denormal",     no_argument,        0, 'd' },
     {"rounding_mode",   required_argument,  0, 'r' },
+    {"op_add",          no_argument,        0, 'a' },
+    {"op_subtract",     no_argument,        0, 's' },
+    {"op_multiply",     no_argument,        0, 'm' },
     {"output",          required_argument,  0, 'o' },
     {0,                 0,                  0,  0  }
 };
@@ -53,6 +55,13 @@ typedef enum
 
     NUM_ROUNDING_MODES
 } RoundingMode;
+
+typedef enum
+{
+    Operation_MULTIPLY = 0,
+    Operation_ADD,
+    Operation_SUBTRACT
+} Operation;
 
 
 // How likely is each argument type?
@@ -82,6 +91,9 @@ static void usage(FILE *stream, const char *ourName)
            "  -V, --version             Prints version information.\n"
            "  -n, --num_tests NUM       Number of tests to output.\n"
            "  -d, --no_denormal         Don't include denormals.\n"
+           "  -m, --op_multiply         Generate test cases for multiplication (default)\n"
+           "  -a, --op_add              Generate test cases for addition\n"
+           "  -s, --op_subtract         Generate test cases for subtraction\n"
            "  -r, --rounding_mode MODE  Set the rounding mode.\n"
            "                                MODE = %u round towards zero (truncate).\n"
            "                                MODE = %u round towards negative infinity.\n"
@@ -120,6 +132,17 @@ static const char *getArgString(ArgumentType argType)
         case ArgumentType_DENORMAL:     return "denormal";
         case ArgumentType_NORMAL:       return "normal";
         default:                        return "unknown";
+    }
+}
+
+static const char *getOperationString(Operation op)
+{
+    switch (op)
+    {
+        case Operation_ADD:         return "+";
+        case Operation_SUBTRACT:    return "-";
+        case Operation_MULTIPLY:    return "*";
+        default:                    return "unknown";
     }
 }
 #endif
@@ -241,6 +264,10 @@ int main(int argc, char **argv)
     // default is nearest
     RoundingMode roundingMode = RoundingMode_NEAREST;
 
+    // Operation
+    Operation op = Operation_MULTIPLY;
+    uint numOpFlags = 0;
+
     // if no output file is passed or - is pased, use stdout
     const char *outputFile = NULL;
 
@@ -255,7 +282,7 @@ int main(int argc, char **argv)
     while (1)
     {
         int option_index = 0;
-        int c = getopt_long(argc, argv, "hVn:r:o:", _gLongOptions, &option_index);
+        int c = getopt_long(argc, argv, "hVmasdn:r:o:", _gLongOptions, &option_index);
 
         if (c == -1)
         {
@@ -293,6 +320,24 @@ int main(int argc, char **argv)
                     usage(stderr, ourName);
                     return 1;
                 }
+                break;
+            }
+            case 'm':
+            {
+                op = Operation_MULTIPLY;
+                numOpFlags++;
+                break;
+            }
+            case 'a':
+            {
+                op = Operation_ADD;
+                numOpFlags++;
+                break;
+            }
+            case 's':
+            {
+                op = Operation_SUBTRACT;
+                numOpFlags++;
                 break;
             }
             case 'r':
@@ -344,6 +389,13 @@ int main(int argc, char **argv)
                 return 1;
             }
         }
+    }
+
+    if (numOpFlags > 1)
+    {
+        fprintf(stderr, "Only one of -a, -s, and -m may be selected\n");
+        usage(stderr, ourName);
+        return 1;
     }
 
     if (optind != argc)
@@ -404,7 +456,27 @@ int main(int argc, char **argv)
         float floatArg1 = *(float *)&intArg1;
         float floatArg2 = *(float *)&intArg2;
 
-        float floatRes = floatArg1 * floatArg2;
+        float floatRes;
+        switch (op)
+        {
+            case Operation_ADD:
+            {
+                floatRes = floatArg1 + floatArg2;
+                break;
+            }
+            case Operation_SUBTRACT:
+            {
+                floatRes = floatArg1 - floatArg2;
+                break;
+            }
+            case Operation_MULTIPLY:
+            default:
+            {
+                floatRes = floatArg1 * floatArg2;
+                break;
+            }
+        }
+
         uint32_t intRes = *(uint32_t *)&floatRes;
 
         if (_gNoDenormals &&
@@ -417,7 +489,7 @@ int main(int argc, char **argv)
         }
 
 #ifdef DEBUG
-        printf("%G * %G = %G\n", floatArg1, floatArg2, floatRes);
+        printf("%G %s %G = %G\n", floatArg1, getOperationString(op), floatArg2, floatRes);
 #endif
 
         fprintf(f, "%u %u %u\n", intArg1, intArg2, intRes);
