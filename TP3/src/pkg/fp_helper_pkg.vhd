@@ -58,6 +58,7 @@ package fp_helper_pkg is
     function set_max(sign: std_ulogic) return fpType;
 
     function get_unbiased_exponent(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return signed;
+    function get_mantissa(fp: fpType) return std_ulogic_vector;
 
     function significand_to_string(significand: std_ulogic_vector((SIGNIFICAND_BITS - 1) downto 0)) return string;
     function exponent_to_string(biasedExponent: std_ulogic_vector((EXPONENT_BITS - 1) downto 0)) return string;
@@ -181,6 +182,16 @@ package body fp_helper_pkg is
     begin
         return signed("0" & biasedExponent) - BIAS;
     end function get_unbiased_exponent;
+
+    function get_mantissa(fp: fpType) return std_ulogic_vector is
+    begin
+        if (is_denormal(fp) or
+            is_zero(fp)) then
+            return '0' & fp.significand;
+        else
+            return '1' & fp.significand;
+        end if;
+    end function get_mantissa;
 
     function significand_to_string(significand: std_ulogic_vector((SIGNIFICAND_BITS - 1) downto 0)) return string is
         -- while (s > 0)
