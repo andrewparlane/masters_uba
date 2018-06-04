@@ -39,7 +39,7 @@ architecture sim of fp_add_tb is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
-    constant PIPELINE_STAGES:   natural := 6;
+    constant PIPELINE_STAGES:   natural := 7;
 
     package fpPkg
             is new work.fp_helper_pkg

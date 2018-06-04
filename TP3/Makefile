@@ -26,6 +26,10 @@ MULT_TEST_DIR	= $(TEST_DIR)/multiplicacion
 SUM_TEST_DIR	= $(TEST_DIR)/suma
 FP_GEN_PATH		= c/test_file_gen
 
+ifndef NUM_C_TESTS
+NUM_C_TESTS		= 100000
+endif
+
 # Common Lib name
 # Add the following to your .vhd files that need
 # to use something from the common/ directory
@@ -129,22 +133,22 @@ FP_MULT_C_TESTS = fp_mult_c_round_zero \
 
 fp_mult_c_round_zero: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 0 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
 
 fp_mult_c_round_down: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 1 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
 
 fp_mult_c_round_up: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 2 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
 
 fp_mult_c_round_nearest: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 3 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
 
 fp_mult_c_all: $(FP_MULT_C_TESTS)
@@ -191,22 +195,22 @@ FP_SUM_C_TESTS = fp_sum_c_round_zero \
 
 fp_sum_c_round_zero: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 0 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
 
 fp_sum_c_round_down: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 1 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
 
 fp_sum_c_round_up: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 2 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
 
 fp_sum_c_round_nearest: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 3 -n 100000 -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
 
 fp_sum_c_all: $(FP_SUM_C_TESTS)
