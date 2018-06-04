@@ -24,6 +24,7 @@ QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 TEST_DIR		= test_files
 MULT_TEST_DIR	= $(TEST_DIR)/multiplicacion
 SUM_TEST_DIR	= $(TEST_DIR)/suma
+SUB_TEST_DIR	= $(TEST_DIR)/resta
 FP_GEN_PATH		= c/test_file_gen
 
 ifndef NUM_C_TESTS
@@ -90,7 +91,18 @@ endef
 #		4) ROUNDING_MODE
 #		5) NO_ASSERT_ON_ZERO_NEG_ZERO
 define FP_SUM_TEST
-	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5))
+	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=false)
+endef
+
+# A macro to run FP subtraction tests
+#	Takes three arguments:
+#		1) TOTAL_BITS
+#		2) EXPONENT_BITS
+#		3) test/file/path.txt
+#		4) ROUNDING_MODE
+#		5) NO_ASSERT_ON_ZERO_NEG_ZERO
+define FP_SUB_TEST
+	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=true)
 endef
 
 FP_MULT_TP_TESTS = fp_mult_23_6 \
@@ -216,6 +228,68 @@ fp_sum_c_round_nearest: all test_file_gen
 fp_sum_c_all: $(FP_SUM_C_TESTS)
 
 .PHONY: $(FP_SUM_TESTS) fp_sum_tp_all $(FP_SUM_C_TESTS) fp_sum_c_all
+
+FP_SUB_TP_TESTS = fp_sub_23_6 \
+                  fp_sub_24_6 \
+                  fp_sub_25_7 \
+                  fp_sub_26_7 \
+                  fp_sub_30_8 \
+                  fp_sub_32_8
+
+fp_sub_23_6: all
+	# 23 bits total, 6 exponent
+	@$(call FP_SUB_TEST,23,6,$(SUB_TEST_DIR)/test_dif_float_23_6.txt,RoundingMode_0,true)
+
+fp_sub_24_6: all
+	# 24 bits total, 6 exponent
+	@$(call FP_SUB_TEST,24,6,$(SUB_TEST_DIR)/test_dif_float_24_6.txt,RoundingMode_0,true)
+
+fp_sub_25_7: all
+	# 25 bits total, 7 exponent
+	@$(call FP_SUB_TEST,25,7,$(SUB_TEST_DIR)/test_dif_float_25_7.txt,RoundingMode_0,true)
+
+fp_sub_26_7: all
+	# 26 bits total, 7 exponent
+	@$(call FP_SUB_TEST,26,7,$(SUB_TEST_DIR)/test_dif_float_26_7.txt,RoundingMode_0,true)
+
+fp_sub_30_8: all
+	# 30 bits total, 8 exponent
+	@$(call FP_SUB_TEST,30,8,$(SUB_TEST_DIR)/test_dif_float_30_8.txt,RoundingMode_0,true)
+
+fp_sub_32_8: all
+	# 32 bits total, 8 exponent
+	@$(call FP_SUB_TEST,32,8,$(SUB_TEST_DIR)/test_dif_float_32_8.txt,RoundingMode_0,true)
+
+fp_sub_tp_all: $(FP_SUB_TP_TESTS)
+
+FP_SUB_C_TESTS = fp_sub_c_round_zero \
+				  fp_sub_c_round_down \
+				  fp_sub_c_round_up \
+				  fp_sub_c_round_nearest
+
+fp_sub_c_round_zero: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
+
+fp_sub_c_round_down: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
+
+fp_sub_c_round_up: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
+
+fp_sub_c_round_nearest: all test_file_gen
+	# 32 bits total, 8 exponent
+	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
+
+fp_sub_c_all: $(FP_SUB_C_TESTS)
+
+.PHONY: $(FP_SUM_TESTS) fp_sub_tp_all $(FP_SUM_C_TESTS) fp_sub_c_all
 
 # delete the library and all compiled files
 clean: helper_clean

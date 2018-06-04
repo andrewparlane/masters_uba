@@ -14,6 +14,7 @@ entity fp_add_tb is
             EXPONENT_BITS:              natural := 8;
             TEST_FILE:                  string  := "test_files/suma/test_sum_float_32_8.txt";
             ROUNDING_MODE:              RoundingMode;
+            SUBTRACT:                   boolean := false;
             NO_ASSERT_ON_ZERO_NEG_ZERO: boolean := false);
 end entity fp_add_tb;
 
@@ -133,7 +134,12 @@ begin
             A <= std_ulogic_vector(u);
 
             utils_pkg.read_unsigned_decimal_from_line(l, u);
-            B <= std_ulogic_vector(u);
+            if (SUBTRACT) then
+                B <= std_ulogic_vector((not u(TOTAL_BITS-1)) &
+                                       u((TOTAL_BITS-2) downto 0));
+            else
+                B <= std_ulogic_vector(u);
+            end if;
 
             utils_pkg.read_unsigned_decimal_from_line(l, u);
             expectedC <= std_ulogic_vector(u);
@@ -149,7 +155,14 @@ begin
     end process;
 
     process
+        variable OP: string(1 to 3);
     begin
+        if (SUBTRACT) then
+            OP := " - ";
+        else
+            OP := " + ";
+        end if;
+
         wait until falling_edge(rst);
         wait until rising_edge(clk);
         wait for (CLK_PERIOD * PIPELINE_STAGES);
@@ -160,7 +173,7 @@ begin
                        (NO_ASSERT_ON_ZERO_NEG_ZERO and
                         (fpPkg.is_zero(fpC)) and
                         (fpPkg.is_zero(fpExpectedCDelayed)))
-                    report fpPkg.to_string(fpADelayed) & " + " &
+                    report fpPkg.to_string(fpADelayed) & OP &
                            fpPkg.to_string(fpBDelayed) & " = " &
                            fpPkg.to_string(fpC) & " expecting " &
                            fpPkg.to_string(fpExpectedCDelayed)
