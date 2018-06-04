@@ -21,12 +21,12 @@ architecture sim of fp_add_tb is
     component fp_add is
         generic (TOTAL_BITS:    natural;
                  EXPONENT_BITS: natural);
-        port (clk:  in  std_ulogic;
-              rst:  in  std_ulogic;
-              inA:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              inB:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              roundingMode: RoundingMode;
-              outC: out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+        port (clk:          in  std_ulogic;
+              rst:          in  std_ulogic;
+              inA:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              inB:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              roundingMode: in RoundingMode;
+              outC:         out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
     end component fp_add;
 
     component delay is

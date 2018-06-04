@@ -7,10 +7,10 @@ use work.fp_rounding_pkg.all;
 entity fp_mult is
     generic (TOTAL_BITS:    natural;
              EXPONENT_BITS: natural);
-    port (inA:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-          inB:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-          roundingMode: RoundingMode;
-          outC: out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+    port (inA:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+          inB:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+          roundingMode: in  RoundingMode;
+          outC:         out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
 end entity fp_mult;
 
 architecture synth of fp_mult is
