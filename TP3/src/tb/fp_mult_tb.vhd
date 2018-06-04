@@ -37,12 +37,12 @@ architecture sim of fp_mult_tb is
     signal C:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal expectedC:   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
 
-    -- convert the args and result to fpTypes
+    -- convert the args and result to fpUnpackeds
     -- for debugging
-    signal fpA:         fpPkg.fpType;
-    signal fpB:         fpPkg.fpType;
-    signal fpC:         fpPkg.fpType;
-    signal fpExpectedC: fpPkg.fpType;
+    signal fpA:         fpPkg.fpUnpacked;
+    signal fpB:         fpPkg.fpUnpacked;
+    signal fpC:         fpPkg.fpUnpacked;
+    signal fpExpectedC: fpPkg.fpUnpacked;
 
 
 begin
@@ -54,10 +54,10 @@ begin
                               roundingMode => ROUNDING_MODE,
                               outC => C);
 
-    fpA         <= fpPkg.vect_to_fpType(A);
-    fpB         <= fpPkg.vect_to_fpType(B);
-    fpC         <= fpPkg.vect_to_fpType(C);
-    fpExpectedC <= fpPkg.vect_to_fpType(expectedC);
+    fpA         <= fpPkg.unpack(A);
+    fpB         <= fpPkg.unpack(B);
+    fpC         <= fpPkg.unpack(C);
+    fpExpectedC <= fpPkg.unpack(expectedC);
 
     process
         file     f:     text;

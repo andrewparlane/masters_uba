@@ -55,12 +55,12 @@ architecture sim of fp_add_tb is
     signal expectedC:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal expectedCDelayed:    std_ulogic_vector((TOTAL_BITS - 1) downto 0);
 
-    -- convert the args and result to fpTypes
+    -- convert the args and result to fpUnpackeds
     -- for debugging
-    signal fpADelayed:          fpPkg.fpType;
-    signal fpBDelayed:          fpPkg.fpType;
-    signal fpC:                 fpPkg.fpType;
-    signal fpExpectedCDelayed:  fpPkg.fpType;
+    signal fpADelayed:          fpPkg.fpUnpacked;
+    signal fpBDelayed:          fpPkg.fpUnpacked;
+    signal fpC:                 fpPkg.fpUnpacked;
+    signal fpExpectedCDelayed:  fpPkg.fpUnpacked;
 
     signal clk: std_ulogic := '0';
     signal rst: std_ulogic := '0';
@@ -104,10 +104,10 @@ begin
                                   input => expectedC,
                                   output => expectedCDelayed);
 
-    fpADelayed          <= fpPkg.vect_to_fpType(ADelayed);
-    fpBDelayed          <= fpPkg.vect_to_fpType(BDelayed);
-    fpC                 <= fpPkg.vect_to_fpType(C);
-    fpExpectedCDelayed  <= fpPkg.vect_to_fpType(expectedCDelayed);
+    fpADelayed          <= fpPkg.unpack(ADelayed);
+    fpBDelayed          <= fpPkg.unpack(BDelayed);
+    fpC                 <= fpPkg.unpack(C);
+    fpExpectedCDelayed  <= fpPkg.unpack(expectedCDelayed);
 
     process
         file     f:         text;

@@ -20,19 +20,17 @@ architecture synth of fp_mult is
                          EXPONENT_BITS => EXPONENT_BITS);
 
     constant SIGNIFICAND_BITS:  natural := fpPkg.SIGNIFICAND_BITS;
-    constant MANTISSA_BITS:     natural := SIGNIFICAND_BITS + 1;
-    constant PRODUCT_BITS:      natural := MANTISSA_BITS * 2;
+    constant PRODUCT_BITS:      natural := SIGNIFICAND_BITS * 2;
 
-    signal fpA:    fpPkg.fpType;
-    signal fpB:    fpPkg.fpType;
-    signal fpC:    fpPkg.fpType;
+    signal fpA:    fpPkg.fpUnpacked;
+    signal fpB:    fpPkg.fpUnpacked;
+    signal fpC:    fpPkg.fpUnpacked;
 
 
     -- EXPONENT_BITS + 1 so we have the carry out bit
     -- we calculate both biased(e1 + e2) and biased(e1 + e2) + 1
     -- then select the correct one based on msbOfProduct
     signal newBiasedExponent:           signed((EXPONENT_BITS + 1) downto 0);
-    signal useExponentPlus1:            std_ulogic;
 
     -- The product of the two mantissas
     -- 1.significandA * 1.significandB
@@ -40,11 +38,11 @@ architecture synth of fp_mult is
     signal msbOfProduct:                std_ulogic;
 
     -- The new significand depends on the msb of the product
-    -- We use MANTISSA_BITS + 1 for the mantissaAfterRounding
+    -- We use SIGNIFICAND_BITS + 1 for the mantissaAfterRounding
     -- so that we can catch overflow
-    signal mantissaBeforeRounding:      unsigned((MANTISSA_BITS - 1) downto 0);
-    signal mantissaAfterRounding:       unsigned(MANTISSA_BITS downto 0);
-    signal finalMantissa:               unsigned((MANTISSA_BITS - 1) downto 0);
+    signal mantissaBeforeRounding:      unsigned((SIGNIFICAND_BITS - 1) downto 0);
+    signal mantissaAfterRounding:       unsigned(SIGNIFICAND_BITS downto 0);
+    signal finalMantissa:               unsigned((SIGNIFICAND_BITS - 1) downto 0);
 
     -- rounding bits
     -- r - is the MSb after the mantissa
@@ -64,12 +62,12 @@ begin
     -- Type conversions
     -----------------------------------------------------------------
 
-    -- Convert A and B to fpTypes
-    fpA <= fpPkg.vect_to_fpType(inA);
-    fpB <= fpPkg.vect_to_fpType(inB);
+    -- Convert A and B to fpUnpackeds
+    fpA <= fpPkg.unpack(inA);
+    fpB <= fpPkg.unpack(inB);
 
     -- Convert the result to a vector
-    outC <= fpPkg.fpType_to_vect(fpC);
+    outC <= fpPkg.pack(fpC);
 
     -----------------------------------------------------------------
     -- Add the exponents
@@ -90,7 +88,7 @@ begin
         -- or the MSB of the mantisaa after rounding is 1 then
         -- we need to add 1 to the sum of the exponents
         if ((msbOfProduct = '1') or
-            (mantissaAfterRounding(MANTISSA_BITS) = '1')) then
+            (mantissaAfterRounding(SIGNIFICAND_BITS) = '1')) then
             newBiasedExponent <= sumOfBiasedExponents +
                                  to_signed(1, EXPONENT_BITS + 2);
         else
@@ -109,8 +107,8 @@ begin
     -- multiply the mantissas (includes the implicit "1.")
     -- This gives us 2 bits of integer +
     -- SIGNIFICAND_BITS*2 bits of fractional
-    product <= ('1' & unsigned(fpA.significand)) *
-               ('1' & unsigned(fpB.significand));
+    product <= unsigned(fpA.significand) *
+               unsigned(fpB.significand);
 
     -- Get the MSb of the product.
     msbOfProduct <= product(PRODUCT_BITS - 1);
@@ -123,14 +121,14 @@ begin
             -- 1.xxx so we need to shift right by 1
             mantissaBeforeRounding <= product((PRODUCT_BITS - 1)
                                               downto
-                                              MANTISSA_BITS);
+                                              SIGNIFICAND_BITS);
 
             -- r is the next bit
-            r <= product(MANTISSA_BITS - 1);
+            r <= product(SIGNIFICAND_BITS - 1);
 
             -- and s is the reduction or of all lower bits
-            if (product((MANTISSA_BITS - 2) downto 0) =
-                to_unsigned(0, MANTISSA_BITS - 1)) then
+            if (product((SIGNIFICAND_BITS - 2) downto 0) =
+                to_unsigned(0, SIGNIFICAND_BITS - 1)) then
                 s <= '0';
             else
                 s <= '1';
@@ -139,17 +137,17 @@ begin
             -- The MSb is 0 so we have:
             -- 01.xxxxxx which is what we require.
             -- so just drop the msb and use the next
-            -- MANTISSA_BITS
+            -- SIGNIFICAND_BITS
             mantissaBeforeRounding <= product((PRODUCT_BITS - 2)
                                               downto
-                                              MANTISSA_BITS - 1);
+                                              SIGNIFICAND_BITS - 1);
 
             -- r is the next bit
-            r <= product(MANTISSA_BITS - 2);
+            r <= product(SIGNIFICAND_BITS - 2);
 
             -- and s is the reduction or of all lower bits
-            if (product((MANTISSA_BITS - 3) downto 0) =
-                to_unsigned(0, MANTISSA_BITS - 2)) then
+            if (product((SIGNIFICAND_BITS - 3) downto 0) =
+                to_unsigned(0, SIGNIFICAND_BITS - 2)) then
                 s <= '0';
             else
                 s <= '1';
@@ -194,13 +192,13 @@ begin
                                 (r and s);
         end if;
 
-        -- we use MANTISSA_BITS + 1
+        -- we use SIGNIFICAND_BITS + 1
         -- so we can catch overflows
         if (useMantissaPlus1 = '0') then
             mantissaAfterRounding <= '0' & mantissaBeforeRounding;
         else
             mantissaAfterRounding <= ('0' & mantissaBeforeRounding) +
-                                     to_unsigned(1, MANTISSA_BITS+1);
+                                     to_unsigned(1, SIGNIFICAND_BITS +1);
         end if;
 
         -- now if that overflowed we need to divide by two
@@ -210,10 +208,10 @@ begin
         -- max is 1.11 * 1.11 = 11.0001
         -- so the only time we overflow is when we get:
         -- 01.1111
-        if (mantissaAfterRounding(MANTISSA_BITS) = '1') then
-            finalMantissa <= mantissaAfterRounding(MANTISSA_BITS downto 1);
+        if (mantissaAfterRounding(SIGNIFICAND_BITS) = '1') then
+            finalMantissa <= mantissaAfterRounding(SIGNIFICAND_BITS downto 1);
         else
-            finalMantissa <= mantissaAfterRounding((MANTISSA_BITS - 1) downto 0);
+            finalMantissa <= mantissaAfterRounding((SIGNIFICAND_BITS - 1) downto 0);
         end if;
     end process;
 
@@ -283,9 +281,9 @@ begin
         -- the calculated one
         else
             fpC.sign <= newSign;
-            fpC.biasedExponent <= std_ulogic_vector(newBiasedExponent((EXPONENT_BITS - 1) downto 0));
-            fpC.significand <= std_ulogic_vector(finalMantissa((SIGNIFICAND_BITS - 1) downto 0));
-            fpC.representation <= fpPkg.fpRepresentation_NORMAL;
+            fpC.biasedExponent <= unsigned(newBiasedExponent((EXPONENT_BITS - 1) downto 0));
+            fpC.significand <= finalMantissa((SIGNIFICAND_BITS - 1) downto 0);
+            fpC.numType <= fpPkg.fpNumType_NORMAL;
         end if;
     end process;
 

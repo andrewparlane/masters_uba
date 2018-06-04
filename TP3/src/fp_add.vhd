@@ -22,36 +22,35 @@ architecture synth of fp_add is
                          EXPONENT_BITS => EXPONENT_BITS);
 
     constant SIGNIFICAND_BITS:  natural := fpPkg.SIGNIFICAND_BITS;
-    constant MANTISSA_BITS:     natural := SIGNIFICAND_BITS + 1;
 
     constant PIPLINE_STAGES:    natural := 7;
 
     type Pipeline1Result is record
-        fpA:    fpPkg.fpType;
-        fpB:    fpPkg.fpType;
+        fpA:    fpPkg.fpUnpacked;
+        fpB:    fpPkg.fpUnpacked;
         swap:   boolean;
     end record Pipeline1Result;
 
     type Pipeline2Result is record
-        mantissa:   unsigned((MANTISSA_BITS - 1) downto 0);
+        mantissa:   unsigned((SIGNIFICAND_BITS - 1) downto 0);
         comp2:      std_ulogic;
     end record Pipeline2Result;
 
     type Pipeline3Result is record
-        shiftedMantissa:    unsigned((MANTISSA_BITS - 1) downto 0);
+        shiftedMantissa:    unsigned((SIGNIFICAND_BITS - 1) downto 0);
         g:                  std_ulogic;
         r:                  std_ulogic;
         s:                  std_ulogic;
     end record Pipeline3Result;
 
     type Pipeline4Result is record
-        sum:                unsigned((MANTISSA_BITS - 1) downto 0);
+        sum:                unsigned((SIGNIFICAND_BITS - 1) downto 0);
         carryOut:           std_ulogic;
         comp2:              boolean;
     end record Pipeline4Result;
 
     type Pipeline5Result is record
-        normalizedSum:      unsigned((MANTISSA_BITS - 1) downto 0);
+        normalizedSum:      unsigned((SIGNIFICAND_BITS - 1) downto 0);
         -- +2 for overflow / undeflow
         biasedExponent:     signed((EXPONENT_BITS + 1) downto 0);
         shiftedRight:       boolean;
@@ -64,8 +63,8 @@ architecture synth of fp_add is
     end record Pipeline6Result;
 
     -- pipeline stage 1 internal vars
-    signal p1FpA:       fpPkg.fpType;
-    signal p1FpB:       fpPkg.fpType;
+    signal p1FpA:       fpPkg.fpUnpacked;
+    signal p1FpB:       fpPkg.fpUnpacked;
 
     type Pipeline1ResultArray is array (1 to (PIPLINE_STAGES - 1))
                               of Pipeline1Result;
@@ -102,8 +101,8 @@ begin
     -----------------------------------------------------------------
 
     -- 0) Unpack the vector inputs
-    p1FpA <= fpPkg.vect_to_fpType(inA);
-    p1FpB <= fpPkg.vect_to_fpType(inB);
+    p1FpA <= fpPkg.unpack(inA);
+    p1FpB <= fpPkg.unpack(inB);
 
     process (clk, rst)
     begin
@@ -138,10 +137,10 @@ begin
             p2Res(2).comp2 <= p1Res(1).fpA.sign xor p1Res(1).fpB.sign;
 
             if (p1Res(1).fpA.sign /= p1Res(1).fpB.sign) then
-                p2Res(2).mantissa <= unsigned(not fpPkg.get_mantissa(p1Res(1).fpB)) +
-                                     to_unsigned(1, MANTISSA_BITS);
+                p2Res(2).mantissa <= unsigned(not p1Res(1).fpB.significand) +
+                                     to_unsigned(1, SIGNIFICAND_BITS);
             else
-                p2Res(2).mantissa <= unsigned(fpPkg.get_mantissa(p1Res(1).fpB));
+                p2Res(2).mantissa <= unsigned(p1Res(1).fpB.significand);
             end if;
         end if;
     end process;
@@ -171,43 +170,43 @@ begin
 
             -- we shift mantissa right by bitsToShift
             -- which means the range is
-            -- (bitsToShift + MANTISSA_BITS - 1) downto
+            -- (bitsToShift + SIGNIFICAND_BITS - 1) downto
             -- bitsToShift.
             -- Which is made up of two parts:
             --   Upper bits - all 1s or 0s depending of comp2
             --   Lower bits - upper bits of mantissa
-            --      (MANTISSA_BITS - 1) downto bitsToShift
+            --      (SIGNIFICAND_BITS - 1) downto bitsToShift
 
-            if (bitsToShift < MANTISSA_BITS) then
+            if (bitsToShift < SIGNIFICAND_BITS) then
                 -- copy the bits over from the old result
-                p3Res(3).shiftedMantissa((MANTISSA_BITS - 1 - bitsToShift) downto 0)
-                    <= p2Res(2).mantissa((MANTISSA_BITS - 1)
+                p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1 - bitsToShift) downto 0)
+                    <= p2Res(2).mantissa((SIGNIFICAND_BITS - 1)
                                          downto bitsToShift);
 
                 -- if we aren't shifting by 0 bits then there
                 -- will be bits to shift in with 1s or 0s
                 -- depending on comp2
                 if (bitsToShift /= 0) then
-                    p3Res(3).shiftedMantissa((MANTISSA_BITS - 1) downto (MANTISSA_BITS - bitsToShift))
+                    p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1) downto (SIGNIFICAND_BITS - bitsToShift))
                         <= (others => p2Res(2).comp2);
                 end if;
             else
                 -- we shifted everything out
                 -- so just fill with 1s or 0s
-                p3Res(3).shiftedMantissa((MANTISSA_BITS - 1) downto 0)
+                p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1) downto 0)
                         <= (others => p2Res(2).comp2);
             end if;
 
             -- g is the guard bit, it's the msb that was
             -- shifted out. 3 cases:
             -- 1) bitsToShift = 0, no bits shifted out, g = 0
-            -- 2) bitsToShift > MANTISSA_BITS, bit shifted out
+            -- 2) bitsToShift > SIGNIFICAND_BITS, bit shifted out
             --    is a bit that was shifted in so a 1 or a 0
             --    depending on comp2
             -- 3) others, g = oldMantissa(bitsToShift - 1)
             if (bitsToShift = 0) then
                 p3Res(3).g <= '0';
-            elsif (bitsToShift > MANTISSA_BITS) then
+            elsif (bitsToShift > SIGNIFICAND_BITS) then
                 p3Res(3).g <= p2Res(2).comp2;
             else
                 p3Res(3).g <= p2Res(2).mantissa(bitsToShift - 1);
@@ -216,11 +215,11 @@ begin
             -- r is the rounding bit, it's the second msb that
             -- was shifted out. 3 cases:
             -- 1) bitsToShift < 2, r = 0
-            -- 2) bitsToShift > (MANTISSA_BITS + 1), r is comp2
+            -- 2) bitsToShift > (SIGNIFICAND_BITS + 1), r is comp2
             -- 3) others, r = oldMantissa(bitsToShift - 2)
             if (bitsToShift < 2) then
                 p3Res(3).r <= '0';
-            elsif (bitsToShift > (MANTISSA_BITS + 1)) then
+            elsif (bitsToShift > (SIGNIFICAND_BITS + 1)) then
                 p3Res(3).r <= p2Res(2).comp2;
             else
                 p3Res(3).r <= p2Res(2).mantissa(bitsToShift - 2);
@@ -229,15 +228,15 @@ begin
             -- s is the sticky bit, it's the reduction or of all
             -- shifted out bits after g and r. 3 cases:
             -- 1) bitsToShift < 3, s = 0
-            -- 2) bitsToShift > (MANTISSA_BITS + 2),
+            -- 2) bitsToShift > (SIGNIFICAND_BITS + 2),
             --    s = (|oldMantissa) | comp2
             -- 3) others, s = |oldMantissa((bitsToShift - 3)
             --                             downto 0)
             if (bitsToShift < 3) then
                 p3Res(3).s <= '0';
-            elsif (bitsToShift > (MANTISSA_BITS + 2)) then
+            elsif (bitsToShift > (SIGNIFICAND_BITS + 2)) then
                 p3Res(3).s <= '1' when ((unsigned(p2Res(2).mantissa) /=
-                                      to_unsigned(0, MANTISSA_BITS)) or
+                                      to_unsigned(0, SIGNIFICAND_BITS)) or
                                      p2Res(2).comp2 /= '0')
                            else '0';
             else
@@ -258,7 +257,7 @@ begin
     -----------------------------------------------------------------
     process (clk, rst)
         -- +1 for carry out
-        variable sum: unsigned(MANTISSA_BITS downto 0);
+        variable sum: unsigned(SIGNIFICAND_BITS downto 0);
     begin
         if (rst = '1') then
             -- do nothing
@@ -268,19 +267,19 @@ begin
             p3Res(4) <= p3Res(3);
 
             sum := ('0' & p3Res(3).shiftedMantissa) +
-                   ('0' & unsigned(fpPkg.get_mantissa(p1Res(3).fpA)));
+                   ('0' & p1Res(3).fpA.significand);
 
-            p4Res(4).carryOut <= sum(MANTISSA_BITS);
+            p4Res(4).carryOut <= sum(SIGNIFICAND_BITS);
 
             if ((p2Res(3).comp2 = '1') and          -- if the signs of the arguments differ
-                (sum(MANTISSA_BITS - 1) = '1') and  -- and the msb of the sum is 1
-                (sum(MANTISSA_BITS) = '0')) then    -- and there wasn't a carry out
+                (sum(SIGNIFICAND_BITS - 1) = '1') and  -- and the msb of the sum is 1
+                (sum(SIGNIFICAND_BITS) = '0')) then    -- and there wasn't a carry out
                 -- sum is negative, so get twos complement
-                p4Res(4).sum <= (not sum((MANTISSA_BITS - 1) downto 0)) +
-                                to_unsigned(1, MANTISSA_BITS);
+                p4Res(4).sum <= (not sum((SIGNIFICAND_BITS - 1) downto 0)) +
+                                to_unsigned(1, SIGNIFICAND_BITS);
                 p4Res(4).comp2 <= true;
             else
-                p4Res(4).sum <= sum((MANTISSA_BITS - 1) downto 0);
+                p4Res(4).sum <= sum((SIGNIFICAND_BITS - 1) downto 0);
                 p4Res(4).comp2 <= false;
             end if;
         end if;
@@ -311,7 +310,7 @@ begin
                 -- shift the result right by one
                 -- filling in the new upper bit with carryOut
                 p5Res(5).normalizedSum <= p4Res(4).carryOut &
-                                          p4Res(4).sum((MANTISSA_BITS - 1)
+                                          p4Res(4).sum((SIGNIFICAND_BITS - 1)
                                                        downto 1);
 
                 -- we shifted right by one -> /2
@@ -334,14 +333,14 @@ begin
 
                 if (first1 = -1) then
                     -- all bits are 0, result is 0
-                    p5Res(5).normalizedSum <= to_unsigned(0, MANTISSA_BITS);
+                    p5Res(5).normalizedSum <= to_unsigned(0, SIGNIFICAND_BITS);
                     -- exponent is 0
                     p5Res(5).biasedExponent <= to_signed(0, EXPONENT_BITS + 2);
 
                     p5Res(5).shiftedLeft <= 0;
                     p5Res(5).shiftedRight <= false;
                 else
-                    bitsToShift := MANTISSA_BITS - first1 - 1;
+                    bitsToShift := SIGNIFICAND_BITS - first1 - 1;
 
                     p5Res(5).shiftedLeft <= bitsToShift;
                     p5Res(5).shiftedRight <= false;
@@ -412,10 +411,10 @@ begin
     -- 8) Compute the sign
     -----------------------------------------------------------------
     process (clk, rst)
-        variable fpC:               fpPkg.fpType;
+        variable fpC:               fpPkg.fpUnpacked;
         variable newSign:           std_ulogic;
         variable useMantissaPlus1:  std_ulogic;
-        variable mantissa:          unsigned(MANTISSA_BITS downto 0);
+        variable mantissa:          unsigned(SIGNIFICAND_BITS downto 0);
         variable biasedExponent:    signed((EXPONENT_BITS + 1) downto 0);
     begin
         if (rst = '1') then
@@ -473,19 +472,19 @@ begin
                                     (p6Res(6).r and p6Res(6).s);
             end if;
 
-            -- we use MANTISSA_BITS + 1
+            -- we use SIGNIFICAND_BITS + 1
             -- so we can catch overflows
             if (useMantissaPlus1 = '0') then
                 mantissa := '0' & p5Res(6).normalizedSum;
             else
                 mantissa := ('0' & p5Res(6).normalizedSum) +
-                            to_unsigned(1, MANTISSA_BITS+1);
+                            to_unsigned(1, SIGNIFICAND_BITS+1);
             end if;
 
             -- check for carry out and shift right
-            if (mantissa(MANTISSA_BITS) = '1') then
+            if (mantissa(SIGNIFICAND_BITS) = '1') then
                 -- carry out, shift right by 1
-                mantissa := '0' & mantissa(MANTISSA_BITS downto 1);
+                mantissa := '0' & mantissa(SIGNIFICAND_BITS downto 1);
                 biasedExponent := p5Res(6).biasedExponent +
                                   to_signed(1, EXPONENT_BITS + 2);
             else
@@ -569,13 +568,13 @@ begin
             -- the calculated one
             else
                 fpC.sign            := newSign;
-                fpC.biasedExponent  := std_ulogic_vector(biasedExponent((EXPONENT_BITS - 1) downto 0));
-                fpC.significand     := std_ulogic_vector(mantissa((SIGNIFICAND_BITS - 1) downto 0));
-                fpC.representation  := fpPkg.fpRepresentation_NORMAL;
-            end if;
+                fpC.biasedExponent  := unsigned(biasedExponent((EXPONENT_BITS - 1) downto 0));
+                fpC.significand     := mantissa((SIGNIFICAND_BITS - 1) downto 0);
+                fpC.numType         := fpPkg.fpNumType_NORMAL;
+                end if;
 
             -- Convert the result to a vector
-            outC <= fpPkg.fpType_to_vect(fpC);
+            outC <= fpPkg.pack(fpC);
         end if;
     end process;
 

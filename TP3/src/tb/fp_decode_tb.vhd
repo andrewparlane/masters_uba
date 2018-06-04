@@ -27,10 +27,10 @@ architecture sim of fp_decode_tb is
                         "10000000001110111000010110110010");    -- -0.4650175571441650390625 * 2^-126
 
     signal idx:     natural := 0;
-    signal fp:      floatHelperPkg.fpType;
+    signal fp:      floatHelperPkg.fpUnpacked;
 begin
 
-    fp      <= floatHelperPkg.vect_to_fpType(std_ulogic_vector(num(idx)));
+    fp      <= floatHelperPkg.unpack(std_ulogic_vector(num(idx)));
 
     process
     begin
