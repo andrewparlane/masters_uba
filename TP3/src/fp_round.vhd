@@ -86,7 +86,7 @@ begin
         if (bExp < to_signed(fpPkg.EMIN, EXPONENT_BITS+2)) then
             o_sig <= (others => '0');
             o_bExp <= (others => '0');
-            o_type <= fpNumType_NORMAL;
+            o_type <= fpNumType_ZERO;
 
         -- check for overflow
         elsif (bExp > to_signed(fpPkg.EMAX, EXPONENT_BITS+2)) then
