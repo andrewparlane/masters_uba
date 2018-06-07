@@ -39,7 +39,8 @@ endif
 COMMON_LIB		= common
 
 # src files
-SRCS	= $(wildcard $(PKG_SRC_DIR)/*.vhd) \
+SRCS	= $(PKG_SRC_DIR)/fp_type_pkg.vhd \
+		  $(wildcard $(PKG_SRC_DIR)/*.vhd) \
 		  $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \

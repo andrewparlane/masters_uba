@@ -7,7 +7,7 @@ library common;
 use common.all;
 use common.type_pkg.all;
 
-use work.fp_rounding_pkg.all;
+use work.fp_type_pkg.all;
 
 entity fp_mult_tb is
     generic(TOTAL_BITS:                 natural := 32;
@@ -21,10 +21,10 @@ architecture sim of fp_mult_tb is
     component fp_mult is
         generic (TOTAL_BITS:    natural;
                  EXPONENT_BITS: natural);
-        port (inA:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              inB:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              roundingMode: in RoundingMode;
-              outC:         out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+        port (inA:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              inB:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              rm:   in RoundingMode;
+              outC: out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
     end component fp_mult;
 
     package fpPkg
@@ -51,7 +51,7 @@ begin
                                  EXPONENT_BITS => EXPONENT_BITS)
                     port map (inA => A,
                               inB => B,
-                              roundingMode => ROUNDING_MODE,
+                              rm => ROUNDING_MODE,
                               outC => C);
 
     fpA         <= fpPkg.unpack(A);

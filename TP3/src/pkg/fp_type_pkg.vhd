@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-package fp_rounding_pkg is
+package fp_type_pkg is
 
     type RoundingMode is
     (
@@ -12,4 +12,13 @@ package fp_rounding_pkg is
         RoundingMode_NEAREST
     );
 
-end package fp_rounding_pkg;
+    type fpNumType is
+    (
+        fpNumType_NORMAL,
+        fpNumType_ZERO,
+        fpNumType_DENORMAL,
+        fpNumType_NaN,
+        fpNumType_INFINITY
+    );
+
+end package fp_type_pkg;

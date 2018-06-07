@@ -7,7 +7,7 @@ library common;
 use common.all;
 use common.type_pkg.all;
 
-use work.fp_rounding_pkg.all;
+use work.fp_type_pkg.all;
 
 entity fp_add_tb is
     generic(TOTAL_BITS:                 natural := 32;
@@ -22,12 +22,12 @@ architecture sim of fp_add_tb is
     component fp_add is
         generic (TOTAL_BITS:    natural;
                  EXPONENT_BITS: natural);
-        port (clk:          in  std_ulogic;
-              rst:          in  std_ulogic;
-              inA:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              inB:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              roundingMode: in RoundingMode;
-              outC:         out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              inA:      in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              inB:      in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+              rm:       in RoundingMode;
+              outC:     out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
     end component fp_add;
 
     component delay is
@@ -80,7 +80,7 @@ begin
                               rst => rst,
                               inA => A,
                               inB => B,
-                              roundingMode => ROUNDING_MODE,
+                              rm => ROUNDING_MODE,
                               outC => C);
 
     dlyA: delay generic map (WIDTH => TOTAL_BITS,

@@ -2,20 +2,36 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.fp_rounding_pkg.all;
+use work.fp_type_pkg.all;
 
 entity fp_add is
     generic (TOTAL_BITS:    natural;
              EXPONENT_BITS: natural);
-    port (clk:          in  std_ulogic;
-          rst:          in  std_ulogic;
-          inA:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-          inB:          in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-          roundingMode: in RoundingMode;
-          outC:         out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+    port (clk:  in  std_ulogic;
+          rst:  in  std_ulogic;
+          inA:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+          inB:  in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
+          rm:   in RoundingMode;
+          outC: out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
 end entity fp_add;
 
 architecture synth of fp_add is
+
+    component fp_round is
+        generic (TOTAL_BITS:        natural;
+                 EXPONENT_BITS:     natural;
+                 SIGNIFICAND_BITS:  natural);
+        port (i_sig:    in  unsigned((SIGNIFICAND_BITS - 1) downto 0);
+              i_bExp:   in  signed((EXPONENT_BITS + 1) downto 0);
+              i_sign:   in  std_ulogic;
+              i_r:      in  std_ulogic;
+              i_s:      in  std_ulogic;
+              i_rm:     in  RoundingMode;
+              o_sig:    out unsigned((SIGNIFICAND_BITS - 1) downto 0);
+              o_bExp:   out unsigned((EXPONENT_BITS - 1) downto 0);
+              o_type:   out fpNumType);
+    end component fp_round;
+
     package fpPkg
             is new work.fp_helper_pkg
             generic map (TOTAL_BITS => TOTAL_BITS,
@@ -32,12 +48,12 @@ architecture synth of fp_add is
     end record Pipeline1Result;
 
     type Pipeline2Result is record
-        mantissa:   unsigned((SIGNIFICAND_BITS - 1) downto 0);
-        comp2:      std_ulogic;
+        significand:    unsigned((SIGNIFICAND_BITS - 1) downto 0);
+        comp2:          std_ulogic;
     end record Pipeline2Result;
 
     type Pipeline3Result is record
-        shiftedMantissa:    unsigned((SIGNIFICAND_BITS - 1) downto 0);
+        shiftedSignificand: unsigned((SIGNIFICAND_BITS - 1) downto 0);
         g:                  std_ulogic;
         r:                  std_ulogic;
         s:                  std_ulogic;
@@ -65,6 +81,12 @@ architecture synth of fp_add is
     -- pipeline stage 1 internal vars
     signal p1FpA:       fpPkg.fpUnpacked;
     signal p1FpB:       fpPkg.fpUnpacked;
+
+    -- pipeline stage 7 internal vars
+    signal p7Sign:          std_ulogic;
+    signal p7Sig:           unsigned((SIGNIFICAND_BITS - 1) downto 0);
+    signal p7BExp:          unsigned((EXPONENT_BITS - 1) downto 0);
+    signal p7ResultType:    fpNumType;
 
     type Pipeline1ResultArray is array (1 to (PIPLINE_STAGES - 1))
                               of Pipeline1Result;
@@ -128,19 +150,26 @@ begin
     --      b.significand = twosComplement(b.significand)
     -----------------------------------------------------------------
     process (clk, rst)
+        variable comp2: boolean;
     begin
         if (rst = '1') then
             -- do nothing
         elsif (rising_edge(clk)) then
             p1Res(2) <= p1Res(1);
 
-            p2Res(2).comp2 <= p1Res(1).fpA.sign xor p1Res(1).fpB.sign;
+            -- if fpB is zero then just say the sign is the same
+            -- as fpA, since you can have + or - zero
+            comp2 := (((p1Res(1).fpA.sign xor
+                        p1Res(1).fpB.sign) = '1') and
+                     (not fpPkg.is_zero(p1Res(1).fpB)));
 
-            if (p1Res(1).fpA.sign /= p1Res(1).fpB.sign) then
-                p2Res(2).mantissa <= unsigned(not p1Res(1).fpB.significand) +
-                                     to_unsigned(1, SIGNIFICAND_BITS);
+            p2Res(2).comp2 <= '1' when comp2 else '0';
+
+            if (comp2) then
+                p2Res(2).significand <= unsigned(not p1Res(1).fpB.significand) +
+                                        to_unsigned(1, SIGNIFICAND_BITS);
             else
-                p2Res(2).mantissa <= unsigned(p1Res(1).fpB.significand);
+                p2Res(2).significand <= unsigned(p1Res(1).fpB.significand);
             end if;
         end if;
     end process;
@@ -148,7 +177,7 @@ begin
     -----------------------------------------------------------------
     -- Pipeline stage 3
     -----------------------------------------------------------------
-    -- 3) shift b.mantissa right by a.exp - b.exp places
+    -- 3) shift b.significand right by a.exp - b.exp places
     --      shifting in 1s if comp2.
     --      Of the bits shifted out:
     --          g - guard bit, most significant bit
@@ -168,32 +197,32 @@ begin
             bitsToShift := to_integer(unsigned(p1Res(2).fpA.biasedExponent) -
                             unsigned(p1Res(2).fpB.biasedExponent));
 
-            -- we shift mantissa right by bitsToShift
+            -- we shift significand right by bitsToShift
             -- which means the range is
             -- (bitsToShift + SIGNIFICAND_BITS - 1) downto
             -- bitsToShift.
             -- Which is made up of two parts:
             --   Upper bits - all 1s or 0s depending of comp2
-            --   Lower bits - upper bits of mantissa
+            --   Lower bits - upper bits of significand
             --      (SIGNIFICAND_BITS - 1) downto bitsToShift
 
             if (bitsToShift < SIGNIFICAND_BITS) then
                 -- copy the bits over from the old result
-                p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1 - bitsToShift) downto 0)
-                    <= p2Res(2).mantissa((SIGNIFICAND_BITS - 1)
-                                         downto bitsToShift);
+                p3Res(3).shiftedSignificand((SIGNIFICAND_BITS - 1 - bitsToShift) downto 0)
+                    <= p2Res(2).significand((SIGNIFICAND_BITS - 1)
+                                            downto bitsToShift);
 
                 -- if we aren't shifting by 0 bits then there
                 -- will be bits to shift in with 1s or 0s
                 -- depending on comp2
                 if (bitsToShift /= 0) then
-                    p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1) downto (SIGNIFICAND_BITS - bitsToShift))
+                    p3Res(3).shiftedSignificand((SIGNIFICAND_BITS - 1) downto (SIGNIFICAND_BITS - bitsToShift))
                         <= (others => p2Res(2).comp2);
                 end if;
             else
                 -- we shifted everything out
                 -- so just fill with 1s or 0s
-                p3Res(3).shiftedMantissa((SIGNIFICAND_BITS - 1) downto 0)
+                p3Res(3).shiftedSignificand((SIGNIFICAND_BITS - 1) downto 0)
                         <= (others => p2Res(2).comp2);
             end if;
 
@@ -203,47 +232,47 @@ begin
             -- 2) bitsToShift > SIGNIFICAND_BITS, bit shifted out
             --    is a bit that was shifted in so a 1 or a 0
             --    depending on comp2
-            -- 3) others, g = oldMantissa(bitsToShift - 1)
+            -- 3) others, g = oldSignificand(bitsToShift - 1)
             if (bitsToShift = 0) then
                 p3Res(3).g <= '0';
             elsif (bitsToShift > SIGNIFICAND_BITS) then
                 p3Res(3).g <= p2Res(2).comp2;
             else
-                p3Res(3).g <= p2Res(2).mantissa(bitsToShift - 1);
+                p3Res(3).g <= p2Res(2).significand(bitsToShift - 1);
             end if;
 
             -- r is the rounding bit, it's the second msb that
             -- was shifted out. 3 cases:
             -- 1) bitsToShift < 2, r = 0
             -- 2) bitsToShift > (SIGNIFICAND_BITS + 1), r is comp2
-            -- 3) others, r = oldMantissa(bitsToShift - 2)
+            -- 3) others, r = oldSignificand(bitsToShift - 2)
             if (bitsToShift < 2) then
                 p3Res(3).r <= '0';
             elsif (bitsToShift > (SIGNIFICAND_BITS + 1)) then
                 p3Res(3).r <= p2Res(2).comp2;
             else
-                p3Res(3).r <= p2Res(2).mantissa(bitsToShift - 2);
+                p3Res(3).r <= p2Res(2).significand(bitsToShift - 2);
             end if;
 
             -- s is the sticky bit, it's the reduction or of all
             -- shifted out bits after g and r. 3 cases:
             -- 1) bitsToShift < 3, s = 0
             -- 2) bitsToShift > (SIGNIFICAND_BITS + 2),
-            --    s = (|oldMantissa) | comp2
-            -- 3) others, s = |oldMantissa((bitsToShift - 3)
+            --    s = (|oldSignificand) | comp2
+            -- 3) others, s = |oldSignificand((bitsToShift - 3)
             --                             downto 0)
             if (bitsToShift < 3) then
                 p3Res(3).s <= '0';
             elsif (bitsToShift > (SIGNIFICAND_BITS + 2)) then
-                p3Res(3).s <= '1' when ((unsigned(p2Res(2).mantissa) /=
+                p3Res(3).s <= '1' when ((unsigned(p2Res(2).significand) /=
                                       to_unsigned(0, SIGNIFICAND_BITS)) or
                                      p2Res(2).comp2 /= '0')
-                           else '0';
+                              else '0';
             else
-                p3Res(3).s <= '1' when (to_integer(unsigned(p2Res(2).mantissa
-                                                ((bitsToShift - 3)
-                                                downto 0))) /= 0)
-                           else '0';
+                p3Res(3).s <= '1' when (to_integer(unsigned(p2Res(2).significand
+                                                            ((bitsToShift - 3)
+                                                             downto 0))) /= 0)
+                              else '0';
             end if;
         end if;
     end process;
@@ -251,7 +280,7 @@ begin
     -----------------------------------------------------------------
     -- Pipeline stage 4
     -----------------------------------------------------------------
-    -- 4) Compute the sum fpA.mantissa + fpB.mantissa including
+    -- 4) Compute the sum fpA.significand + fpB.significand including
     --    carray out. If comp2 and msb of sum is 1 and carray out
     --    is 0, then S = twosComplement(S)
     -----------------------------------------------------------------
@@ -266,7 +295,7 @@ begin
             p2Res(4) <= p2Res(3);
             p3Res(4) <= p3Res(3);
 
-            sum := ('0' & p3Res(3).shiftedMantissa) +
+            sum := ('0' & p3Res(3).shiftedSignificand) +
                    ('0' & p1Res(3).fpA.significand);
 
             p4Res(4).carryOut <= sum(SIGNIFICAND_BITS);
@@ -410,168 +439,102 @@ begin
     -- 7) Rounding
     -- 8) Compute the sign
     -----------------------------------------------------------------
+
+    -- compute the sign
+    process (all)
+    begin
+        if (p2Res(6).comp2 = '0') then
+            -- the signs of A and B are the same
+            -- that's our sign
+            p7Sign <= p1Res(6).fpA.sign;
+        elsif (p1Res(6).swap) then
+            -- If we swapped the arguments, then the
+            -- sign is the sign of B, except we stored the
+            -- swapped arguments, so use sign of A
+            p7Sign <= p1Res(6).fpA.sign;
+        elsif (p4Res(6).comp2) then
+            -- If we complemented the result in step 4
+            -- the the sign is the sign of B
+            p7Sign <= p1Res(6).fpB.sign;
+        else
+            -- otherwise we are the sign of A
+            p7Sign <= p1Res(6).fpA.sign;
+        end if;
+    end process;
+
+    fpRound: fp_round generic map (TOTAL_BITS       => TOTAL_BITS,
+                                   EXPONENT_BITS    => EXPONENT_BITS,
+                                   SIGNIFICAND_BITS => SIGNIFICAND_BITS)
+                      port map (i_sig   => p5Res(6).normalizedSum,
+                                i_bExp  => p5Res(6).biasedExponent,
+                                i_sign  => p7Sign,
+                                i_r     => p6Res(6).r,
+                                i_s     => p6Res(6).s,
+                                i_rm    => rm,
+                                o_sig   => p7Sig,
+                                o_bExp  => p7BExp,
+                                o_type  => p7ResultType);
+
     process (clk, rst)
-        variable fpC:               fpPkg.fpUnpacked;
-        variable newSign:           std_ulogic;
-        variable useMantissaPlus1:  std_ulogic;
-        variable mantissa:          unsigned(SIGNIFICAND_BITS downto 0);
-        variable biasedExponent:    signed((EXPONENT_BITS + 1) downto 0);
+        variable fpC:                   fpPkg.fpUnpacked;
     begin
         if (rst = '1') then
             -- do nothing
         elsif (rising_edge(clk)) then
-            -- compute the sign
-            if (p2Res(6).comp2 = '0') then
-                -- the signs of A and B are the same
-                -- that's our sign
-                newSign := p1Res(6).fpA.sign;
-            elsif (p1Res(6).swap) then
-                -- If we swapped the arguments, then the
-                -- sign is the sign of B, except we stored the
-                -- swapped arguments, so use sign of A
-                newSign := p1Res(6).fpA.sign;
-            elsif (p4Res(6).comp2) then
-                -- If we complemented the result in step 4
-                -- the the sign is the sign of B
-                newSign := p1Res(6).fpB.sign;
-            else
-                -- otherwise we are the sign of A
-                newSign := p1Res(6).fpA.sign;
-            end if;
-
-            -- Rounding, 4 cases:
-            -- 1) round towards negative infinity
-            --      -11.1 -> -12.0, 11.9 -> 11.0
-            -- 2) round towards positive infinity
-            --      -11.9 -> -11.0, 11.1 -> 12.0
-            -- 3) round towards 0
-            --      -11.9 -> -11.0, 11.9 -> 11.0
-            -- 4) round to nearest (ties to even)
-            --      -11.9 -> -12.0, -11.1 -> -11.0
-            --       11.9 ->  12.0,  11.1 ->  11.0
-            --       11.5 ->  12.0,  12.5 ->  12.0
-
-
-            if (roundingMode = RoundingMode_NEG_INF) then
-                -- Only add one if we are negative and (r or s)
-                useMantissaPlus1 := newSign and
-                                    (p6Res(6).r or p6Res(6).s);
-            elsif (roundingMode = RoundingMode_POS_INF) then
-                -- Only add one if we are positive and (r or s)
-                useMantissaPlus1 := (not newSign) and
-                                    (p6Res(6).r or p6Res(6).s);
-            elsif (roundingMode = RoundingMode_0) then
-                -- never add one
-                useMantissaPlus1 := '0';
-            else --if (roundingMode = RoundingMode_NEAREST) then
-                -- we add one if we are greater than halfway (r and s)
-                -- in the half way case (r and (not s)) we tie to even
-                -- so add 1 if the lsb of the mantissa is 1 (odd)
-                -- so: (r and s) or (r and (not s) and mantissa(0))
-                useMantissaPlus1 := (p6Res(6).r and p5Res(6).normalizedSum(0)) or
-                                    (p6Res(6).r and p6Res(6).s);
-            end if;
-
-            -- we use SIGNIFICAND_BITS + 1
-            -- so we can catch overflows
-            if (useMantissaPlus1 = '0') then
-                mantissa := '0' & p5Res(6).normalizedSum;
-            else
-                mantissa := ('0' & p5Res(6).normalizedSum) +
-                            to_unsigned(1, SIGNIFICAND_BITS+1);
-            end if;
-
-            -- check for carry out and shift right
-            if (mantissa(SIGNIFICAND_BITS) = '1') then
-                -- carry out, shift right by 1
-                mantissa := '0' & mantissa(SIGNIFICAND_BITS downto 1);
-                biasedExponent := p5Res(6).biasedExponent +
-                                  to_signed(1, EXPONENT_BITS + 2);
-            else
-                -- no carry out, so just set the biased exponent
-                biasedExponent := p5Res(6).biasedExponent;
-            end if;
 
             -- result
             -- If either of the arguments is NaN
             -- the output should be NaN
             if (fpPkg.is_NaN(p1Res(6).fpA) or
                 fpPkg.is_NaN(p1Res(6).fpB)) then
-                fpC := fpPkg.set_NaN(newSign);
+                fpC := fpPkg.set_NaN(p7Sign);
 
             -- If both of the inputs are zero with
             -- opposite signs then the result is +/- 0
-            -- depending on the rounding method
+            -- depending on the rounding method.
+            -- round towards neg_inf uses -0
+            -- the rest use +0
             elsif (fpPkg.is_zero(p1Res(6).fpA) and
                    fpPkg.is_zero(p1Res(6).fpB) and
-                   p2Res(6).comp2 = '1') then
-                if (roundingMode = RoundingMode_0) then
-                    fpC := fpPkg.set_zero('0');
-                elsif (roundingMode = RoundingMode_NEG_INF) then
+                   p1Res(6).fpA.sign /= p1Res(6).fpB.sign) then
+                if (rm = RoundingMode_NEG_INF) then
                     fpC := fpPkg.set_zero('1');
-                elsif (roundingMode = RoundingMode_POS_INF) then
-                    fpC := fpPkg.set_zero('0');
                 else
                     fpC := fpPkg.set_zero('0');
                 end if;
-
-
 
             -- If both of the inputs are infinity with
             -- opposite signs then the result is NaN
             elsif (fpPkg.is_infinity(p1Res(6).fpA) and
                    fpPkg.is_infinity(p1Res(6).fpB) and
                    p2Res(6).comp2 = '1') then
-                fpC := fpPkg.set_NaN(newSign);
+                fpC := fpPkg.set_NaN(p7Sign);
 
             -- If either of the inputs is infinity then the
             -- result is infinity
             elsif (fpPkg.is_infinity(p1Res(6).fpA) or
                    fpPkg.is_infinity(p1Res(6).fpB)) then
-                fpC := fpPkg.set_infinity(newSign);
+                fpC := fpPkg.set_infinity(p7Sign);
 
             -- if one of the operands is 0 the result is the other
-            elsif (fpPkg.is_zero(p1Res(6).fpA)) then
-                fpC := p1Res(6).fpB;
-            elsif (fpPkg.is_zero(p1Res(6).fpB)) then
-                fpC := p1Res(6).fpA;
-
-            -- if we overflowed then we are either infinity
-            -- or max representatable depending on rounding mode
-            elsif (to_integer(biasedExponent) > fpPkg.EMAX) then
-                -- If we round away from (newSign) inifinity,
-                -- then the value saturates at the max
-                -- representatable value = 1.111...111 * 2^EMAX
-                -- if we round towards (newSign) infinity then
-                -- the value is infinity
-                -- if we round to nearest (ties even) then
-                -- the max representatable number is odd (ends in 1)
-                -- so we round to infinity
-                if (roundingMode = RoundingMode_0) then
-                    fpC := fpPkg.set_max(newSign);
-                elsif ((roundingMode = RoundingMode_NEG_INF) and
-                       (newSign = '0')) then
-                    fpC := fpPkg.set_max(newSign);
-                elsif ((roundingMode = RoundingMode_POS_INF) and
-                       (newSign = '1')) then
-                    fpC := fpPkg.set_max(newSign);
-                else
-                    fpC := fpPkg.set_infinity(newSign);
-                end if;
+            --elsif (fpPkg.is_zero(p1Res(6).fpA)) then
+            --    fpC := p1Res(6).fpB;
+            --elsif (fpPkg.is_zero(p1Res(6).fpB)) then
+            --    fpC := p1Res(6).fpA;
 
             -- If we underflowed then the result is zero.
             -- Note: We don't handle denormals yet
-            elsif (biasedExponent < fpPkg.EMIN) then
-                fpC := fpPkg.set_zero(newSign);
+            -- elsif (biasedExponent < fpPkg.EMIN) then
+            --     fpC := fpPkg.set_zero(p7Sign);
 
             -- Finally in all others cases the result is
             -- the calculated one
             else
-                fpC.sign            := newSign;
-                fpC.biasedExponent  := unsigned(biasedExponent((EXPONENT_BITS - 1) downto 0));
-                fpC.significand     := mantissa((SIGNIFICAND_BITS - 1) downto 0);
-                fpC.numType         := fpPkg.fpNumType_NORMAL;
-                end if;
+                fpC.sign            := p7Sign;
+                fpC.biasedExponent  := p7BExp;
+                fpC.significand     := p7Sig;
+                fpC.numType         := p7ResultType;
+            end if;
 
             -- Convert the result to a vector
             outC <= fpPkg.pack(fpC);

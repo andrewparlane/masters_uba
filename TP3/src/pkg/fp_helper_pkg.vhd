@@ -2,6 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use work.fp_type_pkg.all;
+
 -- A floating point number is represented in a vector as:
 -- sign 1 bit, 0 = +ve, 1 = -ve.
 -- exponent E bits
@@ -31,15 +33,6 @@ package fp_helper_pkg is
 
     -- BIAS = 011..11
     constant BIAS:  natural := (2**(EXPONENT_BITS - 1)) - 1;
-
-    type fpNumType is
-    (
-        fpNumType_NORMAL,
-        fpNumType_ZERO,
-        fpNumType_DENORMAL,
-        fpNumType_NaN,
-        fpNumType_INFINITY
-    );
 
     type fpUnpacked is record
         sign:           std_ulogic;
@@ -108,7 +101,7 @@ package body fp_helper_pkg is
                 numType := fpNumType_ZERO;
                 -- store the exponent as 0
                 -- biased exponent = BIAS
-                biasedExponent := to_unsigned(BIAS, EXPONENT_BITS);
+                --biasedExponent := to_unsigned(BIAS, EXPONENT_BITS);
             else
                 numType := fpNumType_DENORMAL;
                 -- store the biased exponent as EMIN
