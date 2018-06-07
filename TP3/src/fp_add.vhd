@@ -516,17 +516,6 @@ begin
                    fpPkg.is_infinity(p1Res(6).fpB)) then
                 fpC := fpPkg.set_infinity(p7Sign);
 
-            -- if one of the operands is 0 the result is the other
-            --elsif (fpPkg.is_zero(p1Res(6).fpA)) then
-            --    fpC := p1Res(6).fpB;
-            --elsif (fpPkg.is_zero(p1Res(6).fpB)) then
-            --    fpC := p1Res(6).fpA;
-
-            -- If we underflowed then the result is zero.
-            -- Note: We don't handle denormals yet
-            -- elsif (biasedExponent < fpPkg.EMIN) then
-            --     fpC := fpPkg.set_zero(p7Sign);
-
             -- Finally in all others cases the result is
             -- the calculated one
             else
