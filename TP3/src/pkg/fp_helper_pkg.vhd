@@ -207,8 +207,12 @@ package body fp_helper_pkg is
 
     function get_unbiased_exponent(fp: fpUnpacked) return signed is
     begin
-        return signed(get_packed_biased_exponent(fp)) -
-               to_signed(BIAS, EXPONENT_BITS);
+        if (fp.numType = fpNumType_ZERO) then
+            return to_signed(0, EXPONENT_BITS);
+        else
+            return signed(fp.biasedExponent) -
+                   to_signed(BIAS, EXPONENT_BITS);
+        end if;
     end function get_unbiased_exponent;
 
     function significand_to_string(fp: fpUnpacked) return string is
