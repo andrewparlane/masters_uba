@@ -208,22 +208,22 @@ FP_SUM_C_TESTS = fp_sum_c_round_zero \
 
 fp_sum_c_round_zero: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -a -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
 
 fp_sum_c_round_down: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -a -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
 
 fp_sum_c_round_up: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -a -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
 
 fp_sum_c_round_nearest: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -a -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -a -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUM_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
 
 fp_sum_c_all: $(FP_SUM_C_TESTS)
@@ -270,22 +270,22 @@ FP_SUB_C_TESTS = fp_sub_c_round_zero \
 
 fp_sub_c_round_zero: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -s -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false)
 
 fp_sub_c_round_down: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -s -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false)
 
 fp_sub_c_round_up: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -s -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false)
 
 fp_sub_c_round_nearest: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen --no_denormal -s -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -s -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_SUB_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false)
 
 fp_sub_c_all: $(FP_SUB_C_TESTS)

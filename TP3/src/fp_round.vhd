@@ -88,6 +88,21 @@ begin
             o_bExp <= (others => '0');
             o_type <= fpNumType_ZERO;
 
+        -- check for gradual underflow
+        elsif ((bExp = to_signed(fpPkg.EMIN, EXPONENT_BITS+2)) and
+               (sig(SIGNIFICAND_BITS-1) = '0')) then
+            if (sig = to_unsigned(0, SIGNIFICAND_BITS+1)) then
+                -- nothing left, so actual underflow
+                o_sig <= (others => '0');
+                o_bExp <= (others => '0');
+                o_type <= fpNumType_ZERO;
+            else
+                -- denormal
+                o_sig <= sig((SIGNIFICAND_BITS-1) downto 0);
+                o_bExp <= (others => '0');
+                o_type <= fpNumType_DENORMAL;
+            end if;
+
         -- check for overflow
         elsif (bExp > to_signed(fpPkg.EMAX, EXPONENT_BITS+2)) then
             -- If we round away from (i_sign) inifinity,

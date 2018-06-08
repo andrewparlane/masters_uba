@@ -127,13 +127,18 @@ begin
     p1FpB <= fpPkg.unpack(inB);
 
     process (clk, rst)
+        variable swap: boolean;
     begin
         if (rst = '1') then
             -- do nothing
         elsif (rising_edge(clk)) then
-            p1Res(1).swap  <= (p1FpA.biasedExponent <
-                               p1FpB.biasedExponent);
-            if (p1FpA.biasedExponent < p1FpB.biasedExponent) then
+            -- swap if A is less than B (don't include the sign)
+            swap := (inA((TOTAL_BITS-2) downto 0) <
+                     inB((TOTAL_BITS-2) downto 0));
+
+            p1Res(1).swap <= swap;
+
+            if (swap) then
                 p1Res(1).fpA <= p1FpB;
                 p1Res(1).fpB <= p1FpA;
             else
@@ -321,8 +326,8 @@ begin
     --    and adjust the exponent
     -----------------------------------------------------------------
     process (clk, rst)
-        variable first1:        integer := -1;
         variable bitsToShift:   integer;
+        variable maxShift:      integer;
     begin
         if (rst = '1') then
             -- do nothing
@@ -352,15 +357,20 @@ begin
             else
 
                 -- shift left until normalized (ie. msb is 1)
-                first1 := -1;
-                for i in p4Res(4).sum'range loop
-                    if (p4Res(4).sum(i) = '1') then
-                        first1 := i;
+                -- or we would underflow (biasedExponent = EMIN)
+                maxShift := to_integer(signed("00" & p1Res(4).fpA.biasedExponent)) -
+                                       fpPkg.EMIN;
+
+                bitsToShift := -1;
+                for i in 0 to (SIGNIFICAND_BITS - 1) loop
+                    if ((p4Res(4).sum(SIGNIFICAND_BITS - i - 1) = '1') or
+                        (i = maxShift)) then
+                        bitsToShift := i;
                         exit;
                     end if;
                 end loop;
 
-                if (first1 = -1) then
+                if (bitsToShift = -1) then
                     -- all bits are 0, result is 0
                     p5Res(5).normalizedSum <= to_unsigned(0, SIGNIFICAND_BITS);
                     -- exponent is 0
@@ -369,8 +379,6 @@ begin
                     p5Res(5).shiftedLeft <= 0;
                     p5Res(5).shiftedRight <= false;
                 else
-                    bitsToShift := SIGNIFICAND_BITS - first1 - 1;
-
                     p5Res(5).shiftedLeft <= bitsToShift;
                     p5Res(5).shiftedRight <= false;
 
@@ -378,11 +386,11 @@ begin
                         p5Res(5).normalizedSum <= p4Res(4).sum;
                     elsif (bitsToShift = 1) then
                         -- shifting 1 bit, just shift in g
-                        p5Res(5).normalizedSum <= p4Res(4).sum(first1 downto 0) &
+                        p5Res(5).normalizedSum <= p4Res(4).sum((SIGNIFICAND_BITS - 2) downto 0) &
                                                   p3Res(4).g;
                     else
                         -- shifting more than 1 bit, shift in g then 0s
-                        p5Res(5).normalizedSum <= p4Res(4).sum(first1 downto 0) &
+                        p5Res(5).normalizedSum <= p4Res(4).sum((SIGNIFICAND_BITS - bitsToShift -1) downto 0) &
                                                   p3Res(4).g &
                                                   to_unsigned(0, (bitsToShift - 1));
                     end if;
