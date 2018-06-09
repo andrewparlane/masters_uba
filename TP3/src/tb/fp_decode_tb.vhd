@@ -11,8 +11,8 @@ end entity fp_decode_tb;
 architecture sim of fp_decode_tb is
     package floatHelperPkg
             is new work.fp_helper_pkg
-            generic map (TOTAL_BITS => 32,
-                         EXPONENT_BITS => 8);
+            generic map (TBITS => 32,
+                         EBITS => 8);
 
     constant num:   unsignedArray(0 to 9)(31 downto 0)
                     := ("00111110001001010101101000011001",     -- +1.29181206226348876953125 * 2^-3

@@ -14,20 +14,21 @@ entity fp_add_tb is
             EXPONENT_BITS:              natural := 8;
             TEST_FILE:                  string  := "test_files/suma/test_sum_float_32_8.txt";
             ROUNDING_MODE:              RoundingMode;
+            DENORMALS:                  boolean;
             SUBTRACT:                   boolean := false;
             NO_ASSERT_ON_ZERO_NEG_ZERO: boolean := false);
 end entity fp_add_tb;
 
 architecture sim of fp_add_tb is
     component fp_add is
-        generic (TOTAL_BITS:    natural;
-                 EXPONENT_BITS: natural);
-        port (clk:      in  std_ulogic;
-              rst:      in  std_ulogic;
-              inA:      in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              inB:      in  std_ulogic_vector((TOTAL_BITS - 1) downto 0);
-              rm:       in RoundingMode;
-              outC:     out std_ulogic_vector((TOTAL_BITS - 1) downto 0));
+        generic (TBITS:     natural;
+                 EBITS:     natural;
+                 DENORMALS: boolean);
+        port (i_clk:    in  std_ulogic;
+              i_a:      in  std_ulogic_vector((TBITS - 1) downto 0);
+              i_b:      in  std_ulogic_vector((TBITS - 1) downto 0);
+              i_rm:     in  RoundingMode;
+              o_res:    out std_ulogic_vector((TBITS - 1) downto 0));
     end component fp_add;
 
     component delay is
@@ -40,12 +41,12 @@ architecture sim of fp_add_tb is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
-    constant PIPELINE_STAGES:   natural := 7;
+    constant PIPELINE_STAGES:   natural := 6;
 
     package fpPkg
             is new work.fp_helper_pkg
-            generic map (TOTAL_BITS => TOTAL_BITS,
-                         EXPONENT_BITS => EXPONENT_BITS);
+            generic map (TBITS => TOTAL_BITS,
+                         EBITS => EXPONENT_BITS);
 
     signal A:                   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal B:                   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
@@ -74,34 +75,34 @@ begin
 
     clk <= not clk after (CLK_PERIOD/2);
 
-    dut: fp_add     generic map (TOTAL_BITS => TOTAL_BITS,
-                                 EXPONENT_BITS => EXPONENT_BITS)
-                    port map (clk => clk,
-                              rst => rst,
-                              inA => A,
-                              inB => B,
-                              rm => ROUNDING_MODE,
-                              outC => C);
+    dut: fp_add     generic map (TBITS      => TOTAL_BITS,
+                                 EBITS      => EXPONENT_BITS,
+                                 DENORMALS  => DENORMALS)
+                    port map (i_clk => clk,
+                              i_a   => A,
+                              i_b   => B,
+                              i_rm  => ROUNDING_MODE,
+                              o_res => C);
 
     dlyA: delay generic map (WIDTH => TOTAL_BITS,
                              DELAY => PIPELINE_STAGES)
-                port map (clk => clk,
-                          rst => rst,
-                          input => A,
+                port map (clk    => clk,
+                          rst    => rst,
+                          input  => A,
                           output => ADelayed);
 
     dlyB: delay generic map (WIDTH => TOTAL_BITS,
                              DELAY => PIPELINE_STAGES)
-                port map (clk => clk,
-                          rst => rst,
-                          input => B,
+                port map (clk    => clk,
+                          rst    => rst,
+                          input  => B,
                           output => BDelayed);
 
     dlyExpectedC: delay generic map (WIDTH => TOTAL_BITS,
                                      DELAY => PIPELINE_STAGES)
-                        port map (clk => clk,
-                                  rst => rst,
-                                  input => expectedC,
+                        port map (clk    => clk,
+                                  rst    => rst,
+                                  input  => expectedC,
                                   output => expectedCDelayed);
 
     fpADelayed          <= fpPkg.unpack(ADelayed);
