@@ -46,6 +46,7 @@ architecture synth of fp_mult is
     -- we calculate both biased(e1 + e2) and biased(e1 + e2) + 1
     -- then select the correct one based on msbOfProduct
     signal newBiasedExponent:           signed((EXPONENT_BITS + 1) downto 0);
+    signal bExpBeforeRounding:          signed((EXPONENT_BITS + 1) downto 0);
     signal finalBiasedExponent:         unsigned((EXPONENT_BITS - 1) downto 0);
 
     -- The product of the two significands
@@ -88,28 +89,9 @@ begin
     -----------------------------------------------------------------
     -- Add the exponents
     -----------------------------------------------------------------
-    process (all)
-        -- biased(e1 + e2) = biased(e1) + biased(e2) - BIAS
-        -- prepend 00 to all arguments to catch
-        -- overflows and underflows.
-        --   newBiasedExponent < EMIN -> underflow
-        --   newBiasedExponent > EMAX -> overflow
-        variable sumOfBiasedExponents: signed((EXPONENT_BITS + 1) downto 0);
-    begin
-        sumOfBiasedExponents := (("00" & signed(fpA.biasedExponent)) +
-                                 ("00" & signed(fpB.biasedExponent))) -
-                                (to_signed(fpPkg.BIAS, EXPONENT_BITS + 2));
-
-        -- If the MSb of the product of the significands is 1
-        -- or the MSb of the significand after rounding is 1 then
-        -- we need to add 1 to the sum of the exponents
-        if (msbOfProduct = '1') then
-            newBiasedExponent <= sumOfBiasedExponents +
-                                 to_signed(1, EXPONENT_BITS + 2);
-        else
-            newBiasedExponent <= sumOfBiasedExponents;
-        end if;
-    end process;
+    newBiasedExponent <= (("00" & signed(fpA.biasedExponent)) +
+                          ("00" & signed(fpB.biasedExponent))) -
+                         (to_signed(fpPkg.BIAS, EXPONENT_BITS + 2));
 
     -----------------------------------------------------------------
     -- Multiply the significands
@@ -125,14 +107,63 @@ begin
     msbOfProduct <= product(PRODUCT_BITS - 1);
 
     process (all)
+        variable extendedProduct:   unsigned((PRODUCT_BITS + SIGNIFICAND_BITS) downto 0);
+        variable bitsToShift:       integer;
+        variable maxShift:          integer;
     begin
-        if (msbOfProduct = '1') then
+        if (to_integer(newBiasedExponent) < fpPkg.EMIN) then
+            -- shift right until we get EMIN
+            bitsToShift := fpPkg.EMIN - to_integer(newBiasedExponent);
+
+            if (bitsToShift > SIGNIFICAND_BITS) then
+                significandBeforeRounding <= to_unsigned(0, SIGNIFICAND_BITS);
+                r <= product(PRODUCT_BITS-1)
+                     when (bitsToShift = (SIGNIFICAND_BITS+1))
+                     else '0';
+                s <= '1' when (product /= to_unsigned(0, PRODUCT_BITS))
+                     else '0';
+            else
+                if (bitsToShift = 0) then
+                    significandBeforeRounding <= product((PRODUCT_BITS-1)
+                                                         downto
+                                                         (PRODUCT_BITS -
+                                                          SIGNIFICAND_BITS - 1));
+                else
+                    significandBeforeRounding <= to_unsigned(0, bitsToShift-1) &
+                                                 product((PRODUCT_BITS-1)
+                                                         downto
+                                                         (PRODUCT_BITS +
+                                                          bitsToShift -
+                                                          SIGNIFICAND_BITS - 1));
+                end if;
+                r <= product(PRODUCT_BITS +
+                             bitsToShift -
+                             SIGNIFICAND_BITS - 2);
+                if (product((PRODUCT_BITS +
+                             bitsToShift -
+                             SIGNIFICAND_BITS - 3)
+                            downto 0) =
+                    to_unsigned(0, PRODUCT_BITS +
+                                   bitsToShift -
+                                   SIGNIFICAND_BITS - 2)) then
+                    s <= '0';
+                else
+                    s <= '1';
+                end if;
+            end if;
+
+            -- set the exponent to EMIN
+            bExpBeforeRounding <= to_signed(fpPkg.EMIN, EXPONENT_BITS + 2);
+        elsif (msbOfProduct = '1') then
             -- The MSb is 1 so we have:
             -- 1x.xxxx but we require the significand to be
             -- 1.xxx so we need to shift right by 1
             significandBeforeRounding <= product((PRODUCT_BITS - 1)
                                                  downto
                                                  SIGNIFICAND_BITS);
+
+            bExpBeforeRounding <= newBiasedExponent +
+                                  to_signed(1, EXPONENT_BITS+2);
 
             -- r is the next bit
             r <= product(SIGNIFICAND_BITS - 1);
@@ -145,23 +176,57 @@ begin
                 s <= '1';
             end if;
         else
-            -- The MSb is 0 so we have:
-            -- 01.xxxxxx which is what we require.
-            -- so just drop the msb and use the next
-            -- SIGNIFICAND_BITS
-            significandBeforeRounding <= product((PRODUCT_BITS - 2)
-                                                 downto
-                                                 (SIGNIFICAND_BITS - 1));
+            -- shift left until normalized (ie. msb is 1)
+            -- or we would underflow (biasedExponent = EMIN)
+            maxShift := to_integer(newBiasedExponent) - fpPkg.EMIN;
 
-            -- r is the next bit
-            r <= product(SIGNIFICAND_BITS - 2);
+            bitsToShift := -1;
+            for i in 0 to (PRODUCT_BITS - 2) loop
+                if ((product(PRODUCT_BITS - i - 2) = '1') or
+                    (i >= maxShift)) then
+                    bitsToShift := i;
+                    exit;
+                end if;
+            end loop;
 
-            -- and s is the reduction or of all lower bits
-            if (product((SIGNIFICAND_BITS - 3) downto 0) =
-                to_unsigned(0, SIGNIFICAND_BITS - 2)) then
+            if (bitsToShift = -1) then
+                -- all bits are 0, result is 0
+                significandBeforeRounding <= to_unsigned(0, SIGNIFICAND_BITS);
+
+                -- biased exponent is 0
+                bExpBeforeRounding <= to_signed(0, EXPONENT_BITS + 2);
+
+                -- r is 0, s is 0
+                r <= '0';
                 s <= '0';
             else
-                s <= '1';
+                -- bitsToShift max = PRODUCT_BITS - 2
+                -- shifting the product by worse case
+                -- would leave 2 bits. We need SIGNIFICAND_BITS
+                -- + 3 for the ignored msb, r and s,
+                -- so if we append SIGNIFICAND_BITS + 1 bits
+                -- of 0s to the product we don't need
+                -- to worry about ranges
+                extendedProduct := product & to_unsigned(0, SIGNIFICAND_BITS+1);
+                significandBeforeRounding <= extendedProduct((PRODUCT_BITS + SIGNIFICAND_BITS - bitsToShift - 1)
+                                             downto
+                                             (PRODUCT_BITS - bitsToShift));
+
+                r <= extendedProduct(PRODUCT_BITS - bitsToShift - 1);
+
+                if (extendedProduct((PRODUCT_BITS - bitsToShift - 2) downto 0) =
+                    to_unsigned(0, PRODUCT_BITS - bitsToShift - 1)) then
+                    s <= '0';
+                else
+                    s <= '1';
+                end if;
+
+                -- adjust the exponent.
+                -- we shifted left by bitsToShift bits
+                -- so we need to decrement the exponent by
+                -- bitsToShift
+                bExpBeforeRounding <= newBiasedExponent -
+                                      to_signed(bitsToShift, EXPONENT_BITS + 2);
             end if;
         end if;
     end process;
@@ -179,7 +244,7 @@ begin
                                    EXPONENT_BITS    => EXPONENT_BITS,
                                    SIGNIFICAND_BITS => SIGNIFICAND_BITS)
                       port map (i_sig   => significandBeforeRounding,
-                                i_bExp  => newBiasedExponent,
+                                i_bExp  => bExpBeforeRounding,
                                 i_sign  => newSign,
                                 i_r     => r,
                                 i_s     => s,
