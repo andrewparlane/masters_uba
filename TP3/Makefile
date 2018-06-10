@@ -149,22 +149,22 @@ FP_MULT_C_TESTS = fp_mult_c_round_zero \
 
 fp_mult_c_round_zero: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -m -r 0 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_0,false,true)
 
 fp_mult_c_round_down: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -m -r 1 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEG_INF,false,true)
 
 fp_mult_c_round_up: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -m -r 2 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_POS_INF,false,true)
 
 fp_mult_c_round_nearest: all test_file_gen
 	# 32 bits total, 8 exponent
-	$(FP_GEN_PATH)/fpTestGen -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
+	$(FP_GEN_PATH)/fpTestGen -m -r 3 -n $(NUM_C_TESTS) -o $(FP_GEN_PATH)/out.txt
 	@$(call FP_MULT_TEST,32,8,$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false,true)
 
 fp_mult_c_all: $(FP_MULT_C_TESTS)
