@@ -14,25 +14,28 @@
 
 //#define DEBUG
 
-#define SIGN_MASK           (0x80000000)
-#define EXPONENT_MASK       (0x7F800000)
-#define SIGNIFICAND_MASK    (~((EXPONENT_MASK) | (SIGN_MASK)))
+#define SIGN_MASK_32B           (0x80000000)
+#define EXPONENT_MASK_32B       (0x7F800000)
+#define SIGNIFICAND_MASK_32B    (~((EXPONENT_MASK_32B) | (SIGN_MASK_32B)))
 
-#warning TODO add options for size
-// see fesetround()
+#define SIGN_MASK_64B           (0x8000000000000000)
+#define EXPONENT_MASK_64B       (0x7FF0000000000000)
+#define SIGNIFICAND_MASK_64B    (~((EXPONENT_MASK_64B) | (SIGN_MASK_64B)))
 
+static int _gDouble = 0;
 static const struct option _gLongOptions[] =
 {
-    {"help",            no_argument,        0, 'h' },
-    {"version",         no_argument,        0, 'V' },
-    {"num_tests",       required_argument,  0, 'n' },
-    {"no_denormal",     no_argument,        0, 'd' },
-    {"rounding_mode",   required_argument,  0, 'r' },
-    {"op_add",          no_argument,        0, 'a' },
-    {"op_subtract",     no_argument,        0, 's' },
-    {"op_multiply",     no_argument,        0, 'm' },
-    {"output",          required_argument,  0, 'o' },
-    {0,                 0,                  0,  0  }
+    {"help",                no_argument,        0,          'h' },
+    {"version",             no_argument,        0,          'V' },
+    {"num_tests",           required_argument,  0,          'n' },
+    {"no_denormal",         no_argument,        0,          'd' },
+    {"rounding_mode",       required_argument,  0,          'r' },
+    {"double_precision",    no_argument,        &_gDouble,   1  },
+    {"op_add",              no_argument,        0,          'a' },
+    {"op_subtract",         no_argument,        0,          's' },
+    {"op_multiply",         no_argument,        0,          'm' },
+    {"output",              required_argument,  0,          'o' },
+    {0,                     0,                  0,           0  }
 };
 
 typedef enum
@@ -91,6 +94,7 @@ static void usage(FILE *stream, const char *ourName)
            "  -V, --version             Prints version information.\n"
            "  -n, --num_tests NUM       Number of tests to output.\n"
            "  -d, --no_denormal         Don't include denormals.\n"
+           "      --double_precision    Use double precision (64 bits total, 11 bits exponent)\n"
            "  -m, --op_multiply         Generate test cases for multiplication (default)\n"
            "  -a, --op_add              Generate test cases for addition\n"
            "  -s, --op_subtract         Generate test cases for subtraction\n"
@@ -119,6 +123,14 @@ static uint32_t rand32()
            ((rand() & 0xff) <<  8) |
            ((rand() & 0xff) << 16) |
            ((rand() & 0xff) << 24);
+}
+
+static uint64_t rand64()
+{
+    // rand() is only guaranteed to be 15 bits
+    // so just call rand32 twice
+    return (((uint64_t)rand32()) <<  0) |
+           (((uint64_t)rand32()) <<  32);
 }
 
 #ifdef DEBUG
@@ -159,11 +171,11 @@ static const char *getRoundingModeString(RoundingMode roundingMode)
     }
 }
 
-static uint32_t generateArgument()
+static ArgumentType generateArgType()
 {
-    // first what type of argument are we
-    uint32_t argTypeRand = rand32() % _gARG_TYPE_NORMAL_IF_LESS_THAN;
     ArgumentType argType;
+    uint32_t argTypeRand = rand32() % _gARG_TYPE_NORMAL_IF_LESS_THAN;
+
     if (argTypeRand < _gARG_TYPE_ZERO_IF_LESS_THAN)
     {
         argType = ArgumentType_ZERO;
@@ -189,6 +201,14 @@ static uint32_t generateArgument()
     printf("Generating argument of type %s\n", getArgString(argType));
 #endif
 
+    return argType;
+}
+
+static uint32_t generate32BitArgument()
+{
+    // first what type of argument are we
+    ArgumentType argType = generateArgType();
+
     // now generate a new random uint32_t
     // to randomize all the bits
     uint32_t arg = rand32();
@@ -199,37 +219,37 @@ static uint32_t generateArgument()
         case ArgumentType_ZERO:
         {
             // zero is all zeros except the sign bit
-            arg &= SIGN_MASK;
+            arg &= SIGN_MASK_32B;
             break;
         }
         case ArgumentType_NaN:
         {
             // NaN is exponent all 1s, significand != 0
-            arg |= EXPONENT_MASK;
+            arg |= EXPONENT_MASK_32B;
 
             // generate random significands until it's none 0
-            while ((arg & SIGNIFICAND_MASK) == 0)
+            while ((arg & SIGNIFICAND_MASK_32B) == 0)
             {
-                arg |= (rand32() & SIGNIFICAND_MASK);
+                arg |= (rand32() & SIGNIFICAND_MASK_32B);
             }
             break;
         }
         case ArgumentType_INF:
         {
             // inf is exponent all 1s, significand 0
-            arg |= EXPONENT_MASK;
-            arg &= ~SIGNIFICAND_MASK;
+            arg |= EXPONENT_MASK_32B;
+            arg &= ~SIGNIFICAND_MASK_32B;
             break;
         }
         case ArgumentType_DENORMAL:
         {
             // denormal is exponent 0, significand not 0
-            arg &= ~EXPONENT_MASK;
+            arg &= ~EXPONENT_MASK_32B;
 
             // generate random significands until it's none 0
-            while ((arg & SIGNIFICAND_MASK) == 0)
+            while ((arg & SIGNIFICAND_MASK_32B) == 0)
             {
-                arg |= (rand32() & SIGNIFICAND_MASK);
+                arg |= (rand32() & SIGNIFICAND_MASK_32B);
             }
             break;
         }
@@ -239,17 +259,185 @@ static uint32_t generateArgument()
 
             // generate random exponents until it's none 0
             // and none all 1s
-            while (((arg & EXPONENT_MASK) == 0) ||
-                   ((arg & EXPONENT_MASK) == EXPONENT_MASK))
+            while (((arg & EXPONENT_MASK_32B) == 0) ||
+                   ((arg & EXPONENT_MASK_32B) == EXPONENT_MASK_32B))
             {
-                arg &= ~EXPONENT_MASK;
-                arg |= (rand32() & EXPONENT_MASK);
+                arg &= ~EXPONENT_MASK_32B;
+                arg |= (rand32() & EXPONENT_MASK_32B);
             }
             break;
         }
     }
 
     return arg;
+}
+
+static uint64_t generate64BitArgument()
+{
+    // first what type of argument are we
+    ArgumentType argType = generateArgType();
+
+    // now generate a new random uint64_t
+    // to randomize all the bits
+    uint64_t arg = rand64();
+
+    // next we make sure it's the correct argument type
+    switch (argType)
+    {
+        case ArgumentType_ZERO:
+        {
+            // zero is all zeros except the sign bit
+            arg &= SIGN_MASK_64B;
+            break;
+        }
+        case ArgumentType_NaN:
+        {
+            // NaN is exponent all 1s, significand != 0
+            arg |= EXPONENT_MASK_64B;
+
+            // generate random significands until it's none 0
+            while ((arg & SIGNIFICAND_MASK_64B) == 0)
+            {
+                arg |= (rand64() & SIGNIFICAND_MASK_64B);
+            }
+            break;
+        }
+        case ArgumentType_INF:
+        {
+            // inf is exponent all 1s, significand 0
+            arg |= EXPONENT_MASK_64B;
+            arg &= ~SIGNIFICAND_MASK_64B;
+            break;
+        }
+        case ArgumentType_DENORMAL:
+        {
+            // denormal is exponent 0, significand not 0
+            arg &= ~EXPONENT_MASK_64B;
+
+            // generate random significands until it's none 0
+            while ((arg & SIGNIFICAND_MASK_64B) == 0)
+            {
+                arg |= (rand64() & SIGNIFICAND_MASK_64B);
+            }
+            break;
+        }
+        case ArgumentType_NORMAL:
+        {
+            // normal is exponent != 0 and exponent != 1
+
+            // generate random exponents until it's none 0
+            // and none all 1s
+            while (((arg & EXPONENT_MASK_64B) == 0) ||
+                   ((arg & EXPONENT_MASK_64B) == EXPONENT_MASK_64B))
+            {
+                arg &= ~EXPONENT_MASK_64B;
+                arg |= (rand64() & EXPONENT_MASK_64B);
+            }
+            break;
+        }
+    }
+
+    return arg;
+}
+
+static void generateSinglePrecision(FILE *f, Operation op, uint32_t num_tests)
+{
+    for (uint32_t i = 0; i < num_tests; i++)
+    {
+        uint32_t intArg1 = generate32BitArgument();
+        uint32_t intArg2 = generate32BitArgument();
+
+        float floatArg1 = *(float *)&intArg1;
+        float floatArg2 = *(float *)&intArg2;
+
+        float floatRes;
+        switch (op)
+        {
+            case Operation_ADD:
+            {
+                floatRes = floatArg1 + floatArg2;
+                break;
+            }
+            case Operation_SUBTRACT:
+            {
+                floatRes = floatArg1 - floatArg2;
+                break;
+            }
+            case Operation_MULTIPLY:
+            default:
+            {
+                floatRes = floatArg1 * floatArg2;
+                break;
+            }
+        }
+
+        uint32_t intRes = *(uint32_t *)&floatRes;
+
+        if (_gNoDenormals &&
+            ((intRes & EXPONENT_MASK_32B) == 0) &&
+            ((intRes & SIGNIFICAND_MASK_32B) != 0))
+        {
+            // denormal and we don't support denormals
+            i--;
+            continue;
+        }
+
+#ifdef DEBUG
+        printf("%G %s %G = %G\n", floatArg1, getOperationString(op), floatArg2, floatRes);
+#endif
+
+        fprintf(f, "%u %u %u\n", intArg1, intArg2, intRes);
+    }
+}
+
+static void generateDoublePrecision(FILE *f, Operation op, uint32_t num_tests)
+{
+    for (uint32_t i = 0; i < num_tests; i++)
+    {
+        uint64_t intArg1 = generate64BitArgument();
+        uint64_t intArg2 = generate64BitArgument();
+
+        double doubleArg1 = *(double *)&intArg1;
+        double doubleArg2 = *(double *)&intArg2;
+
+        double doubleRes;
+        switch (op)
+        {
+            case Operation_ADD:
+            {
+                doubleRes = doubleArg1 + doubleArg2;
+                break;
+            }
+            case Operation_SUBTRACT:
+            {
+                doubleRes = doubleArg1 - doubleArg2;
+                break;
+            }
+            case Operation_MULTIPLY:
+            default:
+            {
+                doubleRes = doubleArg1 * doubleArg2;
+                break;
+            }
+        }
+
+        uint64_t intRes = *(uint64_t *)&doubleRes;
+
+        if (_gNoDenormals &&
+            ((intRes & EXPONENT_MASK_64B) == 0) &&
+            ((intRes & SIGNIFICAND_MASK_64B) != 0))
+        {
+            // denormal and we don't support denormals
+            i--;
+            continue;
+        }
+
+#ifdef DEBUG
+        printf("%G %s %G = %G\n", doubleArg1, getOperationString(op), doubleArg2, doubleRes);
+#endif
+
+        fprintf(f, "%llu %llu %llu\n", intArg1, intArg2, intRes);
+    }
 }
 
 int main(int argc, char **argv)
@@ -379,9 +567,16 @@ int main(int argc, char **argv)
                 else
                 {
                     // Just show the usage()
+                    fprintf(stderr, "???\n");
                 }
                 usage(stderr, ourName);
                 return 1;
+            }
+            case 0:
+            {
+                // long option that doesn't have matching short
+                // option, just ignore here.
+                break;
             }
             default:
             {
@@ -448,51 +643,13 @@ int main(int argc, char **argv)
         }
     }
 
-    for (uint32_t i = 0; i < num_tests; i++)
+    if (_gDouble)
     {
-        uint32_t intArg1 = generateArgument();
-        uint32_t intArg2 = generateArgument();
-
-        float floatArg1 = *(float *)&intArg1;
-        float floatArg2 = *(float *)&intArg2;
-
-        float floatRes;
-        switch (op)
-        {
-            case Operation_ADD:
-            {
-                floatRes = floatArg1 + floatArg2;
-                break;
-            }
-            case Operation_SUBTRACT:
-            {
-                floatRes = floatArg1 - floatArg2;
-                break;
-            }
-            case Operation_MULTIPLY:
-            default:
-            {
-                floatRes = floatArg1 * floatArg2;
-                break;
-            }
-        }
-
-        uint32_t intRes = *(uint32_t *)&floatRes;
-
-        if (_gNoDenormals &&
-            ((intRes & EXPONENT_MASK) == 0) &&
-            ((intRes & SIGNIFICAND_MASK) != 0))
-        {
-            // denormal and we don't support denormals
-            i--;
-            continue;
-        }
-
-#ifdef DEBUG
-        printf("%G %s %G = %G\n", floatArg1, getOperationString(op), floatArg2, floatRes);
-#endif
-
-        fprintf(f, "%u %u %u\n", intArg1, intArg2, intRes);
+        generateDoublePrecision(f, op, num_tests);
+    }
+    else
+    {
+        generateSinglePrecision(f, op, num_tests);
     }
 
     if (outputFile != NULL)
