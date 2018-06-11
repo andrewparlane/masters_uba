@@ -71,8 +71,8 @@ typedef enum
 static const uint32_t ARG_TYPE_ZERO_WEIGHT      = 1;
 static const uint32_t ARG_TYPE_NaN_WEIGHT       = 1;
 static const uint32_t ARG_TYPE_INF_WEIGHT       = 1;
-static const uint32_t ARG_TYPE_DENORMAL_WEIGHT  = 2;
-static const uint32_t ARG_TYPE_NORMAL_WEIGHT    = 5;
+static const uint32_t ARG_TYPE_DENORMAL_WEIGHT  = 10;
+static const uint32_t ARG_TYPE_NORMAL_WEIGHT    = 10;
 
 static uint32_t _gARG_TYPE_ZERO_IF_LESS_THAN;
 static uint32_t _gARG_TYPE_NaN_IF_LESS_THAN;
