@@ -41,6 +41,9 @@ architecture sim of fp_add_tb is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
+    component fp_add_wrapper is
+    end component fp_add_wrapper;
+
     constant PIPELINE_STAGES:   natural := 6;
 
     package fpPkg
@@ -74,6 +77,8 @@ architecture sim of fp_add_tb is
 begin
 
     clk <= not clk after (CLK_PERIOD/2);
+
+    add_coverage:   fp_add_wrapper;
 
     dut: fp_add     generic map (TBITS      => TOTAL_BITS,
                                  EBITS      => EXPONENT_BITS,

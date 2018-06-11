@@ -27,20 +27,6 @@ SUM_TEST_DIR	= $(TEST_DIR)/suma
 SUB_TEST_DIR	= $(TEST_DIR)/resta
 FP_GEN_PATH		= c/test_file_gen
 
-ifndef NUM_C_TESTS
-NUM_C_TESTS		= 100000
-endif
-
-ifdef DOUBLE
-C_DOUBLE_FLAG		= --double_precision
-NUM_C_TOTAL_BITS	= 64
-NUM_C_EXP_BITS		= 11
-else
-C_DOUBLE_FLAG		=
-NUM_C_TOTAL_BITS	= 32
-NUM_C_EXP_BITS		= 8
-endif
-
 # Common Lib name
 # Add the following to your .vhd files that need
 # to use something from the common/ directory
@@ -59,6 +45,31 @@ TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
 # Extra arguments beyond the defaults in helper.mk
 VCOM_FLAGS		=
 VSIM_FLAGS		=
+
+# Coverage files
+MULT_COVERAGE_FILE_32B	= $(SIM_DIR)/mult_coverage_32b.ucdb
+MULT_COVERAGE_FILE_64B	= $(SIM_DIR)/mult_coverage_64b.ucdb
+ADD_COVERAGE_FILE_32B	= $(SIM_DIR)/add_coverage_32b.ucdb
+ADD_COVERAGE_FILE_64B	= $(SIM_DIR)/add_coverage_64b.ucdb
+
+ifndef NUM_C_TESTS
+NUM_C_TESTS		= 100000
+endif
+
+ifdef DOUBLE
+C_DOUBLE_FLAG		= --double_precision
+NUM_C_TOTAL_BITS	= 64
+NUM_C_EXP_BITS		= 11
+MULT_COVERAGE_FILE  = $(MULT_COVERAGE_FILE_64B)
+ADD_COVERAGE_FILE   = $(ADD_COVERAGE_FILE_64B)
+else
+C_DOUBLE_FLAG		=
+NUM_C_TOTAL_BITS	= 32
+NUM_C_EXP_BITS		= 8
+MULT_COVERAGE_FILE  = $(MULT_COVERAGE_FILE_32B)
+ADD_COVERAGE_FILE   = $(ADD_COVERAGE_FILE_32B)
+endif
+
 
 # Now include our helper.mk which has all the rules we need
 # to create our library, compile and simulate our test benches
@@ -92,7 +103,7 @@ fp_decode: all
 #		5) NO_ASSERT_ON_ZERO_NEG_ZERO
 #		6) DENORMALS
 define FP_MULT_TEST
-	@$(call VSIM_CMD, fp_mult_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gDENORMALS=$(6))
+	@$(call VSIM_CMD, fp_mult_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gDENORMALS=$(6), $(MULT_COVERAGE_FILE))
 endef
 
 # A macro to run FP addition tests
@@ -104,7 +115,7 @@ endef
 #		5) NO_ASSERT_ON_ZERO_NEG_ZERO
 #		6) DENORMALS
 define FP_SUM_TEST
-	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=false -gDENORMALS=$(6))
+	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=false -gDENORMALS=$(6), $(ADD_COVERAGE_FILE))
 endef
 
 # A macro to run FP subtraction tests
@@ -116,7 +127,7 @@ endef
 #		5) NO_ASSERT_ON_ZERO_NEG_ZERO
 #		6) DENORMALS
 define FP_SUB_TEST
-	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=true -gDENORMALS=$(6))
+	@$(call VSIM_CMD, fp_add_tb, -gTOTAL_BITS=$(1) -gEXPONENT_BITS=$(2) -gTEST_FILE=$(3) -gROUNDING_MODE=$(4) -gNO_ASSERT_ON_ZERO_NEG_ZERO=$(5) -gSUBTRACT=true -gDENORMALS=$(6), $(ADD_COVERAGE_FILE))
 endef
 
 FP_MULT_TP_TESTS = fp_mult_23_6 \
@@ -178,6 +189,12 @@ fp_mult_c_round_nearest: all test_file_gen
 	@$(call FP_MULT_TEST,$(NUM_C_TOTAL_BITS),$(NUM_C_EXP_BITS),$(FP_GEN_PATH)/out.txt,RoundingMode_NEAREST,false,true)
 
 fp_mult_c_all: $(FP_MULT_C_TESTS)
+
+fp_mult_c_32b_report:
+	@$(call COVERAGE_REPORT, $(MULT_COVERAGE_FILE_32B))
+
+fp_mult_c_64b_report:
+	@$(call COVERAGE_REPORT, $(MULT_COVERAGE_FILE_64B))
 
 .PHONY: $(FP_MULT_TESTS) fp_mult_tp_all $(FP_MULT_C_TESTS) fp_mult_c_all
 

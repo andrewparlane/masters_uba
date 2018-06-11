@@ -21,7 +21,8 @@ architecture synth of fp_add is
         generic (TBITS: natural;
                  EBITS: natural;
                  SBITS: natural);
-        port (i_sig:    in  unsigned((SBITS - 1) downto 0);
+        port (i_clk:    in  std_ulogic;
+              i_sig:    in  unsigned((SBITS - 1) downto 0);
               i_bExp:   in  signed((EBITS + 1) downto 0);
               i_sign:   in  std_ulogic;
               i_r:      in  std_ulogic;
@@ -450,7 +451,8 @@ begin
     fpRound: fp_round generic map (TBITS => TBITS,
                                    EBITS => EBITS,
                                    SBITS => SBITS)
-                      port map (i_sig   => p5Res(5).sum,
+                      port map (i_clk   => i_clk,
+                                i_sig   => p5Res(5).sum,
                                 i_bExp  => p5Res(5).bExp,
                                 i_sign  => p6Sign,
                                 i_r     => p5Res(5).r,

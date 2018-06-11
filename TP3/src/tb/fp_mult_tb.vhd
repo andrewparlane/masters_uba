@@ -23,11 +23,15 @@ architecture sim of fp_mult_tb is
         generic (TBITS:     natural;
                  EBITS:     natural;
                  DENORMALS: boolean);
-        port (i_a:      in  std_ulogic_vector((TBITS - 1) downto 0);
+        port (i_clk:    in  std_ulogic;
+              i_a:      in  std_ulogic_vector((TBITS - 1) downto 0);
               i_b:      in  std_ulogic_vector((TBITS - 1) downto 0);
               i_rm:     in  RoundingMode;
               o_res:    out std_ulogic_vector((TBITS - 1) downto 0));
     end component fp_mult;
+
+    component fp_mult_wrapper is
+    end component fp_mult_wrapper;
 
     package fpPkg
             is new work.fp_helper_pkg
@@ -46,16 +50,24 @@ architecture sim of fp_mult_tb is
     signal fpC:         fpPkg.fpUnpacked;
     signal fpExpectedC: fpPkg.fpUnpacked;
 
-
+    -- 50 MHz
+    signal clk: std_ulogic := '0';
+    constant CLK_HZ:        natural := 50 * 1000 * 1000;
+    constant CLK_PERIOD:    time := 1 sec / CLK_HZ;
 begin
+
+    clk <= not clk after (CLK_PERIOD/2);
 
     dut: fp_mult    generic map (TBITS      => TOTAL_BITS,
                                  EBITS      => EXPONENT_BITS,
                                  DENORMALS  => DENORMALS)
-                    port map (i_a   => A,
+                    port map (i_clk => clk,
+                              i_a   => A,
                               i_b   => B,
                               i_rm  => ROUNDING_MODE,
                               o_res => C);
+
+    mult_coverage:  fp_mult_wrapper;
 
     fpA         <= fpPkg.unpack(A);
     fpB         <= fpPkg.unpack(B);
@@ -88,7 +100,7 @@ begin
             utils_pkg.read_unsigned_decimal_from_line(l, u);
             expectedC <= std_ulogic_vector(u);
 
-            wait for 100 ns;
+            wait for CLK_PERIOD;
 
             assert (C = expectedC) or
                     (fpPkg.is_NaN(fpC) and

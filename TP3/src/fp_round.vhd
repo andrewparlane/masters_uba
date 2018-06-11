@@ -9,7 +9,8 @@ entity fp_round is
              EBITS:     natural;
              SBITS:     natural;
              DENORMALS: boolean);
-    port (i_sig:    in  unsigned((SBITS - 1) downto 0);
+    port (i_clk:    in  std_ulogic;
+          i_sig:    in  unsigned((SBITS - 1) downto 0);
           i_bExp:   in  signed((EBITS + 1) downto 0);
           i_sign:   in  std_ulogic;
           i_r:      in  std_ulogic;

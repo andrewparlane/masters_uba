@@ -8,7 +8,8 @@ entity fp_mult is
     generic (TBITS:     natural;
              EBITS:     natural;
              DENORMALS: boolean);
-    port (i_a:      in  std_ulogic_vector((TBITS - 1) downto 0);
+    port (i_clk:    in  std_ulogic;
+          i_a:      in  std_ulogic_vector((TBITS - 1) downto 0);
           i_b:      in  std_ulogic_vector((TBITS - 1) downto 0);
           i_rm:     in  RoundingMode;
           o_res:    out std_ulogic_vector((TBITS - 1) downto 0));
@@ -20,7 +21,8 @@ architecture synth of fp_mult is
                  EBITS:     natural;
                  SBITS:     natural;
                  DENORMALS: boolean);
-        port (i_sig:    in  unsigned((SBITS - 1) downto 0);
+        port (i_clk:    in  std_ulogic;
+              i_sig:    in  unsigned((SBITS - 1) downto 0);
               i_bExp:   in  signed((EBITS + 1) downto 0);
               i_sign:   in  std_ulogic;
               i_r:      in  std_ulogic;
@@ -277,7 +279,8 @@ begin
                                    EBITS     => EBITS,
                                    SBITS     => SBITS,
                                    DENORMALS => DENORMALS)
-                      port map (i_sig   => normalizedSig,
+                      port map (i_clk   => i_clk,
+                                i_sig   => normalizedSig,
                                 i_bExp  => adjustedBExp,
                                 i_sign  => newSign,
                                 i_r     => r,
