@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.fp_type_pkg.all;
+use work.fp_helper_pkg.all;
 
 entity fp_add is
     generic (TBITS:     natural;
@@ -33,17 +34,12 @@ architecture synth of fp_add is
               o_type:   out fpNumType);
     end component fp_round;
 
-    package fpPkg
-            is new work.fp_helper_pkg
-            generic map (TBITS => TBITS,
-                         EBITS => EBITS);
-
-    constant SBITS:             natural := fpPkg.SBITS;
+    constant SBITS:             natural := get_sbits(TBITS, EBITS);
     constant PIPLINE_STAGES:    natural := 6;
 
     type Pipeline1Result is record
-        fpA:    fpPkg.fpUnpacked;
-        fpB:    fpPkg.fpUnpacked;
+        fpA:    fpUnpacked;
+        fpB:    fpUnpacked;
         swap:   boolean;
     end record Pipeline1Result;
 
@@ -110,13 +106,13 @@ begin
     -----------------------------------------------------------------
 
     process (i_clk)
-        variable fpA:   fpPkg.fpUnpacked;
-        variable fpB:   fpPkg.fpUnpacked;
+        variable fpA:   fpUnpacked;
+        variable fpB:   fpUnpacked;
         variable swap:  boolean;
     begin
         if (rising_edge(i_clk)) then
-            fpA := fpPkg.unpack(i_a);
-            fpB := fpPkg.unpack(i_b);
+            fpA := unpack(i_a, TBITS, EBITS);
+            fpB := unpack(i_b, TBITS, EBITS);
 
             -- swap if A is less than B (don't include the sign)
             swap := (i_a((TBITS-2) downto 0) <
@@ -148,7 +144,7 @@ begin
 
             -- check if the signs differ. if fpB is zero
             -- then just say they don't differ
-            if (fpPkg.is_zero(p1Res(1).fpB)) then
+            if (is_zero(p1Res(1).fpB)) then
                 signsDiffer := false;
             else
                 signsDiffer := true when (p1Res(1).fpA.sign xor
@@ -161,10 +157,10 @@ begin
             -- if they differ, then get the twos complement
             -- of fpB
             if (signsDiffer) then
-                p2Res(2).sig <= unsigned(not p1Res(1).fpB.sig) +
+                p2Res(2).sig <= unsigned(not get_sig(p1Res(1).fpB, SBITS)) +
                                 to_unsigned(1, SBITS);
             else
-                p2Res(2).sig <= unsigned(p1Res(1).fpB.sig);
+                p2Res(2).sig <= unsigned(get_sig(p1Res(1).fpB, SBITS));
             end if;
         end if;
     end process;
@@ -188,8 +184,8 @@ begin
             p1Res(3) <= p1Res(2);
             p2Res(3) <= p2Res(2);
 
-            bitsToShift := to_integer(unsigned(p1Res(2).fpA.bExp) -
-                           unsigned(p1Res(2).fpB.bExp));
+            bitsToShift := to_integer(unsigned(get_bExp(p1Res(2).fpA, EBITS)) -
+                                      unsigned(get_bExp(p1Res(2).fpB, EBITS)));
 
             -- we shift the significand right by bitsToShift
             -- which means the range is
@@ -286,7 +282,7 @@ begin
             p3Res(4) <= p3Res(3);
 
             sum := ('0' & p3Res(3).sig) +
-                   ('0' & p1Res(3).fpA.sig);
+                   ('0' & get_sig(p1Res(3).fpA, SBITS));
 
             p4Res(4).carry <= sum(SBITS);
 
@@ -338,7 +334,7 @@ begin
 
                 -- we shifted right by one -> /2
                 -- so exponent should be +1
-                p5Res(5).bExp <= signed("00" & p1Res(4).fpA.bExp) +
+                p5Res(5).bExp <= signed("00" & get_bExp(p1Res(4).fpA, EBITS)) +
                                  to_signed(1, EBITS + 2);
 
                 -- adjust r and s
@@ -353,8 +349,8 @@ begin
                 -- until biasedExponent is EMIN.
                 -- otherwise just shift until we find a 1
                 if (DENORMALS) then
-                    maxShift := to_integer(signed("00" & p1Res(4).fpA.bExp)) -
-                                           fpPkg.EMIN;
+                    maxShift := to_integer(signed("00" & get_bExp(p1Res(4).fpA, EBITS))) -
+                                           get_emin;
                 else
                     -- set maxShift to SBITS
                     -- this should optimize out the extra
@@ -399,7 +395,7 @@ begin
                     -- we shifted left by bitsToShift bits
                     -- so we need to decrement the exponent by
                     -- bitsToShift
-                    p5Res(5).bExp <= signed("00" & p1Res(4).fpA.bExp) -
+                    p5Res(5).bExp <= signed("00" & get_bExp(p1Res(4).fpA, EBITS)) -
                                      to_signed(bitsToShift, EBITS + 2);
 
                     -- adjust r and s
@@ -463,55 +459,58 @@ begin
                                 o_type  => p6ResultType);
 
     process (i_clk)
-        variable fpC: fpPkg.fpUnpacked;
+        variable fpC: fpUnpacked;
     begin
         if (rising_edge(i_clk)) then
 
             -- result
             -- If either of the arguments is NaN
             -- the output should be NaN
-            if (fpPkg.is_NaN(p1Res(5).fpA) or
-                fpPkg.is_NaN(p1Res(5).fpB)) then
-                fpC := fpPkg.set_NaN(p6Sign);
+            if (is_NaN(p1Res(5).fpA) or
+                is_NaN(p1Res(5).fpB)) then
+                fpC := set_NaN(p6Sign, TBITS, EBITS);
 
             -- If both of the inputs are zero with
             -- opposite signs then the result is +/- 0
             -- depending on the rounding method.
             -- round towards neg_inf uses -0
             -- the rest use +0
-            elsif (fpPkg.is_zero(p1Res(5).fpA) and
-                   fpPkg.is_zero(p1Res(5).fpB) and
+            elsif (is_zero(p1Res(5).fpA) and
+                   is_zero(p1Res(5).fpB) and
                    p1Res(5).fpA.sign /= p1Res(5).fpB.sign) then
                 if (i_rm = RoundingMode_NEG_INF) then
-                    fpC := fpPkg.set_zero('1');
+                    fpC := set_zero('1', TBITS, EBITS);
                 else
-                    fpC := fpPkg.set_zero('0');
+                    fpC := set_zero('0', TBITS, EBITS);
                 end if;
 
             -- If both of the inputs are infinity with
             -- opposite signs then the result is NaN
-            elsif (fpPkg.is_infinity(p1Res(5).fpA) and
-                   fpPkg.is_infinity(p1Res(5).fpB) and
+            elsif (is_infinity(p1Res(5).fpA) and
+                   is_infinity(p1Res(5).fpB) and
                    p2Res(5).signsDiffer) then
-                fpC := fpPkg.set_NaN(p6Sign);
+                fpC := set_NaN(p6Sign, TBITS, EBITS);
 
             -- If either of the inputs is infinity then the
             -- result is infinity
-            elsif (fpPkg.is_infinity(p1Res(5).fpA) or
-                   fpPkg.is_infinity(p1Res(5).fpB)) then
-                fpC := fpPkg.set_infinity(p6Sign);
+            elsif (is_infinity(p1Res(5).fpA) or
+                   is_infinity(p1Res(5).fpB)) then
+                fpC := set_infinity(p6Sign, TBITS, EBITS);
 
             -- Finally in all others cases the result is
             -- the calculated one
             else
+                fpC.emin    := get_emin;
+                fpC.emax    := get_emax(EBITS);
+                fpC.bias    := get_bias(EBITS);
                 fpC.sign    := p6Sign;
-                fpC.bExp    := p6BExp;
-                fpC.sig     := p6Sig;
+                fpC.bExp    := resize(p6BExp, MAX_EBITS);
+                fpC.sig     := resize(p6Sig, MAX_SBITS);
                 fpC.numType := p6ResultType;
             end if;
 
             -- Convert the result to a vector
-            o_res <= fpPkg.pack(fpC);
+            o_res <= pack(fpC, TBITS, EBITS);
         end if;
     end process;
 

@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.fp_type_pkg.all;
+use work.fp_helper_pkg.all;
 
 entity fp_mult is
     generic (TBITS:     natural;
@@ -33,18 +34,13 @@ architecture synth of fp_mult is
               o_type:   out fpNumType);
     end component fp_round;
 
-    package fpPkg
-            is new work.fp_helper_pkg
-            generic map (TBITS => TBITS,
-                         EBITS => EBITS);
-
-    constant SBITS:     natural := fpPkg.SBITS;
+    constant SBITS:     natural := get_sbits(TBITS, EBITS);
     -- number of bits in the product
     constant PBITS:     natural := SBITS * 2;
 
-    signal fpA: fpPkg.fpUnpacked;
-    signal fpB: fpPkg.fpUnpacked;
-    signal fpC: fpPkg.fpUnpacked;
+    signal fpA: fpUnpacked;
+    signal fpB: fpUnpacked;
+    signal fpC: fpUnpacked;
 
     -- EBITS + 2 so we have the carry out bits to detect
     -- overflow and underflow
@@ -81,18 +77,18 @@ begin
     -----------------------------------------------------------------
 
     -- Convert A and B to fpUnpackeds
-    fpA <= fpPkg.unpack(i_a);
-    fpB <= fpPkg.unpack(i_b);
+    fpA <= unpack(i_a, TBITS, EBITS);
+    fpB <= unpack(i_b, TBITS, EBITS);
 
     -- Convert the result to a vector
-    o_res <= fpPkg.pack(fpC);
+    o_res <= pack(fpC, TBITS, EBITS);
 
     -----------------------------------------------------------------
     -- Add the exponents
     -----------------------------------------------------------------
-    sumOfBExps <= ("00" & signed(fpA.bExp)) +
-                  ("00" & signed(fpB.bExp)) -
-                  to_signed(fpPkg.BIAS, EBITS + 2);
+    sumOfBExps <= ("00" & signed(get_bExp(fpA, EBITS))) +
+                  ("00" & signed(get_bExp(fpB, EBITS))) -
+                  to_signed(fpA.bias, EBITS + 2);
 
     -----------------------------------------------------------------
     -- Multiply the significands
@@ -101,7 +97,8 @@ begin
     -- The significand has 1 bit of integer + SBITS-1
     -- of fractional. Therefore the product gives us 2 bits of
     -- integer + (SBITS-1)*2 bits of fractional
-    product <= unsigned(fpA.sig) * unsigned(fpB.sig);
+    product <= unsigned(get_sig(fpA, SBITS)) *
+               unsigned(get_sig(fpB, SBITS));
 
     process (all)
         variable productExt:    unsigned((PBITS + SBITS) downto 0);
@@ -109,7 +106,7 @@ begin
         variable maxShift:      integer;
         variable lsb:           integer;
     begin
-        if ((to_integer(sumOfBExps) < fpPkg.EMIN) and
+        if ((to_integer(sumOfBExps) < get_emin) and
             DENORMALS) then
 
             -- Our current exponent is less than EMIN,
@@ -118,7 +115,7 @@ begin
             -- If we shift out all the bits of the product
             -- then we end up with an actual underflow
             -- and the result is 0.
-            bitsToShift := fpPkg.EMIN - to_integer(sumOfBExps);
+            bitsToShift := get_emin - to_integer(sumOfBExps);
 
             if (bitsToShift > SBITS) then
                 -- if we shift by more than SBITS
@@ -156,7 +153,7 @@ begin
 
             -- set the exponent to EMIN. This gets changed to
             -- a 0 when we get packed into the vector
-            adjustedBExp <= to_signed(fpPkg.EMIN, EBITS + 2);
+            adjustedBExp <= to_signed(get_emin, EBITS + 2);
 
         else
             -- either we don't support denormals,
@@ -204,7 +201,7 @@ begin
                     -- we support denormals, so we need to shift
                     -- left until normalized (ie. msb is 1)
                     -- or we would underflow (adjust = EMIN)
-                    maxShift := to_integer(sumOfBExps) - fpPkg.EMIN;
+                    maxShift := to_integer(sumOfBExps) - get_emin;
 
                     -- if all the bits are 0, then we have
                     -- underflowed and are 0. Note we ignore
@@ -299,30 +296,33 @@ begin
         -- If either of the arguments is NaN
         -- or they are 0 * infinity then
         -- the output should be NaN
-        if (fpPkg.is_NaN(fpA) or
-            fpPkg.is_NaN(fpB) or
-            (fpPkg.is_zero(fpA) and fpPkg.is_infinity(fpB)) or
-            (fpPkg.is_zero(fpB) and fpPkg.is_infinity(fpA))) then
-            fpC <= fpPkg.set_NaN(newSign);
+        if (is_NaN(fpA) or
+            is_NaN(fpB) or
+            (is_zero(fpA) and is_infinity(fpB)) or
+            (is_zero(fpB) and is_infinity(fpA))) then
+            fpC <= set_NaN(newSign, TBITS, EBITS);
 
         -- If either of the inputs is infinity then the
         -- result is infinity.
-        elsif (fpPkg.is_infinity(fpA) or
-               fpPkg.is_infinity(fpB)) then
-            fpC <= fpPkg.set_infinity(newSign);
+        elsif (is_infinity(fpA) or
+               is_infinity(fpB)) then
+            fpC <= set_infinity(newSign, TBITS, EBITS);
 
         -- If either of the arguments is 0
         -- then the result is zero.
-        elsif (fpPkg.is_zero(fpA) or
-               fpPkg.is_zero(fpB)) then
-            fpC <= fpPkg.set_zero(newSign);
+        elsif (is_zero(fpA) or
+               is_zero(fpB)) then
+            fpC <= set_zero(newSign, TBITS, EBITS);
 
         -- Finally in all others cases the result is
         -- the calculated one
         else
+            fpC.emin    <= get_emin;
+            fpC.emax    <= get_emax(EBITS);
+            fpC.bias    <= get_bias(EBITS);
             fpC.sign    <= newSign;
-            fpC.bExp    <= finalBExp;
-            fpC.sig     <= finalSig;
+            fpC.bExp    <= resize(finalBExp, MAX_EBITS);
+            fpC.sig     <= resize(finalSig, MAX_SBITS);
             fpC.numType <= resultType;
         end if;
     end process;

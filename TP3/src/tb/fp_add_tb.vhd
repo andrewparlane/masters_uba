@@ -8,6 +8,7 @@ use common.all;
 use common.type_pkg.all;
 
 use work.fp_type_pkg.all;
+use work.fp_helper_pkg.all;
 
 entity fp_add_tb is
     generic(TOTAL_BITS:                 natural := 32;
@@ -46,11 +47,6 @@ architecture sim of fp_add_tb is
 
     constant PIPELINE_STAGES:   natural := 6;
 
-    package fpPkg
-            is new work.fp_helper_pkg
-            generic map (TBITS => TOTAL_BITS,
-                         EBITS => EXPONENT_BITS);
-
     signal A:                   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal B:                   std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal ADelayed:            std_ulogic_vector((TOTAL_BITS - 1) downto 0);
@@ -61,10 +57,10 @@ architecture sim of fp_add_tb is
 
     -- convert the args and result to fpUnpackeds
     -- for debugging
-    signal fpADelayed:          fpPkg.fpUnpacked;
-    signal fpBDelayed:          fpPkg.fpUnpacked;
-    signal fpC:                 fpPkg.fpUnpacked;
-    signal fpExpectedCDelayed:  fpPkg.fpUnpacked;
+    signal fpADelayed:          fpUnpacked;
+    signal fpBDelayed:          fpUnpacked;
+    signal fpC:                 fpUnpacked;
+    signal fpExpectedCDelayed:  fpUnpacked;
 
     signal clk: std_ulogic := '0';
     signal rst: std_ulogic := '0';
@@ -110,10 +106,10 @@ begin
                                   input  => expectedC,
                                   output => expectedCDelayed);
 
-    fpADelayed          <= fpPkg.unpack(ADelayed);
-    fpBDelayed          <= fpPkg.unpack(BDelayed);
-    fpC                 <= fpPkg.unpack(C);
-    fpExpectedCDelayed  <= fpPkg.unpack(expectedCDelayed);
+    fpADelayed          <= unpack(ADelayed, TOTAL_BITS, EXPONENT_BITS);
+    fpBDelayed          <= unpack(BDelayed, TOTAL_BITS, EXPONENT_BITS);
+    fpC                 <= unpack(C, TOTAL_BITS, EXPONENT_BITS);
+    fpExpectedCDelayed  <= unpack(expectedCDelayed, TOTAL_BITS, EXPONENT_BITS);
 
     process
         file     f:         text;
@@ -174,15 +170,15 @@ begin
         wait for (CLK_PERIOD * PIPELINE_STAGES);
         while (done = '0') loop
             assert (C = expectedCDelayed) or
-                        (fpPkg.is_NaN(fpC) and
-                         fpPkg.is_NaN(fpExpectedCDelayed)) or
+                        (is_NaN(fpC) and
+                         is_NaN(fpExpectedCDelayed)) or
                        (NO_ASSERT_ON_ZERO_NEG_ZERO and
-                        (fpPkg.is_zero(fpC)) and
-                        (fpPkg.is_zero(fpExpectedCDelayed)))
-                    report fpPkg.to_string(fpADelayed) & OP &
-                           fpPkg.to_string(fpBDelayed) & " = " &
-                           fpPkg.to_string(fpC) & " expecting " &
-                           fpPkg.to_string(fpExpectedCDelayed)
+                        (is_zero(fpC)) and
+                        (is_zero(fpExpectedCDelayed)))
+                    report to_string(fpADelayed, TOTAL_BITS, EXPONENT_BITS) & OP &
+                           to_string(fpBDelayed, TOTAL_BITS, EXPONENT_BITS) & " = " &
+                           to_string(fpC, TOTAL_BITS, EXPONENT_BITS) & " expecting " &
+                           to_string(fpExpectedCDelayed, TOTAL_BITS, EXPONENT_BITS)
                     severity failure;
 
             wait for CLK_PERIOD;

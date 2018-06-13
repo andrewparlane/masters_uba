@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.fp_type_pkg.all;
+use work.fp_helper_pkg.all;
 
 entity fp_round is
     generic (TBITS:     natural;
@@ -22,10 +23,6 @@ entity fp_round is
 end entity fp_round;
 
 architecture synth of fp_round is
-    package fpPkg
-            is new work.fp_helper_pkg
-            generic map (TBITS => TBITS,
-                         EBITS => EBITS);
 begin
     process (all)
         variable useSigP1:  std_ulogic;
@@ -88,13 +85,13 @@ begin
         end if;
 
         -- check for underflow
-        if (bExp < to_signed(fpPkg.EMIN, EBITS+2)) then
+        if (bExp < to_signed(get_emin, EBITS+2)) then
             o_sig <= (others => '0');
             o_bExp <= (others => '0');
             o_type <= fpNumType_ZERO;
 
         -- check for gradual underflow
-        elsif ((bExp = to_signed(fpPkg.EMIN, EBITS+2)) and
+        elsif ((bExp = to_signed(get_emin, EBITS+2)) and
                (sig(SBITS-1) = '0')) then
             if ((sig = to_unsigned(0, SBITS+1)) or
                 (not DENORMALS)) then
@@ -110,7 +107,7 @@ begin
             end if;
 
         -- check for overflow
-        elsif (bExp > to_signed(fpPkg.EMAX, EBITS+2)) then
+        elsif (bExp > to_signed(get_emax(EBITS), EBITS+2)) then
             -- If we round away from (i_sign) inifinity,
             -- then the value saturates at the max
             -- representatable value = 1.111...111 * 2^EMAX
@@ -124,7 +121,7 @@ begin
                 ((i_rm = RoundingMode_POS_INF) and (i_sign = '1'))) then
                 -- saturate at max representatable
                 o_sig <= (others => '1');
-                o_bExp <= to_unsigned(fpPkg.EMAX, EBITS);
+                o_bExp <= to_unsigned(get_emax(EBITS), EBITS);
                 o_type <= fpNumType_INFINITY;
             else
                 -- infinity

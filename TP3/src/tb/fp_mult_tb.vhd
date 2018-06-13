@@ -8,6 +8,7 @@ use common.all;
 use common.type_pkg.all;
 
 use work.fp_type_pkg.all;
+use work.fp_helper_pkg.all;
 
 entity fp_mult_tb is
     generic(TOTAL_BITS:                 natural := 32;
@@ -33,11 +34,6 @@ architecture sim of fp_mult_tb is
     component fp_mult_wrapper is
     end component fp_mult_wrapper;
 
-    package fpPkg
-            is new work.fp_helper_pkg
-            generic map (TBITS => TOTAL_BITS,
-                         EBITS => EXPONENT_BITS);
-
     signal A:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal B:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
     signal C:           std_ulogic_vector((TOTAL_BITS - 1) downto 0);
@@ -45,10 +41,10 @@ architecture sim of fp_mult_tb is
 
     -- convert the args and result to fpUnpackeds
     -- for debugging
-    signal fpA:         fpPkg.fpUnpacked;
-    signal fpB:         fpPkg.fpUnpacked;
-    signal fpC:         fpPkg.fpUnpacked;
-    signal fpExpectedC: fpPkg.fpUnpacked;
+    signal fpA:         fpUnpacked;
+    signal fpB:         fpUnpacked;
+    signal fpC:         fpUnpacked;
+    signal fpExpectedC: fpUnpacked;
 
     -- 50 MHz
     signal clk: std_ulogic := '0';
@@ -69,10 +65,10 @@ begin
 
     mult_coverage:  fp_mult_wrapper;
 
-    fpA         <= fpPkg.unpack(A);
-    fpB         <= fpPkg.unpack(B);
-    fpC         <= fpPkg.unpack(C);
-    fpExpectedC <= fpPkg.unpack(expectedC);
+    fpA         <= unpack(A, TOTAL_BITS, EXPONENT_BITS);
+    fpB         <= unpack(B, TOTAL_BITS, EXPONENT_BITS);
+    fpC         <= unpack(C, TOTAL_BITS, EXPONENT_BITS);
+    fpExpectedC <= unpack(expectedC, TOTAL_BITS, EXPONENT_BITS);
 
     process
         file     f:     text;
@@ -103,15 +99,15 @@ begin
             wait for CLK_PERIOD;
 
             assert (C = expectedC) or
-                    (fpPkg.is_NaN(fpC) and
-                     fpPkg.is_NaN(fpExpectedC)) or
+                    (is_NaN(fpC) and
+                     is_NaN(fpExpectedC)) or
                    (NO_ASSERT_ON_ZERO_NEG_ZERO and
-                    (fpPkg.is_zero(fpC)) and
-                    (fpPkg.is_zero(fpExpectedC)))
-                report fpPkg.to_string(fpA) & " * " &
-                       fpPkg.to_string(fpB) & " = " &
-                       fpPkg.to_string(fpC) & " expecting " &
-                       fpPkg.to_string(fpExpectedC)
+                    (is_zero(fpC)) and
+                    (is_zero(fpExpectedC)))
+                report to_string(fpA, TOTAL_BITS, EXPONENT_BITS) & " * " &
+                       to_string(fpB, TOTAL_BITS, EXPONENT_BITS) & " = " &
+                       to_string(fpC, TOTAL_BITS, EXPONENT_BITS) & " expecting " &
+                       to_string(fpExpectedC, TOTAL_BITS, EXPONENT_BITS)
                 severity failure;
         end loop;
 
