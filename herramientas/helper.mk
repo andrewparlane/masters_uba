@@ -137,14 +137,16 @@ SV_TB_FLAGS 	= $(patsubst $(TB_SRC_DIR)/%.sv, $(FLAGS_DIR)/%.flag, $(filter %.sv
 
 # Flags for use with vcom (vhdl compiler)
 VCOM_FLAGS 			:= $(MODELSIM_FLAG) \
-					   -work $(VLIB_NAME)
+					   -work $(VLIB_NAME) \
+					   -mixedsvvh
 
 # Flags to use with modules we will synthesise (IE not testbenches)
 NON_TB_VCOM_FLAGS	:= -check_synthesis
 
 # Flags for use with vlog (verilog compiler)
 VLOG_FLAGS 			:= $(MODELSIM_FLAG) \
-					   -work $(VLIB_NAME)
+					   -work $(VLIB_NAME) \
+					   -mixedsvvh
 
 # Flags to use with modules we will synthesise (IE not testbenches)
 NON_TB_VLOG_FLAGS	:=
