@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.utils_pkg.all;
+
 use work.fp_type_pkg.all;
 use work.fp_helper_pkg.all;
 
@@ -101,10 +104,10 @@ begin
                unsigned(get_sig(fpB, SBITS));
 
     process (all)
-        variable productExt:    unsigned((PBITS + SBITS) downto 0);
-        variable bitsToShift:   integer;
-        variable maxShift:      integer;
-        variable lsb:           integer;
+        variable productExt:        unsigned((PBITS + SBITS) downto 0);
+        variable bitsToShift:       integer;
+        variable maxShift:          integer;
+        variable lsb:               integer;
     begin
         if ((to_integer(sumOfBExps) < get_emin) and
             DENORMALS) then
@@ -130,33 +133,31 @@ begin
                     r <= '0';
                 end if;
 
-                if (product /= to_unsigned(0, PBITS)) then
-                    s <= '1';
-                else
-                    s <= '0';
-                end if;
+                s <= reduction_or(std_ulogic_vector(product));
             else
                 -- The significand is the product, right shifted
-                -- by bitsToShift. Since the decimal point is:
-                -- xx.xxxxx then we want to add bitsToShift-1
-                -- 0s and then the rest of the bits are from
-                -- the product.
-                -- bitsFromProduct := SBITS - (bitsToShift-1)
-                -- so the range is PBITS-1 downto lsb, where:
-                -- lsb := (PBITS-1) - (SBITS - (bitsToShift-1)) + 1
-                lsb := PBITS + bitsToShift - SBITS - 1;
-                normalizedSig <= to_unsigned(0, bitsToShift-1) &
-                                 product((PBITS-1) downto lsb);
+                -- by bitsToShift. We store the product in a
+                -- variable of size PBITS + SBITS + 1.
+                -- So that at the maximum shift of SBITS, all
+                -- of the data is still in the reult, so we can
+                -- get S and R easily.
+                productExt := product & to_unsigned(0, SBITS+1);
+                productExt := SHIFT_RIGHT(productExt, bitsToShift);
+
+                -- We currently have ab.cde
+                -- so shifting right by one gives us: 0a.bcde
+                -- so we don't use the msb of the result.
+                -- if the upper bit is PBITS+SBITS-1 and we
+                -- want SBITS, then the lsb is PBITS
+                normalizedSig <= productExt((PBITS+SBITS-1) downto (PBITS));
 
                 -- r is the next bit
-                r <= product(lsb - 1);
+                r <= productExt(PBITS-1);
 
                 -- s is the reduction or of all lower bits
-                if (product((lsb - 2) downto 0) = to_unsigned(0, lsb - 1)) then
-                    s <= '0';
-                else
-                    s <= '1';
-                end if;
+                -- bitsToShift max for us to be here is SBITS
+                -- if we shifted
+                s <= reduction_or(std_ulogic_vector(productExt((PBITS-2) downto 0)));
             end if;
 
             -- set the exponent to EMIN. This gets changed to
@@ -189,6 +190,7 @@ begin
 
                 -- we have 0x.xxxx, and want 1.xxxx
                 -- so we need to shift left by some amount
+                -- (potentially 0)
 
                 if (not DENORMALS) then
                     -- we don't support denormals,
@@ -213,14 +215,14 @@ begin
                     -- we support denormals, so we need to shift
                     -- left until normalized (ie. msb is 1)
                     -- or we would underflow (adjust = EMIN)
-                    maxShift := to_integer(sumOfBExps) - get_emin;
+                    maxShift := 1 + to_integer(sumOfBExps) -
+                                get_emin;
 
                     -- if all the bits are 0, then we have
-                    -- underflowed and are 0. Note we ignore
-                    -- the msb, because we know it's not a 1
+                    -- underflowed and are 0.
                     bitsToShift := -1;
-                    for i in 0 to (PBITS - 2) loop
-                        if ((product(PBITS - i - 2) = '1') or
+                    for i in 0 to (PBITS - 1) loop
+                        if ((product(PBITS - i - 1) = '1') or
                             (i >= maxShift)) then
                             bitsToShift := i;
                             exit;
@@ -238,38 +240,38 @@ begin
                         r <= '0';
                         s <= '0';
                     else
-                        -- bitsToShift max = PBITS - 2
+                        -- bitsToShift max = PBITS - 1
                         -- shifting the product by that would
-                        -- leave 2 bits of the product.
-                        -- We need SBITS + 3 (ignored msb, r and s),
+                        -- leave 1 bits of the product.
+                        -- We need SBITS + 2 (r and s),
                         -- so if we append (SBITS+1) bits
                         -- of 0s to the product we don't need
                         -- to worry about ranges.
                         productExt := product((PBITS-1) downto 0) &
                                       to_unsigned(0, SBITS+1);
 
-                        -- the msb of the productExt is PBITS + SBITS
-                        -- we shift left by bitsToShift, so we want
-                        -- PBITS + SBITS - bitsToShift - 1 downto lsb
-                        -- where lsb := PBITS + SBITS - bitsToShift - 1 - (SBITS-1)
-                        lsb := PBITS - bitsToShift;
-                        normalizedSig <= productExt((PBITS + SBITS - bitsToShift - 1)
-                                                     downto lsb);
+                        productExt := SHIFT_LEFT(productExt, bitsToShift);
+
+                        -- We currently have 0a.bcde000
+                        -- so shifting left by one gives us: a.bcde0000
+                        -- so we use the msb of the result.
+                        -- if the upper bit is PBITS+SBITS and we
+                        -- want SBITS, then the lsb is PBITS+1
+                        normalizedSig <= productExt((PBITS + SBITS) downto (PBITS+1));
+
                         -- r is the next bit
-                        r <= productExt(lsb - 1);
+                        r <= productExt(PBITS);
+
                         -- s is the reduction-or of the rest of the bits
-                        if (productExt((lsb - 2) downto 0) = to_unsigned(0, lsb - 1)) then
-                            s <= '0';
-                        else
-                            s <= '1';
-                        end if;
+                        s <= reduction_or(std_ulogic_vector(productExt((PBITS-1) downto 0)));
 
                         -- adjust the exponent.
                         -- we shifted left by bitsToShift bits
-                        -- so we need to decrement the exponent by
-                        -- bitsToShift
+                        -- but the decimal point was after the second
+                        -- bit. So we need to decrement the exponent
+                        -- by bitsToShift - 1
                         adjustedBExp <= sumOfBExps -
-                                        to_signed(bitsToShift,
+                                        to_signed(bitsToShift - 1,
                                                   EBITS + 2);
                     end if;
                 end if;
