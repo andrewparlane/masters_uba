@@ -7,6 +7,9 @@ use std.textio.all;
 package utils_pkg is
     function min_width(max_value: natural) return natural;
     function vector_to_string(vect: std_ulogic_vector) return string;
+
+    function reduction_or(v: std_ulogic_vector) return std_ulogic;
+
     procedure read_unsigned_decimal_from_line(l: inout line;
                                               u: inout unsigned);
 end package utils_pkg;
@@ -25,6 +28,15 @@ package body utils_pkg is
         end loop;
         return str;
     end function vector_to_string;
+
+    function reduction_or(v: std_ulogic_vector) return std_ulogic is
+    begin
+        if (v = std_ulogic_vector(to_unsigned(0, v'length))) then
+            return '0';
+        else
+            return '1';
+        end if;
+    end function reduction_or;
 
     procedure read_unsigned_decimal_from_line(l: inout line;
                                               u: inout unsigned) is
