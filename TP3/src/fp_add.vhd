@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.utils_pkg.all;
+
 use work.fp_type_pkg.all;
 use work.fp_helper_pkg.all;
 
@@ -181,89 +184,70 @@ begin
 
     process (i_clk)
         variable bitsToShift:   integer;
-        variable fillerBits:    std_ulogic;
+        variable fillerBit:     std_ulogic;
+
+        -- we shifte fpB.sig by fpA.exp - fpB.exp.
+        -- in the worst case we shift out the entire significand
+        -- + 1 bit for guard, and + 1 bit for round
+        -- = SBITS+2. So if we create a variable of size
+        -- SBITS + SBITS+2. Then when we shift we know exactly
+        -- where to look for G and R. S is also easy to check.
+        -- We also add 1 bit at the top, so that the arithmetic
+        -- shift, shifts that bit repeatedly in. Also it's signed
+        -- for the same reason
+        variable shifted: signed(((2*SBITS)+2) downto 0);
     begin
         if (rising_edge(i_clk)) then
             p1Res(3) <= p1Res(2);
             p2Res(3) <= p2Res(2);
 
+            -- we shift the significand right by bitsToShift
             bitsToShift := to_integer(unsigned(get_bExp(p1Res(2).fpA, EBITS)) -
                                       unsigned(get_bExp(p1Res(2).fpB, EBITS)));
 
-            -- we shift the significand right by bitsToShift
-            -- which means the range is
-            -- (bitsToShift + SBITS - 1) downto
-            -- bitsToShift.
-            -- Which is made up of two parts:
-            --   Upper bits - all 1s or 0s depending of comp2
-            --   Lower bits - upper bits of significand
-            --      (SBITS - 1) downto bitsToShift
 
-            fillerBits := '1' when p2Res(2).signsDiffer
-                          else '0';
-
-            if (bitsToShift < SBITS) then
-                -- copy the bits over from the old result
-                p3Res(3).sig((SBITS - 1 - bitsToShift) downto 0)
-                    <= p2Res(2).sig((SBITS - 1) downto bitsToShift);
-
-                -- if we aren't shifting by 0 bits then there
-                -- will be bits to shift in with fillerBits
-                if (bitsToShift /= 0) then
-                    p3Res(3).sig((SBITS - 1) downto (SBITS - bitsToShift))
-                        <= (others => fillerBits);
-                end if;
+            -- we shift in fillerBit, which depends on if
+            -- we complemented in stage 2 or not.
+            if (p2Res(2).signsDiffer) then
+                fillerBit := '1';
             else
-                -- we shifted everything out
-                -- so just fill with fillerBits
-                p3Res(3).sig((SBITS - 1) downto 0)
-                        <= (others => fillerBits);
+                fillerBit := '0';
             end if;
+
+            -- take the significand to shift, prepend filler bit
+            -- and append SBITS+2 of 0s
+            shifted := signed(fillerBit &
+                              p2Res(2).sig &
+                              to_unsigned(0, SBITS+2));
+
+            -- now shift it right by bitsToShift
+            shifted := SHIFT_RIGHT(shifted, bitsToShift);
+
+            -- the resulting significand is in the upper SBITS
+            -- after the MSb.
+            p3Res(3).sig <= unsigned(shifted(((2*SBITS)+1) downto (SBITS+2)));
 
             -- g is the guard bit, it's the msb that was
-            -- shifted out. 3 cases:
-            -- 1) bitsToShift = 0, no bits shifted out, g = 0
-            -- 2) bitsToShift > SBITS, bit shifted out
-            --    is a bit that was shifted in (fillerBits)
-            -- 3) others, g = oldSignificand(bitsToShift - 1)
-            if (bitsToShift = 0) then
-                p3Res(3).g <= '0';
-            elsif (bitsToShift > SBITS) then
-                p3Res(3).g <= fillerBits;
-            else
-                p3Res(3).g <= p2Res(2).sig(bitsToShift - 1);
-            end if;
+            -- shifted out.
+            p3Res(3).g <= shifted(SBITS+1);
 
             -- r is the rounding bit, it's the second msb that
-            -- was shifted out. 3 cases:
-            -- 1) bitsToShift < 2, r = 0
-            -- 2) bitsToShift > (SBITS + 1), r is fillerBits
-            -- 3) others, r = oldSignificand(bitsToShift - 2)
-            if (bitsToShift < 2) then
-                p3Res(3).r <= '0';
-            elsif (bitsToShift > (SBITS + 1)) then
-                p3Res(3).r <= fillerBits;
-            else
-                p3Res(3).r <= p2Res(2).sig(bitsToShift - 2);
-            end if;
+            -- was shifted out.
+            p3Res(3).r <= shifted(SBITS);
 
             -- s is the sticky bit, it's the reduction or of all
-            -- shifted out bits after g and r. 3 cases:
-            -- 1) bitsToShift < 3, s = 0
-            -- 2) bitsToShift > (SBITS + 2),
-            --    s = (|oldSignificand) | comp2
-            -- 3) others, s = |oldSignificand((bitsToShift - 3)
-            --                             downto 0)
-            if (bitsToShift < 3) then
-                p3Res(3).s <= '0';
-            elsif (bitsToShift > (SBITS + 2)) then
-                p3Res(3).s <= '1' when (unsigned(p2Res(2).sig) /=
-                                        to_unsigned(0, SBITS))
-                              else fillerBits;
+            -- shifted out bits after g and r. 2 cases:
+            -- 1) bitsToShift <= SBITS+2,
+            --      we haven't shifted out of our variable
+            --      so s is the reduction or of the lower SBITS
+            -- 2) bitsToShift > SBITS+2
+            --      we shifted out all our significand
+            --      plus one for g and r. So s is the
+            --      reduction or of the significand + fillerBit
+            if (bitsToShift <= (SBITS+2)) then
+                p3Res(3).s <= reduction_or(std_ulogic_vector(shifted((SBITS-1) downto 0)));
             else
-                p3Res(3).s <= '1' when (unsigned(p2Res(2).sig((bitsToShift - 3)downto 0)) /=
-                                        to_unsigned(0, bitsToShift - 2))
-                              else '0';
+                p3Res(3).s <= reduction_or(std_ulogic_vector(fillerBit & p2Res(2).sig));
             end if;
         end if;
     end process;
@@ -381,18 +365,10 @@ begin
                     p5Res(5).s <= '0';
                 else
 
-                    if (bitsToShift = 0) then
-                        p5Res(5).sum <= p4Res(4).sum;
-                    elsif (bitsToShift = 1) then
-                        -- shifting 1 bit, just shift in g
-                        p5Res(5).sum <= p4Res(4).sum((SBITS - 2) downto 0) &
-                                        p3Res(4).g;
-                    else
-                        -- shifting more than 1 bit, shift in g then 0s
-                        p5Res(5).sum <= p4Res(4).sum((SBITS - bitsToShift -1) downto 0) &
-                                        p3Res(4).g &
-                                        to_unsigned(0, (bitsToShift - 1));
-                    end if;
+                    -- shift left by bitsToShift
+                    -- first bit to shift in is g, then 0s
+                    p5Res(5).sum <= SHIFT_LEFT(p4Res(4).sum & p3Res(4).g,
+                                               bitsToShift)(SBITS downto 1);
 
                     -- adjust the exponent.
                     -- we shifted left by bitsToShift bits
