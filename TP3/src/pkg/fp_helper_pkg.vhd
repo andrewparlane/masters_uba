@@ -314,7 +314,11 @@ package body fp_helper_pkg is
     function to_string(fp: fpUnpacked; tbits: natural; ebits: natural) return string is
         variable signStr: string(1 to 1);
     begin
-        signStr := "+" when fp.sign = '0' else "-";
+        if (fp.sign = '0') then
+            signStr := "+";
+        else
+            signStr := "-";
+        end if;
 
         if (fp.numType = fpNumType_ZERO) then
             return signStr & "0";

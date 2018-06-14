@@ -124,11 +124,17 @@ begin
                 -- r is the last bit shifted out, which is
                 -- either the MSb of the product, or 0
                 normalizedSig <= to_unsigned(0, SBITS);
-                r <= product(PBITS-1)
-                     when (bitsToShift = (SBITS+1))
-                     else '0';
-                s <= '1' when (product /= to_unsigned(0, PBITS))
-                     else '0';
+                if (bitsToShift = (SBITS+1)) then
+                    r <= product(PBITS-1);
+                else
+                    r <= '0';
+                end if;
+
+                if (product /= to_unsigned(0, PBITS)) then
+                    s <= '1';
+                else
+                    s <= '0';
+                end if;
             else
                 -- The significand is the product, right shifted
                 -- by bitsToShift. Since the decimal point is:
@@ -146,9 +152,11 @@ begin
                 r <= product(lsb - 1);
 
                 -- s is the reduction or of all lower bits
-                s <= '0' when (product((lsb - 2) downto 0) =
-                               to_unsigned(0, lsb - 1))
-                     else '1';
+                if (product((lsb - 2) downto 0) = to_unsigned(0, lsb - 1)) then
+                    s <= '0';
+                else
+                    s <= '1';
+                end if;
             end if;
 
             -- set the exponent to EMIN. This gets changed to
@@ -172,9 +180,11 @@ begin
                 r <= product(SBITS - 1);
 
                 -- and s is the reduction or of all lower bits
-                s <= '0' when (product((SBITS - 2) downto 0) =
-                               to_unsigned(0, SBITS - 1))
-                     else '1';
+                if (product((SBITS - 2) downto 0) = to_unsigned(0, SBITS - 1)) then
+                    s <= '0';
+                else
+                    s <= '1';
+                end if;
             else
 
                 -- we have 0x.xxxx, and want 1.xxxx
@@ -191,9 +201,11 @@ begin
                     -- r is the next bit
                     r <= product(SBITS - 2);
                     -- and s is the reduction or of all lower bits
-                    s <= '0' when (product((SBITS - 3) downto 0) =
-                                   to_unsigned(0, SBITS - 2))
-                         else '1';
+                    if (product((SBITS - 3) downto 0) = to_unsigned(0, SBITS - 2)) then
+                        s <= '0';
+                    else
+                        s <= '1';
+                    end if;
 
                     -- no need to adjust the exponent
                     adjustedBExp <= sumOfBExps;
@@ -246,9 +258,11 @@ begin
                         -- r is the next bit
                         r <= productExt(lsb - 1);
                         -- s is the reduction-or of the rest of the bits
-                        s <= '0' when (productExt((lsb - 2) downto 0) =
-                                       to_unsigned(0, lsb - 1))
-                             else '1';
+                        if (productExt((lsb - 2) downto 0) = to_unsigned(0, lsb - 1)) then
+                            s <= '0';
+                        else
+                            s <= '1';
+                        end if;
 
                         -- adjust the exponent.
                         -- we shifted left by bitsToShift bits

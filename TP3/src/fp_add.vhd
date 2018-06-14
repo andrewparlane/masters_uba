@@ -147,9 +147,11 @@ begin
             if (is_zero(p1Res(1).fpB)) then
                 signsDiffer := false;
             else
-                signsDiffer := true when (p1Res(1).fpA.sign xor
-                                          p1Res(1).fpB.sign)
-                               else false;
+                if (p1Res(1).fpA.sign xor p1Res(1).fpB.sign) then
+                    signsDiffer := true;
+                else
+                    signsDiffer := false;
+                end if;
             end if;
 
             p2Res(2).signsDiffer <= signsDiffer;
