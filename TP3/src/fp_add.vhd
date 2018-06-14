@@ -21,7 +21,8 @@ architecture synth of fp_add is
     component fp_round is
         generic (TBITS: natural;
                  EBITS: natural;
-                 SBITS: natural);
+                 SBITS: natural;
+                 DENORMALS: boolean);
         port (i_clk:    in  std_ulogic;
               i_sig:    in  unsigned((SBITS - 1) downto 0);
               i_bExp:   in  signed((EBITS + 1) downto 0);
@@ -448,7 +449,8 @@ begin
 
     fpRound: fp_round generic map (TBITS => TBITS,
                                    EBITS => EBITS,
-                                   SBITS => SBITS)
+                                   SBITS => SBITS,
+                                   DENORMALS => DENORMALS)
                       port map (i_clk   => i_clk,
                                 i_sig   => p5Res(5).sum,
                                 i_bExp  => p5Res(5).bExp,
