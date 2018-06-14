@@ -305,39 +305,41 @@ begin
     -- Pick the correct result:
     -----------------------------------------------------------------
 
-    process (all)
+    process (i_clk)
     begin
-        -- If either of the arguments is NaN
-        -- or they are 0 * infinity then
-        -- the output should be NaN
-        if (is_NaN(fpA) or
-            is_NaN(fpB) or
-            (is_zero(fpA) and is_infinity(fpB)) or
-            (is_zero(fpB) and is_infinity(fpA))) then
-            fpC <= set_NaN(newSign, TBITS, EBITS);
+        if (rising_edge(i_clk)) then
+            -- If either of the arguments is NaN
+            -- or they are 0 * infinity then
+            -- the output should be NaN
+            if (is_NaN(fpA) or
+                is_NaN(fpB) or
+                (is_zero(fpA) and is_infinity(fpB)) or
+                (is_zero(fpB) and is_infinity(fpA))) then
+                fpC <= set_NaN(newSign, TBITS, EBITS);
 
-        -- If either of the inputs is infinity then the
-        -- result is infinity.
-        elsif (is_infinity(fpA) or
-               is_infinity(fpB)) then
-            fpC <= set_infinity(newSign, TBITS, EBITS);
+            -- If either of the inputs is infinity then the
+            -- result is infinity.
+            elsif (is_infinity(fpA) or
+                   is_infinity(fpB)) then
+                fpC <= set_infinity(newSign, TBITS, EBITS);
 
-        -- If either of the arguments is 0
-        -- then the result is zero.
-        elsif (is_zero(fpA) or
-               is_zero(fpB)) then
-            fpC <= set_zero(newSign, TBITS, EBITS);
+            -- If either of the arguments is 0
+            -- then the result is zero.
+            elsif (is_zero(fpA) or
+                   is_zero(fpB)) then
+                fpC <= set_zero(newSign, TBITS, EBITS);
 
-        -- Finally in all others cases the result is
-        -- the calculated one
-        else
-            fpC.emin    <= get_emin;
-            fpC.emax    <= get_emax(EBITS);
-            fpC.bias    <= get_bias(EBITS);
-            fpC.sign    <= newSign;
-            fpC.bExp    <= resize(finalBExp, MAX_EBITS);
-            fpC.sig     <= resize(finalSig, MAX_SBITS);
-            fpC.numType <= resultType;
+            -- Finally in all others cases the result is
+            -- the calculated one
+            else
+                fpC.emin    <= get_emin;
+                fpC.emax    <= get_emax(EBITS);
+                fpC.bias    <= get_bias(EBITS);
+                fpC.sign    <= newSign;
+                fpC.bExp    <= resize(finalBExp, MAX_EBITS);
+                fpC.sig     <= resize(finalSig, MAX_SBITS);
+                fpC.numType <= resultType;
+            end if;
         end if;
     end process;
 
