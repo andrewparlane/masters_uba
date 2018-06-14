@@ -24,7 +24,11 @@ package body utils_pkg is
         variable str: string(1 to vect'length);
     begin
         for i in vect'range loop
-            str(i+1) := '1' when vect(vect'length - i - 1) else '0';
+            if (vect(vect'length - i - 1) = '1') then
+                str(i+1) := '1';
+            else
+                str(i+1) := '0';
+            end if;
         end loop;
         return str;
     end function vector_to_string;
