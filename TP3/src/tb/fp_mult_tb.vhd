@@ -7,7 +7,6 @@ library common;
 use common.all;
 use common.type_pkg.all;
 
-use work.fp_type_pkg.all;
 use work.fp_helper_pkg.all;
 
 entity fp_mult_tb is

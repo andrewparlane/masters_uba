@@ -2,8 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.fp_type_pkg.all;
-
 -- A floating point number is represented in a vector as:
 -- sign 1 bit, 0 = +ve, 1 = -ve.
 -- exponent E bits
@@ -23,6 +21,15 @@ package fp_helper_pkg is
     constant MAX_EBITS: natural := 11;
     constant MAX_SBITS: natural := 53;
 
+    type fpNumType is
+    (
+        fpNumType_NORMAL,
+        fpNumType_ZERO,
+        fpNumType_DENORMAL,
+        fpNumType_NaN,
+        fpNumType_INFINITY
+    );
+
     type fpUnpacked is record
         sign:       std_ulogic;
         bExp:       unsigned((MAX_EBITS - 1) downto 0);
@@ -33,6 +40,14 @@ package fp_helper_pkg is
         emax:       natural;
         bias:       natural;
     end record fpUnpacked;
+
+    type RoundingMode is
+    (
+        RoundingMode_NEG_INF,
+        RoundingMode_POS_INF,
+        RoundingMode_0,
+        RoundingMode_NEAREST
+    );
 
     function unpack(vect:  std_ulogic_vector; tbits: natural; ebits: natural) return fpUnpacked;
     function pack(fp: fpUnpacked; tbits: natural; ebits: natural) return std_ulogic_vector;

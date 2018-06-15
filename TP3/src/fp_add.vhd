@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library common;
 use common.utils_pkg.all;
 
-use work.fp_type_pkg.all;
 use work.fp_helper_pkg.all;
 
 entity fp_add is

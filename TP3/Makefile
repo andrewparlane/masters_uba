@@ -35,8 +35,7 @@ FP_GEN_PATH		= c/test_file_gen
 COMMON_LIB		= common
 
 # src files
-SRCS	= $(PKG_SRC_DIR)/fp_type_pkg.vhd \
-		  $(wildcard $(PKG_SRC_DIR)/*.vhd) \
+SRCS	= $(wildcard $(PKG_SRC_DIR)/*.vhd) \
 		  $(wildcard $(SRC_DIR)/*.vhd)
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
@@ -190,13 +189,21 @@ fp_mult_c_round_nearest: all test_file_gen
 
 fp_mult_c_all: $(FP_MULT_C_TESTS)
 
+.PHONY: $(FP_MULT_TESTS) fp_mult_tp_all $(FP_MULT_C_TESTS) fp_mult_c_all
+
 fp_mult_c_32b_report:
 	@$(call COVERAGE_REPORT, $(MULT_COVERAGE_FILE_32B))
 
 fp_mult_c_64b_report:
 	@$(call COVERAGE_REPORT, $(MULT_COVERAGE_FILE_64B))
 
-.PHONY: $(FP_MULT_TESTS) fp_mult_tp_all $(FP_MULT_C_TESTS) fp_mult_c_all
+fp_add_c_32b_report:
+	@$(call COVERAGE_REPORT, $(ADD_COVERAGE_FILE_32B))
+
+fp_add_c_64b_report:
+	@$(call COVERAGE_REPORT, $(ADD_COVERAGE_FILE_64B))
+
+.PHONY: fp_mult_c_32b_report fp_mult_c_64b_report fp_add_c_32b_report fp_add_c_64b_report
 
 FP_SUM_TP_TESTS = fp_sum_23_6 \
                   fp_sum_24_6 \
@@ -325,7 +332,9 @@ fp_sub_c_all: $(FP_SUB_C_TESTS)
 all_tests: 	fp_sub_c_all fp_sum_c_all fp_mult_c_all \
 			fp_sub_tp_all fp_sum_tp_all fp_mult_tp_all
 
-.PHONY: all_tests
+all_c_tests: fp_sub_c_all fp_sum_c_all fp_mult_c_all
+
+.PHONY: all_tests all_c_tests
 
 # delete the library and all compiled files
 clean: helper_clean

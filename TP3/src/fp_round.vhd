@@ -2,7 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-use work.fp_type_pkg.all;
 use work.fp_helper_pkg.all;
 
 entity fp_round is

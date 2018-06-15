@@ -1,4 +1,4 @@
-import fp_type_pkg::*;
+import fp_helper_pkg::*;
 
 program fp_round_coverage_prog
         #(parameter TBITS,
@@ -10,10 +10,10 @@ program fp_round_coverage_prog
           input logic                       i_sign,
           input logic                       i_r,
           input logic                       i_s,
-          input fp_type_pkg::roundingmode   i_rm,
+          input fp_helper_pkg::roundingmode i_rm,
           input logic [SBITS-1:0]           o_sig,
           input logic [EBITS-1:0]           o_bExp,
-          input fp_type_pkg::fpnumtype      o_type);
+          input fp_helper_pkg::fpnumtype    o_type);
 
     covergroup cg_input @(posedge i_clk);
         option.per_instance = 1;
@@ -103,7 +103,7 @@ program fp_add_mult_coverage_prog
          (input logic                       i_clk,
           input logic [TBITS-1:0]           i_a,
           input logic [TBITS-1:0]           i_b,
-          input fp_type_pkg::roundingmode   i_rm,
+          input fp_helper_pkg::roundingmode i_rm,
           input logic [TBITS-1:0]           o_res);
 
     // note SBITS here is the amount of bits in the packed
