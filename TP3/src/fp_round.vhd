@@ -5,8 +5,7 @@ use ieee.numeric_std.all;
 use work.fp_helper_pkg.all;
 
 entity fp_round is
-    generic (TBITS:     natural;
-             EBITS:     natural;
+    generic (EBITS:     natural;
              SBITS:     natural;
              DENORMALS: boolean);
     port (i_clk:    in  std_ulogic;

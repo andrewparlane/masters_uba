@@ -20,8 +20,7 @@ end entity fp_mult;
 
 architecture synth of fp_mult is
     component fp_round is
-        generic (TBITS:     natural;
-                 EBITS:     natural;
+        generic (EBITS:     natural;
                  SBITS:     natural;
                  DENORMALS: boolean);
         port (i_clk:    in  std_ulogic;
@@ -287,8 +286,7 @@ begin
     -----------------------------------------------------------------
     -- rounding:
     -----------------------------------------------------------------
-    fpRound: fp_round generic map (TBITS     => TBITS,
-                                   EBITS     => EBITS,
+    fpRound: fp_round generic map (EBITS     => EBITS,
                                    SBITS     => SBITS,
                                    DENORMALS => DENORMALS)
                       port map (i_clk   => i_clk,

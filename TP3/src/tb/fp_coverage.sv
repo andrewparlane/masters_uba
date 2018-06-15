@@ -1,8 +1,7 @@
 import fp_helper_pkg::*;
 
 program fp_round_coverage_prog
-        #(parameter TBITS,
-          parameter EBITS,
+        #(parameter EBITS,
           parameter SBITS)
          (input logic                       i_clk,
           input logic [SBITS-1:0]           i_sig,
@@ -209,8 +208,7 @@ module fp_mult_wrapper;
          fp_mult_bind (.*);
 
     bind fp_round
-         fp_round_coverage_prog #(.TBITS(TBITS),
-                                  .EBITS(EBITS),
+         fp_round_coverage_prog #(.EBITS(EBITS),
                                   .SBITS(SBITS))
          fp_round_bind (.*);
 endmodule
@@ -222,8 +220,7 @@ module fp_add_wrapper;
          fp_add_bind (.*);
 
     bind fp_round
-         fp_round_coverage_prog #(.TBITS(TBITS),
-                                  .EBITS(EBITS),
+         fp_round_coverage_prog #(.EBITS(EBITS),
                                   .SBITS(SBITS))
          fp_round_bind (.*);
 endmodule
