@@ -202,23 +202,40 @@ VSIM_FLAGS					:=	$(MODELSIM_FLAG) \
 								-error 3473 \
 								-error 3351
 
-# the run the test command.
-#	Takes two arguments:
+# the run the test command, with coverage support
+#	Takes three arguments:
 #		1) Top level module name
 #		2) Additional VSIM_FLAGS
-define VSIM_CMD
+#		3) Coverage file
+define VSIM_CMD_WITH_COVERAGE
 	@echo -e "$(COLOUR_GREEN)Running simulation of $(1).$(COLOUR_NONE)\n"
 	@mkdir -p $(WAVES_DIR)
+	# move the old coverage file to _old
+	-mv $(3) $(3)_old
+	# run the simulation
 	$(call COLOURIZE, \
 		vsim $(VSIM_FLAGS) \
 			 $(2) \
 			 -wlf $(WAVES_DIR)/$(strip $(1)).wlf \
-			 -do "log -r /*; \
+			 -do "coverage save $(3) -onexit; \
+				  log -r /*; \
 				  run 5 sec; \
 				  assertion report -recursive *; \
 				  quit -f" \
 			 $(1))
+
+	# merge the coverage file with the old one
+	-vcover merge $(3) $(3) $(3)_old
 endef
+
+# the run the test command, using the default coverage file
+#	Takes two arguments:
+#		1) Top level module name
+#		2) Additional VSIM_FLAGS
+define VSIM_CMD
+	@$(call VSIM_CMD_WITH_COVERAGE, $(1), $(2), coverage.ucdb)
+endef
+
 
 # A macro to open questasim and show us the saved waves
 #	Takes two arguments:
@@ -247,6 +264,21 @@ endef
 # A generic rule to open questasim and show us the saved waves
 view:
 	$(call VSIM_VIEW_WAVES_WLF, $(WLF), $(VSIM_ALL_WAVES))
+
+# ----------------------------------------------------------------------------------
+# Coverage reporting
+# ----------------------------------------------------------------------------------
+#	Takes one arguments:
+#		1) Coverage file
+define COVERAGE_REPORT
+	@echo -e "$(COLOUR_GREEN) Generating coverage report from $(1).$(COLOUR_NONE)\n"
+	if [ ! -e $(1) ]; then \
+		echo -e "$(COLOUR_RED)Error: file $(1) doesn't exist$(COLOUR_NONE)"; \
+		exit 1; \
+	else \
+		vcover report -html $(1); \
+	fi;
+endef
 
 # ----------------------------------------------------------------------------------
 # Cleaning
