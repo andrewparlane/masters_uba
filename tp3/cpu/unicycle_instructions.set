@@ -49,7 +49,7 @@
 			{"aluop": 0, "out": {"Operation": 2}},
 			{"aluop": 1, "out": {"Operation": 6}},
 			{"aluop": 2, "func":  8, "out": {"Operation": 0, "JumpReg": 1}},
-			{"aluop": 2, "func":  8, "out": {"Operation": 0, "JumpReg": 1, "SavePCInRd": 1}},
+			{"aluop": 2, "func":  9, "out": {"Operation": 0, "JumpReg": 1, "Link": 1}},
 			{"aluop": 2, "func": 32, "out": {"Operation": 2}},
 			{"aluop": 2, "func": 34, "out": {"Operation": 6}},
 			{"aluop": 2, "func": 36, "out": {"Operation": 0}},

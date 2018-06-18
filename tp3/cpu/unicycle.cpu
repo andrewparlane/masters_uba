@@ -30,9 +30,13 @@
 		"MuxMem":     {"type": "Multiplexer", "latency": 15, "x": 580, "y": 270, "size": 32, "sel": "MemToReg", "in": ["0", "1"], "out": "Out", "desc": {"default": "Selects the result of the ALU or the value read from memory to write to the destination register (WriteData).", "pt": "Selecciona o resultado da ALU ou o valor lido da memória para escrever no registo de destino (WriteData)."}},
         "ForkJR":     {"type": "Fork", "x": 625, "y": 120, "size": 1, "in": "In", "out": ["Out1", "Out2"] },
         "ForkRs":     {"type": "Fork", "x": 370, "y": 248, "size": 32, "in": "In", "out": ["Out1", "Out2"] },
+        "ForkPCp4":   {"type": "Fork", "x": 560, "y": 26, "size": 32, "in": "In", "out": ["Out1", "Out2"] },
         "OrJump":     {"type": "Or", "x": 600, "y": 60, "in1": "Jump", "in2": "JumpReg", "out": "Out", "desc": {"default": "Is it a jump instruction."}},
         "OrBJR":      {"type": "Or", "x": 510, "y": 60, "in1": "Branch", "in2": "JumpReg", "out": "Out", "desc": {"default": "Is it a jump register or a branch instruction."}},
-        "ConcatNewPCSel": {"type": "Concatenator", "x": 587, "y": 75, "in1": {"id": "OrJump", "size": 1}, "in2": {"id": "OrBJR", "size": 1}, "out": "Out" }},
+        "ConcatNewPCSel": {"type": "Concatenator", "x": 587, "y": 75, "in1": {"id": "OrJump", "size": 1}, "in2": {"id": "OrBJR", "size": 1}, "out": "Out" },
+        "MuxMem2":    {"type": "Multiplexer", "latency": 15, "x": 640, "y": 276, "size": 32, "sel": "WritePC", "out": "Out", "in": ["0", "1"]}
+    },
+
 	"wires": [
 		{"from": "PC", "out": "PC", "to": "ForkPC", "in": "In"},
 		{"from": "Const4", "out": "Out", "to": "PCAdder", "in": "In2"},
@@ -69,7 +73,8 @@
 		{"from": "ForkImm", "out": "Out2", "to": "ShiftImm", "in": "In", "points": [{"x": 340, "y": 100}]},
 		{"from": "ShiftImm", "out": "Out", "to": "AddBranch", "in": "In2", "points": [{"x": 405, "y": 100}, {"x": 405, "y": 82}]},
 		{"from": "ForkBranch", "out": "Out1", "to": "AddBranch", "in": "In1"},
-		{"from": "ForkBranch", "out": "Out2", "to": "MuxNewPC", "in": "0", "points": [{"x": 320, "y": 26}], "end": {"x": 580, "y": 26}},
+		{"from": "ForkBranch", "out": "Out2", "to": "ForkPCp4", "in": "In", "points": [{"x": 320, "y": 26}], "end": {"x": 580, "y": 26}},
+		{"from": "ForkPCp4", "out": "Out1", "to": "MuxNewPC", "in": "0", "end": {"x": 580, "y": 26}},
         {"from": "AddBranch", "out": "Out", "to": "MuxNewPC", "in": "1", "points": [{"x": 480, "y": 77}, {"x": 480, "y": 33}], "end": {"x": 580, "y": 33}},
         {"from": "ConcatJump", "out": "Out", "to": "MuxNewPC", "in": "2", "end": {"x": 580, "y": 40}},
         {"from": "ForkRs", "out": "Out2", "to": "MuxNewPC", "in": "3", "points": [{"x": 370, "y": 200}, {"x": 550, "y": 200}, {"x": 550, "y": 46}], "end": {"x": 580, "y": 46}},
@@ -92,7 +97,10 @@
 		{"from": "Control", "out": "MemToReg", "to": "MuxMem", "in": "MemToReg", "start": {"x": 280, "y": 150}, "points": [{"x": 587, "y": 150}]},
 		{"from": "DataMem", "out": "ReadData", "to": "MuxMem", "in": "1"},
 		{"from": "ForkMem", "out": "Out2", "to": "MuxMem", "in": "0", "points": [{"x": 470, "y": 352}, {"x": 570, "y": 352}, {"x": 570, "y": 281}]},
-		{"from": "MuxMem", "out": "Out", "to": "RegBank", "in": "WriteData", "end": {"x": 250, "y": 297}, "points": [{"x": 600, "y": 287}, {"x": 600, "y": 400}, {"x": 240, "y": 400}, {"x": 240, "y": 297}]}
+		{"from": "MuxMem", "out": "Out", "to": "MuxMem2", "in": "0"},
+		{"from": "MuxMem2", "out": "Out", "to": "RegBank", "in": "WriteData", "end": {"x": 250, "y": 297}, "points": [{"x": 680, "y": 293}, {"x": 680, "y": 400}, {"x": 240, "y": 400}, {"x": 240, "y": 297}]},
+        {"from": "ForkPCp4", "out": "Out2", "to": "MuxMem2", "in": "1", "points": [{"x": 560, "y": 200}, {"x": 610, "y": 200}, {"x": 610, "y": 298}]},
+        {"from": "ALUControl", "out": "Link", "to": "MuxMem2", "in": "WritePC", "start": {"x": 370, "y": 350}, "points": [{"x": 370, "y": 390}, {"x": 645, "y": 390}]}
 	],
 	"reg_names": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"],
 	"instructions": "unicycle_instructions.set"
