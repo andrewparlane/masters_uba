@@ -1,0 +1,60 @@
+uart
+    baud rate
+Cordic
+    passes?
+Video
+    resolution
+        640*480@60Hz
+            single buffered - 307,200 bits
+            double buffered - 614,400 bits
+            clock: 25MHz
+    options
+        1) single buffereed in BRAM
+           clear and rewrite all during blanking ~1.76mS
+           12,000 co-ords read + 3*cordic + written
+           = new value written every 146nS -> clk 6MHz
+           probably doable
+        2) Double buffered in SRAM / SDRAM
+           would need to be able to guarantee pixel data is ready
+           so probably have to read X rows of pixel data to a buffer
+           while writing cordic results to a buffer.
+           Then write codic data to RAM, then read more pixels
+           etc...
+        3) Don't worry about it, the updates will look like shit
+           while rotating
+
+RAMs
+----
+    BRAM
+        430,080 bits + 53,760 parity bits
+    SDRAM - U17 - 1M*16*4
+        IS42S16400D-7TL
+        speed 7ns - 143MHz
+        8MB
+    SRAM - U18 - 256K*16
+        IS61LV25616AL-10T
+        512KB
+        pretty simple interface
+        read at 100MHz
+        write at 100MHz (probably)
+
+Clocks
+------
+    VGA
+        25MHz
+    SRAM
+        max 100MHz
+
+Plan
+----
+    enter stage 1
+    UART writes data to SRAM
+    enter stage 2
+    loop at 50Hz
+        start pipeline
+            read coordinates
+            cordic1
+            cordic2
+            cordic3
+            convert to 2D
+            write to BRAM
