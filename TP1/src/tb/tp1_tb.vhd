@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.type_pkg.all;
+
 entity tp1_tb is
 end entity tp1_tb;
 
@@ -23,8 +26,7 @@ architecture sim of tp1_tb is
     signal key:         std_ulogic_vector(1 downto 0) := "00";
 
     -- usamos esto por los outputs de los contadores
-    type countsArray is array (3 downto 0) of unsigned(3 downto 0);
-    signal counts: countsArray;
+    signal counts: unsignedArray(3 downto 0)(3 downto 0);
 
 begin
 
@@ -39,10 +41,7 @@ begin
                                 KEY => key);
 
     -- leer las salidas de las contadores en tp1.
-    counts(0) <= <<signal dut.d0out: unsigned(3 downto 0)>>;
-    counts(1) <= <<signal dut.d1out: unsigned(3 downto 0)>>;
-    counts(2) <= <<signal dut.d2out: unsigned(3 downto 0)>>;
-    counts(3) <= <<signal dut.d3out: unsigned(3 downto 0)>>;
+    counts <= <<signal dut.bcdOut: unsignedArray(3 downto 0)(3 downto 0)>>;
 
     -- pruebas con PSL
     -- ---------------

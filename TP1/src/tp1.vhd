@@ -22,7 +22,7 @@ end entity tp1;
 
 architecture synth of tp1 is
 
-    component contador is
+    component counter is
         generic (WIDTH: natural;
                  MAX: natural);
         port (clk:      in  std_ulogic;
@@ -33,24 +33,24 @@ architecture synth of tp1 is
               count:    out unsigned((WIDTH - 1) downto 0);
               atZero:   out std_ulogic;
               atMax:    out std_ulogic);
-    end component contador;
+    end component counter;
 
-    component contador_bcd is
+    component counter_bcd is
         generic (CIFRAS: natural);
         port (clk:      in  std_ulogic;
               en:       in  std_ulogic;
               rst:      in  std_ulogic;
               dout:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
-    end component contador_bcd;
+    end component counter_bcd;
 
-    component multi_seven_seg_bcd is
+    component multi_seven_seg_hex is
         generic (CIFRAS: natural);
         port (clk:      in  std_ulogic;
               rst:      in  std_ulogic;
               en:       in  std_ulogic_vector((CIFRAS - 1) downto 0);
-              bcd:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
+              hex:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
               display:  out slvArray((CIFRAS - 1) downto 0)(6 downto 0));
-    end component multi_seven_seg_bcd;
+    end component multi_seven_seg_hex;
 
     -- Tenemos CLOCK_DIVIDER así que el banco de prueba
     -- no necesita simular 50.000.000 ticks para incrementar
@@ -77,7 +77,7 @@ begin
     bcdEn <= d0en1KHz when (fast = '1') else d0en1Hz;
 
     -- generar enable @ 1Hz desde 50MHz clk
-    en1Hz_inst: contador
+    en1Hz_inst: counter
                 generic map    (WIDTH => 26,
                                 MAX => ONE_HZ_EN_MAX)
                 port map       (clk => CLOCK_50,
@@ -90,7 +90,7 @@ begin
                                 atMax => d0en1Hz);
 
     -- generar enable @ 1KHz desde 50MHz clk
-    en1KHz_inst: contador
+    en1KHz_inst: counter
                  generic map   (WIDTH => 16,
                                 MAX => ONE_KHZ_EN_MAX)
                  port map      (clk => CLOCK_50,
@@ -103,7 +103,7 @@ begin
                                 atMax => d0en1KHz);
 
     -- El contador BCD de 4 cifras
-    contBcd_inst:       contador_bcd
+    contBcd_inst:       counter_bcd
                         generic map     (CIFRAS => 4)
                         port map        (clk => CLOCK_50,
                                          en => bcdEn,
@@ -111,12 +111,12 @@ begin
                                          dout => bcdOut);
 
     multi7SegInst:
-    multi_seven_seg_bcd generic map (CIFRAS => 8)
+    multi_seven_seg_hex generic map (CIFRAS => 8)
                         port map (clk => CLOCK_50,
                                   rst => rst,
                                   en => "00001111",
-                                  bcd(3 downto 0) => bcdOut,
-                                  bcd(7 downto 4) => (to_unsigned(0,4),
+                                  hex(3 downto 0) => bcdOut,
+                                  hex(7 downto 4) => (to_unsigned(0,4),
                                                       to_unsigned(0,4),
                                                       to_unsigned(0,4),
                                                       to_unsigned(0,4)),
