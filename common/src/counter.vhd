@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity contador is
+entity counter is
     generic (WIDTH: natural;
              MAX: natural);
     port (clk:      in  std_ulogic;
@@ -13,9 +13,9 @@ entity contador is
           count:    out unsigned((WIDTH - 1) downto 0);
           atZero:   out std_ulogic;
           atMax:    out std_ulogic);
-end entity contador;
+end entity counter;
 
-architecture synth of contador is
+architecture synth of counter is
     signal countAux: unsigned((WIDTH - 1) downto 0) := (others => '0');
 begin
 

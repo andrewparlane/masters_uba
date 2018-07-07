@@ -2,12 +2,12 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity contador_tb is
-end entity contador_tb;
+entity counter_tb is
+end entity counter_tb;
 
-architecture sim of contador_tb is
+architecture sim of counter_tb is
 
-    component contador is
+    component counter is
         generic (WIDTH: natural;
                  MAX: natural);
         port (clk:      in  std_ulogic;
@@ -18,7 +18,7 @@ architecture sim of contador_tb is
               count:    out unsigned((WIDTH - 1) downto 0);
               atZero:   out std_ulogic;
               atMax:    out std_ulogic);
-    end component contador;
+    end component counter;
 
     constant WIDTH: natural := 4;
     constant MAX: natural := 9;
@@ -38,7 +38,7 @@ begin
     -- clk period = 100ns
     clk <= not clk after 50 ns;
 
-    dut: contador   generic map    (WIDTH => WIDTH,
+    dut: counter    generic map    (WIDTH => WIDTH,
                                     MAX => MAX)
                     port map       (clk => clk,
                                     rst => rst,

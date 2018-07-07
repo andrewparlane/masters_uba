@@ -4,17 +4,17 @@ use ieee.numeric_std.all;
 
 use work.all;
 
-entity contador_bcd is
+entity counter_bcd is
     generic (CIFRAS: natural);
     port (clk:      in  std_ulogic;
           en:       in  std_ulogic;
           rst:      in  std_ulogic;
           dout:     out type_pkg.unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
-end entity contador_bcd;
+end entity counter_bcd;
 
-architecture synth of contador_bcd is
+architecture synth of counter_bcd is
 
-    component contador is
+    component counter is
         generic (WIDTH: natural;
                  MAX: natural);
         port (clk:      in  std_ulogic;
@@ -25,7 +25,7 @@ architecture synth of contador_bcd is
               count:    out unsigned((WIDTH - 1) downto 0);
               atZero:   out std_ulogic;
               atMax:    out std_ulogic);
-    end component contador;
+    end component counter;
 
     type stdLogicArray is array ((CIFRAS - 1) downto 0) of std_ulogic;
     signal dEn: stdLogicArray;
@@ -44,7 +44,7 @@ begin
             -- (en and atMax)
             dEn(c) <= dEn(c-1) and atMax(c-1);
         end generate;
-        inst:   contador    generic map    (WIDTH => 4,
+        inst:   counter     generic map    (WIDTH => 4,
                                             MAX => 9)
                             port map       (clk => clk,
                                             en => dEn(c),
