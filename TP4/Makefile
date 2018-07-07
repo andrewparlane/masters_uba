@@ -29,7 +29,8 @@ QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 COMMON_LIB		= common
 
 # src files
-SRCS	= $(wildcard $(SRC_DIR)/*.vhd)
+SRCS	= $(wildcard $(SRC_DIR)/*.vhd) \
+		  $(wildcard $(SRC_DIR)/synth_test/*.vhd) \
 # tb files
 TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
 		  $(wildcard $(TB_SRC_DIR)/*.sv)
@@ -49,9 +50,27 @@ common:
 	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
 # default rule is to create the library, and compile all the components
-all: common srcs tb_srcs
+all: common srcs tb_srcs altera_mf
 
 .PHONY: common all
+
+$(SIM_DIR)/altera_mf_work:
+	vlib $(SIM_DIR)/altera_mf_work
+	vmap $(MODELSIM_FLAG) altera_mf $(SIM_DIR)/altera_mf_work
+
+$(SIM_DIR)/altera_mf_work/flag: $(SIM_DIR)/altera_mf_work
+	vcom $(MODELSIM_FLAG) -work altera_mf -2002 -explicit $(QUARTUS_DIR)/eda/sim_lib/altera_mf_components.vhd
+	vcom $(MODELSIM_FLAG) -work altera_mf -2002 -explicit $(QUARTUS_DIR)/eda/sim_lib/altera_mf.vhd
+	touch $(SIM_DIR)/altera_mf_work/flag
+
+altera_mf: $(SIM_DIR)/altera_mf_work/flag
+
+.PHONY: altera_mf
+
+sram: all
+	@$(call VSIM_CMD, sram_tb)
+
+.PHONY: sram
 
 # delete the library and all compiled files
 clean: helper_clean
