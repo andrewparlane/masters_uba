@@ -2,15 +2,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity seven_seg_bcd is
+entity seven_seg_hex is
     port (clk:      in  std_ulogic;
           rst:      in  std_ulogic;
           en:       in  std_ulogic;
-          bcd:      in  unsigned(3 downto 0);
+          hex:      in  unsigned(3 downto 0);
           display:  out std_ulogic_vector(6 downto 0));
-end entity seven_seg_bcd;
+end entity seven_seg_hex;
 
-architecture synth of seven_seg_bcd is
+architecture synth of seven_seg_hex is
     signal displayAux: std_ulogic_vector(6 downto 0);
 begin
 
@@ -28,7 +28,7 @@ begin
     --      -------
     --         3
 
-    with bcd select displayAux <=
+    with hex select displayAux <=
             (not "0111111") when 4ux"0",
             (not "0000110") when 4ux"1",
             (not "1011011") when 4ux"2",
@@ -39,6 +39,12 @@ begin
             (not "0000111") when 4ux"7",
             (not "1111111") when 4ux"8",
             (not "1101111") when 4ux"9",
+            (not "1110111") when 4ux"A",
+            (not "1111100") when 4ux"B",
+            (not "1011000") when 4ux"C",
+            (not "1011110") when 4ux"D",
+            (not "1111001") when 4ux"E",
+            (not "1110001") when 4ux"F",
             (not "0000000") when others;
 
     process (clk, rst)
