@@ -32,8 +32,8 @@ end entity vga;
 
 architecture synth of vga is
 
-    -- contador de lib common
-    component contador is
+    -- counter de lib common
+    component counter is
         generic (WIDTH: natural;
                  MAX: natural);
         port (clk:      in  std_ulogic;
@@ -44,7 +44,7 @@ architecture synth of vga is
               count:    out unsigned((WIDTH - 1) downto 0);
               atZero:   out std_ulogic;
               atMax:    out std_ulogic);
-    end component contador;
+    end component counter;
 
     -------------------------------------------------------------------------------------
     -- Constantes
@@ -93,7 +93,7 @@ begin
     -------------------------------------------------------------------------------------
     -- los contadores
     -------------------------------------------------------------------------------------
-    xCont:  contador    generic map (WIDTH => COUNTER_X_WIDTH,
+    xCont:  counter     generic map (WIDTH => COUNTER_X_WIDTH,
                                      MAX => H_TOTAL - 1)
                         port map (clk => clk,
                                   rst => rst,
@@ -104,7 +104,7 @@ begin
                                   atZero => open,
                                   atMax => xAtMax);
 
-    yCont:  contador    generic map (WIDTH => COUNTER_Y_WIDTH,
+    yCont:  counter     generic map (WIDTH => COUNTER_Y_WIDTH,
                                      MAX => V_TOTAL - 1)
                         port map (clk => clk,
                                   rst => rst,

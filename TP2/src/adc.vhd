@@ -16,8 +16,8 @@ end entity adc;
 
 architecture synth of adc is
 
-    -- contador de lib common
-    component contador is
+    -- counter de lib common
+    component counter is
         generic (WIDTH: natural;
                  MAX: natural);
         port (clk:      in  std_ulogic;
@@ -28,16 +28,16 @@ architecture synth of adc is
               count:    out unsigned((WIDTH - 1) downto 0);
               atZero:   out std_ulogic;
               atMax:    out std_ulogic);
-    end component contador;
+    end component counter;
 
     -- de lib common
-    component contador_bcd is
+    component counter_bcd is
         generic (CIFRAS: natural);
         port (clk:      in  std_ulogic;
               en:       in  std_ulogic;
               rst:      in  std_ulogic;
               dOut:     out unsignedArray((CIFRAS-1) downto 0)(3 downto 0));
-    end component contador_bcd;
+    end component counter_bcd;
 
     signal dOutAux:                 std_ulogic;
     signal bcdRst:                  std_ulogic;
@@ -73,7 +73,7 @@ begin
     -----------------------------------------------------------------
     -- Contamos desde 0 a 25001 con un contador binario.
     -----------------------------------------------------------------
-    contBin:    contador    generic map (WIDTH => 16,
+    contBin:    counter     generic map (WIDTH => 16,
                                          MAX => 33001)
                             port map (clk => clk,
                                       rst => rst,
@@ -90,7 +90,7 @@ begin
     -- o cuando el contador binario es cero.
     -----------------------------------------------------------------
     bcdRst <= contadorBinarioZero OR rst;
-    contBcd:    contador_bcd    generic map (CIFRAS => 5)
+    contBcd:    counter_bcd     generic map (CIFRAS => 5)
                                 port map (clk => clk,
                                           en => dOutAux,
                                           rst => bcdRst,

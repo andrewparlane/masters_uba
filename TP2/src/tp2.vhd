@@ -87,14 +87,14 @@ architecture synth of tp2 is
               resultado:    out unsignedArray(2 downto 0)(3 downto 0));
     end component adc;
 
-    component multi_seven_seg_bcd is
+    component multi_seven_seg_hex is
         generic (CIFRAS: natural);
         port (clk:      in  std_ulogic;
               rst:      in  std_ulogic;
               en:       in  std_ulogic_vector((CIFRAS - 1) downto 0);
-              bcd:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
+              hex:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
               display:  out slvArray((CIFRAS - 1) downto 0)(6 downto 0));
-    end component multi_seven_seg_bcd;
+    end component multi_seven_seg_hex;
 
     -- reset con KEY[0]
     signal rst: std_ulogic;
@@ -184,13 +184,13 @@ begin
                              px => px);
 
     multi7SegInst:
-    multi_seven_seg_bcd generic map (CIFRAS => 8)
+    multi_seven_seg_hex generic map (CIFRAS => 8)
                         port map (clk => CLOCK_50,
                                   rst => rst,
                                   en => "01110000",
-                                  bcd(6 downto 4) => muestra,
-                                  bcd(7) => to_unsigned(0,4),
-                                  bcd(3 downto 0) => (to_unsigned(0,4),
+                                  hex(6 downto 4) => muestra,
+                                  hex(7) => to_unsigned(0,4),
+                                  hex(3 downto 0) => (to_unsigned(0,4),
                                                       to_unsigned(0,4),
                                                       to_unsigned(0,4),
                                                       to_unsigned(0,4)),
