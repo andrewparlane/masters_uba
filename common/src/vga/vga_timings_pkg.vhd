@@ -61,9 +61,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library common;
-use common.all;
-
 use work.all;
 
 package vga_timings_800_600_pkg is
@@ -111,9 +108,6 @@ end package body vga_timings_800_600_pkg;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-
-library common;
-use common.all;
 
 use work.all;
 

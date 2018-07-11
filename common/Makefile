@@ -20,9 +20,14 @@ TB_SRC_DIR		= $(SRC_DIR)/tb
 
 # src files
 SRCS	= $(SRC_DIR)/type_pkg.vhd \
-		  $(wildcard $(SRC_DIR)/*.vhd)
+		  $(wildcard $(SRC_DIR)/*.vhd) \
+		  $(wildcard $(SRC_DIR)/vga/*.vhd)
+
 # tb files
-TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd)
+TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
+		  $(wildcard $(TB_SRC_DIR)/*.sv) \
+		  $(wildcard $(TB_SRC_DIR)/vga/*.vhd) \
+		  $(wildcard $(TB_SRC_DIR)/vga/*.sv)
 
 # Extra arguments beyond the defaults in helper.mk
 VCOM_FLAGS		=

@@ -2,15 +2,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library common;
-use common.all;
+use work.all;
+use work.vga_timings_10_10_pkg.all;
 
-use work.vga_timings_800_600_pkg.all;
+entity adv7123_tb is
+end entity adv7123_tb;
 
-entity adv7123_tb2 is
-end entity adv7123_tb2;
-
-architecture sim of adv7123_tb2 is
+architecture sim of adv7123_tb is
     component adv7123 is
         generic (H_ACTIVE:      natural;    -- ticks
                  H_FRONT_PORCH: natural;    -- ticks
@@ -102,45 +100,25 @@ begin
 
     process (all)
     begin
-        if ((pixelY >= to_unsigned(100, pixelX'length) and
-             pixelY < to_unsigned(200, pixelX'length)) or
-            (pixelY >= to_unsigned(300, pixelX'length) and
-             pixelY < to_unsigned(400, pixelX'length)) or
-            (pixelY >= to_unsigned(500, pixelX'length) and
-             pixelY < to_unsigned(600, pixelX'length))) then
-            rIn <= (others => '0');
-            gIn <= (others => '0');
-            bIn <= (others => '0');
+        if (rst = '1') then
+            rIn <= "1111111111";
+            gIn <= "1111111111";
+            bIn <= "1111111111";
         else
-            if ((pixelX >= to_unsigned(0, pixelX'length) and
-                 pixelX < to_unsigned(100, pixelX'length)) or
-                (pixelX >= to_unsigned(300, pixelX'length) and
-                 pixelX < to_unsigned(400, pixelX'length)) or
-                (pixelX >= to_unsigned(600, pixelX'length) and
-                 pixelX < to_unsigned(700, pixelX'length))) then
-                rIn <= (others => '1');
+            gIn <= "0000000000";
+            bIn <= "0000000000";
+            if (pixelY(0) = '0') then
+                if (pixelX(0) = '0') then
+                    rIn <= "1111111111";
+                else
+                    rIn <= "0000000000";
+                end if;
             else
-                rIn <= (others => '0');
-            end if;
-
-            if ((pixelX >= to_unsigned(100, pixelX'length) and
-                 pixelX < to_unsigned(200, pixelX'length)) or
-                (pixelX >= to_unsigned(400, pixelX'length) and
-                 pixelX < to_unsigned(500, pixelX'length)) or
-                (pixelX >= to_unsigned(700, pixelX'length) and
-                 pixelX < to_unsigned(800, pixelX'length))) then
-                gIn <= (others => '1');
-            else
-                gIn <= (others => '0');
-            end if;
-
-            if ((pixelX >= to_unsigned(200, pixelX'length) and
-                 pixelX < to_unsigned(300, pixelX'length)) or
-                (pixelX >= to_unsigned(500, pixelX'length) and
-                 pixelX < to_unsigned(600, pixelX'length))) then
-                bIn <= (others => '1');
-            else
-                bIn <= (others => '0');
+                if (pixelX(0) = '0') then
+                    rIn <= "0000000000";
+                else
+                    rIn <= "1111111111";
+                end if;
             end if;
         end if;
     end process;
@@ -154,7 +132,7 @@ begin
         rst <= '1';
         wait for CLK_PERIOD * 5;
         rst <= '0';
-        wait for (2 * FRAME_TIME);
+        wait for (5 * FRAME_TIME);
         rst <= '1';
         wait for 100 ns;
         std.env.stop;

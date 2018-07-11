@@ -2,9 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library common;
-use common.all;
-
+use work.all;
 use work.vga_timings_10_10_pkg.all;
 
 entity vga_tb is
