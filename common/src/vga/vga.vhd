@@ -20,13 +20,14 @@ entity vga is
              V_SYNC:        natural;    -- líneas
              V_BACK_PORCH:  natural);   -- líneas
 
-    port (clk:      in  std_ulogic;
-          rst:      in  std_ulogic;
-          pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-          pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
-          inActive: out std_ulogic;
-          nHSync:   out std_ulogic;
-          nVSync:   out std_ulogic);
+    port (clk:          in  std_ulogic;
+          rst:          in  std_ulogic;
+          pixelX:       out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+          pixelY:       out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
+          endOfFrame:   out std_ulogic;
+          inActive:     out std_ulogic;
+          nHSync:       out std_ulogic;
+          nVSync:       out std_ulogic);
 
 end entity vga;
 
@@ -113,7 +114,7 @@ begin
                                   loadData => to_unsigned(0, y'length),
                                   count => y,
                                   atZero => open,
-                                  atMax => open);
+                                  atMax => endOfFrame);
 
     -------------------------------------------------------------------------------------
     -- Salidas

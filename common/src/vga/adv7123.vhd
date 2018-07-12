@@ -20,21 +20,22 @@ entity adv7123 is
              V_SYNC:        natural;    -- líneas
              V_BACK_PORCH:  natural);   -- líneas
 
-    port (clk:      in  std_ulogic;
-          rst:      in  std_ulogic;
-          rIn:      in  std_ulogic_vector(9 downto 0);
-          gIn:      in  std_ulogic_vector(9 downto 0);
-          bIn:      in  std_ulogic_vector(9 downto 0);
-          pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-          pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
-          clkOut:   out std_ulogic;
-          rOut:     out std_ulogic_vector(9 downto 0);
-          gOut:     out std_ulogic_vector(9 downto 0);
-          bOut:     out std_ulogic_vector(9 downto 0);
-          nBlank:   out std_ulogic;
-          nSync:    out std_ulogic;
-          nHSync:   out std_ulogic;
-          nVSync:   out std_ulogic);
+    port (clk:          in  std_ulogic;
+          rst:          in  std_ulogic;
+          rIn:          in  std_ulogic_vector(9 downto 0);
+          gIn:          in  std_ulogic_vector(9 downto 0);
+          bIn:          in  std_ulogic_vector(9 downto 0);
+          pixelX:       out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+          pixelY:       out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
+          endOfFrame:   out std_ulogic;
+          clkOut:       out std_ulogic;
+          rOut:         out std_ulogic_vector(9 downto 0);
+          gOut:         out std_ulogic_vector(9 downto 0);
+          bOut:         out std_ulogic_vector(9 downto 0);
+          nBlank:       out std_ulogic;
+          nSync:        out std_ulogic;
+          nHSync:       out std_ulogic;
+          nVSync:       out std_ulogic);
 
 end entity adv7123;
 
@@ -50,19 +51,21 @@ architecture synth of adv7123 is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (clk:      in  std_ulogic;
-              rst:      in  std_ulogic;
-              pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-              pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
-              inActive: out std_ulogic;
-              nHSync:   out std_ulogic;
-              nVSync:   out std_ulogic);
+        port (clk:          in  std_ulogic;
+              rst:          in  std_ulogic;
+              pixelX:       out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+              pixelY:       out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
+              endOfFrame:   out std_ulogic;
+              inActive:     out std_ulogic;
+              nHSync:       out std_ulogic;
+              nVSync:       out std_ulogic);
 
     end component vga;
 
-    signal inActive:    std_ulogic;
-    signal nHSyncAux:   std_ulogic;
-    signal nVSyncAux:   std_ulogic;
+    signal inActive:        std_ulogic;
+    signal nHSyncAux:       std_ulogic;
+    signal nVSyncAux:       std_ulogic;
+    signal endOfFrameAux:   std_ulogic;
 begin
 
     vgaInst:    vga generic map (H_ACTIVE       => H_ACTIVE,
@@ -79,7 +82,8 @@ begin
                               pixelY => pixelY,
                               inActive => inActive,
                               nHSync => nHSyncAux,
-                              nVSync => nVSyncAux);
+                              nVSync => nVSyncAux,
+                              endOfFrame => endOfFrameAux);
 
     -- usamos el clkIn por ahora
     -- si queremos cambiar la tasa de cuadras
@@ -96,6 +100,7 @@ begin
             nSync  <= '0';
             nHSync <= '0';
             nVSync <= '0';
+            endOfFrame <= '0';
         elsif (rising_edge(clk)) then
             -- inActive es activo alto
             -- blank <= not inActive
@@ -109,6 +114,8 @@ begin
 
             nHSync <= nHSyncAux;
             nVSync <= nVSyncAux;
+
+            endOfFrame <= endOfFrameAux;
 
             if (inActive = '1') then
                 rOut <= rIn;
