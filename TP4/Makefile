@@ -70,6 +70,9 @@ altera_mf: $(SIM_DIR)/altera_mf_work/flag
 sram: all
 	@$(call VSIM_CMD, sram_tb)
 
+video_ram: all
+	@$(call VSIM_CMD, video_ram_tb)
+
 .PHONY: sram
 
 # delete the library and all compiled files
