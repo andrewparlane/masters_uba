@@ -37,7 +37,7 @@ architecture synth of sram_test is
         port (i_clk:    in      std_ulogic; -- max clk 100MHz
               i_reset:  in      std_ulogic;
               -- inputs
-              i_addr:   in      std_ulogic_vector(17 downto 0);
+              i_addr:   in      unsigned(17 downto 0);
               i_wdata:  in      std_ulogic_vector(15 downto 0);
               i_rnw:    in      std_ulogic;
               i_start:  in      std_ulogic;
@@ -121,7 +121,7 @@ begin
     inst: sram port map (i_clk              => CLOCK_50,
                          i_reset            => rst,
                          -- input
-                         i_addr             => SW,
+                         i_addr             => unsigned(SW),
                          i_wdata            => std_ulogic_vector(wdata),
                          i_rnw              => rnw,
                          i_start            => start,

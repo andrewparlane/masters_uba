@@ -1,5 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library altera_mf;
 use altera_mf.all;
@@ -12,7 +13,7 @@ entity sram is
     port (i_clk:    in      std_ulogic; -- max clk 100MHz
           i_reset:  in      std_ulogic;
           -- inputs
-          i_addr:   in      std_ulogic_vector(17 downto 0);
+          i_addr:   in      unsigned(17 downto 0);
           i_wdata:  in      std_ulogic_vector(15 downto 0);
           i_rnw:    in      std_ulogic;
           i_start:  in      std_ulogic;
@@ -70,7 +71,7 @@ begin
                 -- wait for read or write request
                 if (i_start) then
                     -- we have a request
-                    o_addr <= i_addr;
+                    o_addr <= std_ulogic_vector(i_addr);
 
                     if (i_rnw = '1') then
                         -- read
