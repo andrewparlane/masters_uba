@@ -10,7 +10,9 @@ end entity adv7123_tb;
 
 architecture sim of adv7123_tb is
     component adv7123 is
-        generic (H_ACTIVE:      natural;    -- ticks
+        generic (DELAY_TICKS:   natural := 1;
+
+                 H_ACTIVE:      natural;    -- ticks
                  H_FRONT_PORCH: natural;    -- ticks
                  H_SYNC:        natural;    -- ticks
                  H_BACK_PORCH:  natural;    -- ticks
@@ -20,21 +22,22 @@ architecture sim of adv7123_tb is
                  V_SYNC:        natural;    -- líneas
                  V_BACK_PORCH:  natural);   -- líneas
 
-        port (clk:      in  std_ulogic;
-              rst:      in  std_ulogic;
-              rIn:      in  std_ulogic_vector(9 downto 0);
-              gIn:      in  std_ulogic_vector(9 downto 0);
-              bIn:      in  std_ulogic_vector(9 downto 0);
-              pixelX:   out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-              pixelY:   out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
-              clkOut:   out std_ulogic;
-              rOut:     out std_ulogic_vector(9 downto 0);
-              gOut:     out std_ulogic_vector(9 downto 0);
-              bOut:     out std_ulogic_vector(9 downto 0);
-              nBlank:   out std_ulogic;
-              nSync:    out std_ulogic;
-              nHSync:   out std_ulogic;
-              nVSync:   out std_ulogic);
+        port (clk:          in  std_ulogic;
+              rst:          in  std_ulogic;
+              rIn:          in  std_ulogic_vector(9 downto 0);
+              gIn:          in  std_ulogic_vector(9 downto 0);
+              bIn:          in  std_ulogic_vector(9 downto 0);
+              pixelX:       out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
+              pixelY:       out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
+              endOfFrame:   out std_ulogic;
+              clkOut:       out std_ulogic;
+              rOut:         out std_ulogic_vector(9 downto 0);
+              gOut:         out std_ulogic_vector(9 downto 0);
+              bOut:         out std_ulogic_vector(9 downto 0);
+              nBlank:       out std_ulogic;
+              nSync:        out std_ulogic;
+              nHSync:       out std_ulogic;
+              nVSync:       out std_ulogic);
 
     end component adv7123;
 
@@ -51,6 +54,7 @@ architecture sim of adv7123_tb is
     signal nSync:       std_ulogic;
     signal nHSync:      std_ulogic;
     signal nVSync:      std_ulogic;
+    signal endOfFrame:  std_ulogic;
 
     signal rIn:         std_ulogic_vector(9 downto 0);
     signal gIn:         std_ulogic_vector(9 downto 0);
@@ -72,7 +76,8 @@ begin
 
     clk <= not clk after (CLK_PERIOD/2);
 
-    dut: adv7123    generic map(H_ACTIVE        => H_ACTIVE,
+    dut: adv7123    generic map(DELAY_TICKS     => 1,
+                                H_ACTIVE        => H_ACTIVE,
                                 H_FRONT_PORCH   => H_FRONT_PORCH,
                                 H_SYNC          => H_SYNC,
                                 H_BACK_PORCH    => H_BACK_PORCH,
@@ -87,6 +92,7 @@ begin
                              bIn => bIn,
                              pixelX => pixelX,
                              pixelY => pixelY,
+                             endOfFrame => endOfFrame,
                              clkOut => clkOut,
                              rOut => rOut,
                              gOut => gOut,
@@ -98,13 +104,13 @@ begin
 
     sva:    adv7123_sva_wrapper;
 
-    process (all)
+    process (clk, rst)
     begin
         if (rst = '1') then
             rIn <= "1111111111";
             gIn <= "1111111111";
             bIn <= "1111111111";
-        else
+        elsif (rising_edge(clk)) then
             gIn <= "0000000000";
             bIn <= "0000000000";
             if (pixelY(0) = '0') then

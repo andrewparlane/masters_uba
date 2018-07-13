@@ -1,4 +1,5 @@
-program adv7123_props #(parameter H_ACTIVE,
+program adv7123_props #(parameter DELAY_TICKS,
+                        parameter H_ACTIVE,
                         parameter H_FRONT_PORCH,
                         parameter H_SYNC,
                         parameter H_BACK_PORCH,
@@ -49,9 +50,9 @@ program adv7123_props #(parameter H_ACTIVE,
     notBlankingRGB: assert property
         (@(posedge clk)
          (nBlank === 1) |->
-            ((rOut === $past(rIn)) &&
-             (gOut === $past(gIn)) &&
-             (bOut === $past(bIn))));
+            ((rOut === rIn) &&
+             (gOut === gIn) &&
+             (bOut === bIn)));
 
 
     integer f;
@@ -79,7 +80,8 @@ endprogram
 
 module adv7123_sva_wrapper;
     bind adv7123
-         adv7123_props #(.H_ACTIVE(H_ACTIVE),
+         adv7123_props #(.DELAY_TICKS(DELAY_TICKS),
+                         .H_ACTIVE(H_ACTIVE),
                          .H_FRONT_PORCH(H_FRONT_PORCH),
                          .H_SYNC(H_SYNC),
                          .H_BACK_PORCH(H_BACK_PORCH),

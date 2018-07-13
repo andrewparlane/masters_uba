@@ -6,11 +6,15 @@ library work;
 use work.all;
 
 entity adv7123 is
-    -------------------------------------
-    -- There are predefined timing in
-    -- vga_timings_pkg.vhd.
-    -------------------------------------
-    generic (H_ACTIVE:      natural;    -- ticks
+    -----------------------------------------------------------------
+    -- There are predefined timing in vga_timings_pkg.vhd.
+    -- DELAY_TICKS specifies how many ticks to delay the
+    -- blanking and sync signals. This is for when it takes
+    -- some number of ticks to provide the pixel data.
+    -----------------------------------------------------------------
+    generic (DELAY_TICKS:   natural := 1;
+
+             H_ACTIVE:      natural;    -- ticks
              H_FRONT_PORCH: natural;    -- ticks
              H_SYNC:        natural;    -- ticks
              H_BACK_PORCH:  natural;    -- ticks
@@ -62,10 +66,24 @@ architecture synth of adv7123 is
 
     end component vga;
 
-    signal inActive:        std_ulogic;
-    signal nHSyncAux:       std_ulogic;
-    signal nVSyncAux:       std_ulogic;
-    signal endOfFrameAux:   std_ulogic;
+    component delay is
+        generic (DELAY: natural;
+                 WIDTH: natural);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              input:    in  std_ulogic_vector((WIDTH - 1) downto 0);
+              output:   out std_ulogic_vector((WIDTH - 1) downto 0));
+    end component delay;
+
+    signal inActive:            std_ulogic;
+    signal inActiveDelayed:     std_ulogic;
+    signal nHSyncAux:           std_ulogic;
+    signal nHSyncDelayed:       std_ulogic;
+    signal nVSyncAux:           std_ulogic;
+    signal nVSyncDelayed:       std_ulogic;
+    signal endOfFrameAux:       std_ulogic;
+    signal endOfFrameDelayed:   std_ulogic;
+
 begin
 
     vgaInst:    vga generic map (H_ACTIVE       => H_ACTIVE,
@@ -89,42 +107,62 @@ begin
     -- the input clock.
     clkOut <= clk;
 
-    process(clk,rst)
+    inActiveDelay: delay
+        generic map (DELAY => DELAY_TICKS,
+                     WIDTH => 1)
+        port map (clk => clk,
+                  rst => rst,
+                  input(0) => inActive,
+                  output(0) => inActiveDelayed);
+
+    nHSyncDelay: delay
+        generic map (DELAY => DELAY_TICKS,
+                     WIDTH => 1)
+        port map (clk => clk,
+                  rst => rst,
+                  input(0) => nHSyncAux,
+                  output(0) => nHSyncDelayed);
+
+    nVSyncDelay: delay
+        generic map (DELAY => DELAY_TICKS,
+                     WIDTH => 1)
+        port map (clk => clk,
+                  rst => rst,
+                  input(0) => nVSyncAux,
+                  output(0) => nVSyncDelayed);
+
+    endOfFrameDelay: delay
+        generic map (DELAY => DELAY_TICKS,
+                     WIDTH => 1)
+        port map (clk => clk,
+                  rst => rst,
+                  input(0) => endOfFrameAux,
+                  output(0) => endOfFrameDelayed);
+
+    process (all)
     begin
-        if (rst) then
+        -- inActive is active high
+        -- blank <= not inActive
+        -- nBlank <= not blank <= inActive
+        nBlank <= inActiveDelayed;
+
+        nHSync <= nHSyncDelayed;
+        nVSync <= nVSyncDelayed;
+        endOfFrame <= endOfFrameDelayed;
+
+        -- nSync is active low
+        -- when nHSync = 0 or nVSync = 0
+        -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
+        nSync <= nHSyncDelayed and nVSyncDelayed;
+
+        if (inActiveDelayed = '1') then
+            rOut <= rIn;
+            gOut <= gIn;
+            bOut <= bIn;
+        else
             rOut <= (others => '0');
             gOut <= (others => '0');
             bOut <= (others => '0');
-            nBlank <= '0';
-            nSync  <= '0';
-            nHSync <= '0';
-            nVSync <= '0';
-            endOfFrame <= '0';
-        elsif (rising_edge(clk)) then
-            -- inActive is active high
-            -- blank <= not inActive
-            -- nBlank <= not blank <= inActive
-            nBlank <= inActive;
-
-            -- nSync is active low
-            -- when nHSync = 0 or nVSync = 0
-            -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
-            nSync <= nHSyncAux and nVSyncAux;
-
-            nHSync <= nHSyncAux;
-            nVSync <= nVSyncAux;
-
-            endOfFrame <= endOfFrameAux;
-
-            if (inActive = '1') then
-                rOut <= rIn;
-                gOut <= gIn;
-                bOut <= bIn;
-            else
-                rOut <= (others => '0');
-                gOut <= (others => '0');
-                bOut <= (others => '0');
-            end if;
         end if;
     end process;
 
