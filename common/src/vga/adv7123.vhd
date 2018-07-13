@@ -7,8 +7,8 @@ use work.all;
 
 entity adv7123 is
     -------------------------------------
-    -- Hay valores predefinidos en
-    -- vga_timings_pkg.vhd
+    -- There are predefined timing in
+    -- vga_timings_pkg.vhd.
     -------------------------------------
     generic (H_ACTIVE:      natural;    -- ticks
              H_FRONT_PORCH: natural;    -- ticks
@@ -85,9 +85,8 @@ begin
                               nVSync => nVSyncAux,
                               endOfFrame => endOfFrameAux);
 
-    -- usamos el clkIn por ahora
-    -- si queremos cambiar la tasa de cuadras
-    -- tendremos que armar un PLL aquí
+    -- the output clock that goes to the ADV7123 is
+    -- the input clock.
     clkOut <= clk;
 
     process(clk,rst)
@@ -102,13 +101,13 @@ begin
             nVSync <= '0';
             endOfFrame <= '0';
         elsif (rising_edge(clk)) then
-            -- inActive es activo alto
+            -- inActive is active high
             -- blank <= not inActive
             -- nBlank <= not blank <= inActive
             nBlank <= inActive;
 
-            -- nSync es activo bajo
-            -- cuando nHSync = 0 o nVSync = 0
+            -- nSync is active low
+            -- when nHSync = 0 or nVSync = 0
             -- nSync <= !(!nHSync | !nVSync) = nHSync and nVSync
             nSync <= nHSyncAux and nVSyncAux;
 
