@@ -10,16 +10,16 @@ end entity video_ram_tb;
 
 architecture sim of video_ram_tb is
     component video_ram
-        port (address_a:    in std_logic_vector (15 downto 0);
-              address_b:    in std_logic_vector (18 downto 0);
+        port (address_a:    in std_logic_vector (18 downto 0);
+              address_b:    in std_logic_vector (15 downto 0);
               clock_a:      in std_logic;
               clock_b:      in std_logic;
-              data_a:       in std_logic_vector (7 downto 0);
-              data_b:       in std_logic_vector (0 downto 0);
+              data_a:       in std_logic_vector (0 downto 0);
+              data_b:       in std_logic_vector (7 downto 0);
               wren_a:       in std_logic;
               wren_b:       in std_logic;
-              q_a:          out std_logic_vector (7 downto 0);
-              q_b:          out std_logic_vector (0 downto 0));
+              q_a:          out std_logic_vector (0 downto 0);
+              q_b:          out std_logic_vector (7 downto 0));
     end component video_ram;
 
     component delay is
@@ -90,16 +90,16 @@ begin
     end process;
 
     dut: video_ram
-    port map (address_a     => std_logic_vector(addr),
-              address_b     => (others => '0'),
-              clock_a       => clk,
-              clock_b       => '0',
-              data_a        => std_logic_vector(wdata),
-              data_b        => (others => '0'),
-              wren_a        => wen,
-              wren_b        => '0',
-              unsigned(q_a) => rdata,
-              q_b           => open);
+    port map (address_a     => (others => '0'),
+              address_b     => std_logic_vector(addr),
+              clock_a       => '0',
+              clock_b       => clk,
+              data_a        => (others => '0'),
+              data_b        => std_logic_vector(wdata),
+              wren_a        => '0',
+              wren_b        => wen,
+              q_a           => open,
+              unsigned(q_b) => rdata);
 
     -- Generate incAddr
     process (clk, reset)

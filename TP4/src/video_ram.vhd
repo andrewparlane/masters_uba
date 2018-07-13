@@ -42,24 +42,24 @@ USE altera_mf.all;
 ENTITY video_ram IS
 	PORT
 	(
-		address_a		: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
-		address_b		: IN STD_LOGIC_VECTOR (18 DOWNTO 0);
+		address_a		: IN STD_LOGIC_VECTOR (18 DOWNTO 0);
+		address_b		: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
 		clock_a		: IN STD_LOGIC  := '1';
 		clock_b		: IN STD_LOGIC ;
-		data_a		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-		data_b		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
+		data_a		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
+		data_b		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		wren_a		: IN STD_LOGIC  := '0';
 		wren_b		: IN STD_LOGIC  := '0';
-		q_a		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-		q_b		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0)
+		q_a		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
+		q_b		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 END video_ram;
 
 
 ARCHITECTURE SYN OF video_ram IS
 
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (7 DOWNTO 0);
-	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (0 DOWNTO 0);
+	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (0 DOWNTO 0);
+	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (7 DOWNTO 0);
 
 
 
@@ -92,20 +92,20 @@ ARCHITECTURE SYN OF video_ram IS
 	PORT (
 			clock0	: IN STD_LOGIC ;
 			wren_a	: IN STD_LOGIC ;
-			address_b	: IN STD_LOGIC_VECTOR (18 DOWNTO 0);
+			address_b	: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
 			clock1	: IN STD_LOGIC ;
-			data_b	: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
-			q_a	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+			data_b	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+			q_a	: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
 			wren_b	: IN STD_LOGIC ;
-			address_a	: IN STD_LOGIC_VECTOR (15 DOWNTO 0);
-			data_a	: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-			q_b	: OUT STD_LOGIC_VECTOR (0 DOWNTO 0)
+			address_a	: IN STD_LOGIC_VECTOR (18 DOWNTO 0);
+			data_a	: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
+			q_b	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	q_a    <= sub_wire0(7 DOWNTO 0);
-	q_b    <= sub_wire1(0 DOWNTO 0);
+	q_a    <= sub_wire0(0 DOWNTO 0);
+	q_b    <= sub_wire1(7 DOWNTO 0);
 
 	altsyncram_component : altsyncram
 	GENERIC MAP (
@@ -117,18 +117,18 @@ BEGIN
 		indata_reg_b => "CLOCK1",
 		intended_device_family => "Cyclone II",
 		lpm_type => "altsyncram",
-		numwords_a => 38400,
-		numwords_b => 307200,
+		numwords_a => 307200,
+		numwords_b => 38400,
 		operation_mode => "BIDIR_DUAL_PORT",
 		outdata_aclr_a => "NONE",
 		outdata_aclr_b => "NONE",
 		outdata_reg_a => "CLOCK0",
 		outdata_reg_b => "CLOCK1",
 		power_up_uninitialized => "TRUE",
-		widthad_a => 16,
-		widthad_b => 19,
-		width_a => 8,
-		width_b => 1,
+		widthad_a => 19,
+		widthad_b => 16,
+		width_a => 1,
+		width_b => 8,
 		width_byteena_a => 1,
 		width_byteena_b => 1,
 		wrcontrol_wraddress_reg_b => "CLOCK1"
@@ -203,10 +203,10 @@ END SYN;
 -- Retrieval info: PRIVATE: USE_DIFF_CLKEN NUMERIC "0"
 -- Retrieval info: PRIVATE: UseDPRAM NUMERIC "1"
 -- Retrieval info: PRIVATE: VarWidth NUMERIC "1"
--- Retrieval info: PRIVATE: WIDTH_READ_A NUMERIC "8"
--- Retrieval info: PRIVATE: WIDTH_READ_B NUMERIC "1"
--- Retrieval info: PRIVATE: WIDTH_WRITE_A NUMERIC "8"
--- Retrieval info: PRIVATE: WIDTH_WRITE_B NUMERIC "1"
+-- Retrieval info: PRIVATE: WIDTH_READ_A NUMERIC "1"
+-- Retrieval info: PRIVATE: WIDTH_READ_B NUMERIC "8"
+-- Retrieval info: PRIVATE: WIDTH_WRITE_A NUMERIC "1"
+-- Retrieval info: PRIVATE: WIDTH_WRITE_B NUMERIC "8"
 -- Retrieval info: PRIVATE: WRADDR_ACLR_B NUMERIC "0"
 -- Retrieval info: PRIVATE: WRADDR_REG_B NUMERIC "1"
 -- Retrieval info: PRIVATE: WRCTRL_ACLR_B NUMERIC "0"
@@ -221,41 +221,41 @@ END SYN;
 -- Retrieval info: CONSTANT: INDATA_REG_B STRING "CLOCK1"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Cyclone II"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "altsyncram"
--- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "38400"
--- Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "307200"
+-- Retrieval info: CONSTANT: NUMWORDS_A NUMERIC "307200"
+-- Retrieval info: CONSTANT: NUMWORDS_B NUMERIC "38400"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "BIDIR_DUAL_PORT"
 -- Retrieval info: CONSTANT: OUTDATA_ACLR_A STRING "NONE"
 -- Retrieval info: CONSTANT: OUTDATA_ACLR_B STRING "NONE"
 -- Retrieval info: CONSTANT: OUTDATA_REG_A STRING "CLOCK0"
 -- Retrieval info: CONSTANT: OUTDATA_REG_B STRING "CLOCK1"
 -- Retrieval info: CONSTANT: POWER_UP_UNINITIALIZED STRING "TRUE"
--- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "16"
--- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "19"
--- Retrieval info: CONSTANT: WIDTH_A NUMERIC "8"
--- Retrieval info: CONSTANT: WIDTH_B NUMERIC "1"
+-- Retrieval info: CONSTANT: WIDTHAD_A NUMERIC "19"
+-- Retrieval info: CONSTANT: WIDTHAD_B NUMERIC "16"
+-- Retrieval info: CONSTANT: WIDTH_A NUMERIC "1"
+-- Retrieval info: CONSTANT: WIDTH_B NUMERIC "8"
 -- Retrieval info: CONSTANT: WIDTH_BYTEENA_A NUMERIC "1"
 -- Retrieval info: CONSTANT: WIDTH_BYTEENA_B NUMERIC "1"
 -- Retrieval info: CONSTANT: WRCONTROL_WRADDRESS_REG_B STRING "CLOCK1"
--- Retrieval info: USED_PORT: address_a 0 0 16 0 INPUT NODEFVAL "address_a[15..0]"
--- Retrieval info: USED_PORT: address_b 0 0 19 0 INPUT NODEFVAL "address_b[18..0]"
+-- Retrieval info: USED_PORT: address_a 0 0 19 0 INPUT NODEFVAL "address_a[18..0]"
+-- Retrieval info: USED_PORT: address_b 0 0 16 0 INPUT NODEFVAL "address_b[15..0]"
 -- Retrieval info: USED_PORT: clock_a 0 0 0 0 INPUT VCC "clock_a"
 -- Retrieval info: USED_PORT: clock_b 0 0 0 0 INPUT NODEFVAL "clock_b"
--- Retrieval info: USED_PORT: data_a 0 0 8 0 INPUT NODEFVAL "data_a[7..0]"
--- Retrieval info: USED_PORT: data_b 0 0 1 0 INPUT NODEFVAL "data_b[0..0]"
--- Retrieval info: USED_PORT: q_a 0 0 8 0 OUTPUT NODEFVAL "q_a[7..0]"
--- Retrieval info: USED_PORT: q_b 0 0 1 0 OUTPUT NODEFVAL "q_b[0..0]"
+-- Retrieval info: USED_PORT: data_a 0 0 1 0 INPUT NODEFVAL "data_a[0..0]"
+-- Retrieval info: USED_PORT: data_b 0 0 8 0 INPUT NODEFVAL "data_b[7..0]"
+-- Retrieval info: USED_PORT: q_a 0 0 1 0 OUTPUT NODEFVAL "q_a[0..0]"
+-- Retrieval info: USED_PORT: q_b 0 0 8 0 OUTPUT NODEFVAL "q_b[7..0]"
 -- Retrieval info: USED_PORT: wren_a 0 0 0 0 INPUT GND "wren_a"
 -- Retrieval info: USED_PORT: wren_b 0 0 0 0 INPUT GND "wren_b"
--- Retrieval info: CONNECT: @address_a 0 0 16 0 address_a 0 0 16 0
--- Retrieval info: CONNECT: @address_b 0 0 19 0 address_b 0 0 19 0
+-- Retrieval info: CONNECT: @address_a 0 0 19 0 address_a 0 0 19 0
+-- Retrieval info: CONNECT: @address_b 0 0 16 0 address_b 0 0 16 0
 -- Retrieval info: CONNECT: @clock0 0 0 0 0 clock_a 0 0 0 0
 -- Retrieval info: CONNECT: @clock1 0 0 0 0 clock_b 0 0 0 0
--- Retrieval info: CONNECT: @data_a 0 0 8 0 data_a 0 0 8 0
--- Retrieval info: CONNECT: @data_b 0 0 1 0 data_b 0 0 1 0
+-- Retrieval info: CONNECT: @data_a 0 0 1 0 data_a 0 0 1 0
+-- Retrieval info: CONNECT: @data_b 0 0 8 0 data_b 0 0 8 0
 -- Retrieval info: CONNECT: @wren_a 0 0 0 0 wren_a 0 0 0 0
 -- Retrieval info: CONNECT: @wren_b 0 0 0 0 wren_b 0 0 0 0
--- Retrieval info: CONNECT: q_a 0 0 8 0 @q_a 0 0 8 0
--- Retrieval info: CONNECT: q_b 0 0 1 0 @q_b 0 0 1 0
+-- Retrieval info: CONNECT: q_a 0 0 1 0 @q_a 0 0 1 0
+-- Retrieval info: CONNECT: q_b 0 0 8 0 @q_b 0 0 8 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL video_ram.vhd TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL video_ram.inc FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL video_ram.cmp FALSE
