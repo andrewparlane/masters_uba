@@ -98,19 +98,13 @@ architecture synth of tp4 is
               o_nVSync:             out std_ulogic);
     end component video_subsystem;
 
-    component pll100M
-        port (areset:   in std_logic;
-              inclk0:   in std_logic;
+    component pll
+        port (areset:   in  std_logic;
+              inclk0:   in  std_logic;
               c0:       out std_logic;
+              c1:       out std_logic;
               locked:   out std_logic);
-    end component pll100M;
-
-    component pll25M
-        port (areset:   in std_logic;
-              inclk0:   in std_logic;
-              c0:       out std_logic;
-              locked:   out std_logic);
-    end component pll25M;
+    end component;
 
     type CoOrd is
     (
@@ -122,10 +116,8 @@ architecture synth of tp4 is
     constant NUM_COORDS:    natural := 5;
 
     signal clk25M:          std_ulogic;
-    signal clk25M_locked:   std_ulogic;
-
     signal clk100M:         std_ulogic;
-    signal clk100M_locked:  std_ulogic;
+    signal pll_locked:      std_ulogic;
 
     signal idle:            std_ulogic;
     signal idleDelayed:     std_ulogic;
@@ -157,20 +149,16 @@ architecture synth of tp4 is
 
 begin
 
-    reset <= not (KEY(0) or clk25M_locked or clk100M_locked);
+    reset <= not (KEY(0) or pll_locked);
 
     -----------------------------------------------------------------
     -- PLLs
     -----------------------------------------------------------------
-    pll100M_inst: pll25M port map (areset  => '0',
-                                   inclk0  => CLOCK_50,
-                                   c0      => clk100M,
-                                   locked  => clk100M_locked);
-
-    pll25M_inst: pll25M port map (areset  => '0',
-                                  inclk0  => CLOCK_50,
-                                  c0      => clk25M,
-                                  locked  => clk25M_locked);
+    pll_inst: pll port map (areset  => '0',
+                            inclk0  => CLOCK_50,
+                            c0      => clk100M,
+                            c1      => clk25M,
+                            locked  => pll_locked);
 
     -----------------------------------------------------------------
     -- SRAM
