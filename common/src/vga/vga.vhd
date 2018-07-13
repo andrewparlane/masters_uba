@@ -89,6 +89,7 @@ architecture synth of vga is
     signal y: unsigned((COUNTER_Y_WIDTH - 1) downto 0);
 
     signal xAtMax: std_ulogic;
+    signal yAtMax: std_ulogic;
 begin
 
     -------------------------------------------------------------------------------------
@@ -114,7 +115,7 @@ begin
                                   loadData => to_unsigned(0, y'length),
                                   count => y,
                                   atZero => open,
-                                  atMax => endOfFrame);
+                                  atMax => yAtMax);
 
     -------------------------------------------------------------------------------------
     -- Salidas
@@ -128,6 +129,7 @@ begin
             inActive <= '0';    -- activo alto
             pixelX <= (others => '0');
             pixelY <= (others => '0');
+            endOfFrame <= '0';
         elsif (rising_edge(clk)) then
             -- nHSync está activo (bajo) durante el hsync
             if ((x >= H_SYNC_START) and
@@ -159,6 +161,11 @@ begin
                 pixelY <= resize(y - to_unsigned(V_ACTIVE_START, y'length),
                                   pixelY'length);
             end if;
+
+            -- We're at the end of the frame
+            -- when both pixelX and pixelY are at their max
+            -- values. Which happens when y and x are at max.
+            endOfFrame <= yAtMax and xAtMax;
 
             -- estamos en la región activo?
             if ((x < H_ACTIVE_START) or

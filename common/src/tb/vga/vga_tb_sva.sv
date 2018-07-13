@@ -10,6 +10,7 @@ program vga_props #(parameter H_ACTIVE,
                     input logic rst,
                     input logic [$clog2(H_ACTIVE)-1:0] pixelX,
                     input logic [$clog2(V_ACTIVE)-1:0] pixelY,
+                    input logic endOfFrame,
                     input logic inActive,
                     input logic nHSync,
                     input logic nVSync);
@@ -59,6 +60,18 @@ program vga_props #(parameter H_ACTIVE,
         (pixelX === (H_ACTIVE-1)) |=>
             ##(H_FRONT_PORCH) $fell(nHSync));
 
+    // check that endOfFrame only asserts for one tick
+    endOfFramePulseWidth: assert property
+        (@(posedge clk)
+        ($rose(endOfFrame) |=>
+            $fell(endOfFrame)));
+
+    // Check that nHSync falls FP pixel
+    // after endOfFrame
+    endOfFrameToHSync: assert property
+        (@(posedge clk)
+        ($rose(endOfFrame) |=>
+            ##(H_FRONT_PORCH) $fell(nHSync)));
 
     // check that once nHSync asserts (active low) then it should
     // stay low for H_SYNC ticks and then rise again
