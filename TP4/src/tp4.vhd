@@ -4,7 +4,6 @@ use ieee.numeric_std.all;
 
 library common;
 use common.all;
-use common.vga_timings_640_480_pkg.all;
 
 entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
@@ -81,34 +80,6 @@ architecture synth of tp4 is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
-    component adv7123 is
-        generic (H_ACTIVE:      natural;    -- ticks
-                 H_FRONT_PORCH: natural;    -- ticks
-                 H_SYNC:        natural;    -- ticks
-                 H_BACK_PORCH:  natural;    -- ticks
-
-                 V_ACTIVE:      natural;    -- líneas
-                 V_FRONT_PORCH: natural;    -- líneas
-                 V_SYNC:        natural;    -- líneas
-                 V_BACK_PORCH:  natural);   -- líneas
-
-        port (clk:          in  std_ulogic;
-              rst:          in  std_ulogic;
-              rIn:          in  std_ulogic_vector(9 downto 0);
-              gIn:          in  std_ulogic_vector(9 downto 0);
-              bIn:          in  std_ulogic_vector(9 downto 0);
-              pixelX:       out unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-              pixelY:       out unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
-              endOfFrame:   out std_ulogic;
-              clkOut:       out std_ulogic;
-              rOut:         out std_ulogic_vector(9 downto 0);
-              gOut:         out std_ulogic_vector(9 downto 0);
-              bOut:         out std_ulogic_vector(9 downto 0);
-              nBlank:       out std_ulogic;
-              nSync:        out std_ulogic;
-              nHSync:       out std_ulogic;
-              nVSync:       out std_ulogic);
-    end component adv7123;
 
     component pll25M
         port (areset:   in std_logic;
@@ -116,20 +87,6 @@ architecture synth of tp4 is
               c0:       out std_logic;
               locked:   out std_logic);
     end component pll25M;
-
-    component video_ram
-        port (address_a:    in std_logic_vector (15 downto 0);
-              address_b:    in std_logic_vector (18 downto 0);
-              clock_a:      in std_logic;
-              clock_b:      in std_logic;
-              data_a:       in std_logic_vector (7 downto 0);
-              data_b:       in std_logic_vector (0 downto 0);
-              wren_a:       in std_logic;
-              wren_b:       in std_logic;
-              q_a:          out std_logic_vector (7 downto 0);
-              q_b:          out std_logic_vector (0 downto 0));
-    end component video_ram;
-
 
     type CoOrd is
     (
@@ -166,10 +123,7 @@ architecture synth of tp4 is
     constant gamma:         unsigned(31 downto 0) := (others => '0');
     signal cordic_valid:    std_ulogic;
 
-    signal pixelOn:         std_ulogic;
     signal endOfFrame:      std_ulogic;
-    signal pixelX:          unsigned((utils_pkg.min_width(H_ACTIVE) - 1) downto 0);
-    signal pixelY:          unsigned((utils_pkg.min_width(V_ACTIVE) - 1) downto 0);
 
     signal reset:           std_ulogic;
 
@@ -309,69 +263,5 @@ begin
                       o_z => rotated_z,
                       o_valid => cordic_valid);
 
-
-    -----------------------------------------------------------------
-    -- Video ram
-    -----------------------------------------------------------------
-    -- 640*480 bits, byte addressable = 38,400 bytes
-    -- two read/write ports (although we never write from the second)
-    -- A) clocked with CLOCK_50
-    --    pipelined: read, set, write.
-    --    The cordic gives us x,y which gives us our address
-    --    we read that byte
-    --    set the correct bit
-    --    then write it back
-    -- B) clocked with clk25M (read only)
-    --    addressed by vga pixelX and pixelY
-    --    ?? ticks of delay
-    -----------------------------------------------------------------
-    --video_ram_inst:
-    --video_ram
-    --port map (address_a => ,
-    --          address_b => ,
-    --          clock_a   => ,
-    --          clock_b   => ,
-    --          data_a    => ,
-    --          data_b    => ,
-    --          wren_a    => ,
-    --          wren_b    => ,
-    --          q_a       => ,
-    --          q_b       => );
-
-    -----------------------------------------------------------------
-    -- VGA
-    -----------------------------------------------------------------
-    -- 640x480 with 25MHz clock -> 59.5 frames/second
-    -- We update the video ram during the vertical blanking
-    -- period which is 45 lines of 800 pixels = 1.44ms
-    -----------------------------------------------------------------
-
-    adv7123_inst:
-    adv7123 generic map(H_ACTIVE        => H_ACTIVE,
-                        H_FRONT_PORCH   => H_FRONT_PORCH,
-                        H_SYNC          => H_SYNC,
-                        H_BACK_PORCH    => H_BACK_PORCH,
-                        V_ACTIVE        => V_ACTIVE,
-                        V_FRONT_PORCH   => V_FRONT_PORCH,
-                        V_SYNC          => V_SYNC,
-                        V_BACK_PORCH    => V_BACK_PORCH)
-            port map(clk => clk25M,
-                     rst => reset,
-                     rIn => (others => pixelOn),
-                     gIn => (others => pixelOn),
-                     bIn => (others => pixelOn),
-
-                     pixelX     => pixelX,
-                     pixelY     => pixelY,
-                     endOfFrame => endOfFrame,
-
-                     clkOut => VGA_CLK,
-                     rOut   => VGA_R,
-                     gOut   => VGA_G,
-                     bOut   => VGA_B,
-                     nBlank => VGA_BLANK,
-                     nSync  => VGA_SYNC,
-                     nHSync => VGA_HS,
-                     nVSync => VGA_VS);
 
 end architecture synth;

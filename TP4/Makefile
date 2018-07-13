@@ -73,7 +73,10 @@ sram: all
 video_ram: all
 	@$(call VSIM_CMD, video_ram_tb)
 
-.PHONY: sram
+video_subsystem: all
+	@$(call VSIM_CMD, video_subsystem_tb)
+
+.PHONY: sram video_ram video_subsystem
 
 # delete the library and all compiled files
 clean: helper_clean
