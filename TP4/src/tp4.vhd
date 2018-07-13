@@ -80,6 +80,12 @@ architecture synth of tp4 is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
+    component pll100M
+        port (areset:   in std_logic;
+              inclk0:   in std_logic;
+              c0:       out std_logic;
+              locked:   out std_logic);
+    end component pll100M;
 
     component pll25M
         port (areset:   in std_logic;
@@ -99,6 +105,9 @@ architecture synth of tp4 is
 
     signal clk25M:          std_ulogic;
     signal clk25M_locked:   std_ulogic;
+
+    signal clk100M:         std_ulogic;
+    signal clk100M_locked:  std_ulogic;
 
     signal idle:            std_ulogic;
     signal idleDelayed:     std_ulogic;
@@ -129,11 +138,16 @@ architecture synth of tp4 is
 
 begin
 
-    reset <= not (KEY(0) or clk25M_locked);
+    reset <= not (KEY(0) or clk25M_locked or clk100M_locked);
 
     -----------------------------------------------------------------
     -- PLLs
     -----------------------------------------------------------------
+    pll100M_inst: pll25M port map (areset  => '0',
+                                   inclk0  => CLOCK_50,
+                                   c0      => clk100M,
+                                   locked  => clk100M_locked);
+
     pll25M_inst: pll25M port map (areset  => '0',
                                   inclk0  => CLOCK_50,
                                   c0      => clk25M,
@@ -146,7 +160,7 @@ begin
     sram_rnw <= '1';
 
     sramInst:
-    sram port map (i_clk        => CLOCK_50,
+    sram port map (i_clk        => clk100M,
                    i_reset      => reset,
                    -- inputs
                    i_addr       => sram_address,
@@ -176,18 +190,18 @@ begin
     dly:    delay
             generic map (DELAY => 3,
                          WIDTH => 1)
-            port map (clk => CLOCK_50,
+            port map (clk => clk100M,
                       rst => reset,
                       input(0) => idle,
                       output(0) => idleDelayed);
 
     -- Control logic
-    process (CLOCK_50, reset)
+    process (clk100M, reset)
     begin
         if (reset = '1') then
             idle <= '0';
             sram_start <= '0';
-        elsif (rising_edge(CLOCK_50)) then
+        elsif (rising_edge(clk100M)) then
             if (idle = '1') then
                 -- wait for start signal
                 if (start_rotations = '1') then
@@ -214,12 +228,12 @@ begin
     -----------------------------------------------------------------
 
     -- set up the input co-ordinates
-    process (CLOCK_50, reset)
+    process (clk100M, reset)
     begin
         if (reset = '1') then
             currentCoOrd <= CoOrd_X;
             cordic_en <= '0';
-        elsif (rising_edge(CLOCK_50)) then
+        elsif (rising_edge(clk100M)) then
             -- deassert en (if it was set)
             cordic_en <= '0';
 
@@ -249,7 +263,7 @@ begin
             generic map (N => 9,
                          M => 23,
                          STEPS => 10)
-            port map (i_clk => CLOCK_50,
+            port map (i_clk => clk100M,
                       i_reset => reset,
                       i_en => cordic_en,
                       i_x => original_x,
