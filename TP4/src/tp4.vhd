@@ -80,6 +80,24 @@ architecture synth of tp4 is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
+    component video_subsystem is
+        port (i_clk100M:            in  std_ulogic;
+              i_clk25M:             in  std_ulogic;
+              i_reset:              in  std_ulogic;
+              i_setPixelAddr:       in  unsigned(15 downto 0);
+              i_setPixelBitMask:    in  unsigned(7 downto 0);
+              i_setPixel:           in  std_ulogic;
+              o_requestNewData:     out std_ulogic;
+              o_vgaClk:             out std_ulogic;
+              o_rOut:               out std_ulogic_vector(9 downto 0);
+              o_gOut:               out std_ulogic_vector(9 downto 0);
+              o_bOut:               out std_ulogic_vector(9 downto 0);
+              o_nBlank:             out std_ulogic;
+              o_nSync:              out std_ulogic;
+              o_nHSync:             out std_ulogic;
+              o_nVSync:             out std_ulogic);
+    end component video_subsystem;
+
     component pll100M
         port (areset:   in std_logic;
               inclk0:   in std_logic;
@@ -111,7 +129,6 @@ architecture synth of tp4 is
 
     signal idle:            std_ulogic;
     signal idleDelayed:     std_ulogic;
-    signal start_rotations: std_ulogic;
     signal currentCoOrd:    CoOrd;
 
     signal sram_address:    unsigned(17 downto 0);
@@ -132,7 +149,9 @@ architecture synth of tp4 is
     constant gamma:         unsigned(31 downto 0) := (others => '0');
     signal cordic_valid:    std_ulogic;
 
-    signal endOfFrame:      std_ulogic;
+    signal setPixelAddr:    unsigned(15 downto 0);
+    signal setPixelBitMask: unsigned(7 downto 0);
+    signal requestNewData:  std_ulogic;
 
     signal reset:           std_ulogic;
 
@@ -180,9 +199,12 @@ begin
                    o_nLB        => SRAM_LB_N,
                    o_nUB        => SRAM_UB_N);
 
-    -- we extend the read sram data from Q9.7 to Q9.23
-    sram_rdata_ext(15 downto 0) <= (others => '0');
-    sram_rdata_ext(31 downto 16) <= signed(sram_rdata);
+    -- we extend the read sram data from Q7.9 to Q9.23
+    -- adding zeros to the lower bits and sign extending the
+    -- upper bits
+    sram_rdata_ext(13 downto 0) <= (others => '0');
+    sram_rdata_ext(29 downto 14) <= signed(sram_rdata);
+    sram_rdata_ext(31 downto 30) <= (others => sram_rdata(15));
 
     -- We need to know when we are reading sram. This is the
     -- idle signal. However our reads are delayed by 3 ticks
@@ -204,7 +226,7 @@ begin
         elsif (rising_edge(clk100M)) then
             if (idle = '1') then
                 -- wait for start signal
-                if (start_rotations = '1') then
+                if (requestNewData = '1') then
                     idle <= '0';
                     sram_address <= to_unsigned(0, 18);
                     sram_start <= '1';
@@ -277,5 +299,53 @@ begin
                       o_z => rotated_z,
                       o_valid => cordic_valid);
 
+    -----------------------------------------------------------------
+    -- Video subsystem
+    -----------------------------------------------------------------
+    -- Video RAM + ADV7123 controller
+    -----------------------------------------------------------------
+
+    process (all)
+        variable intX:      integer;
+        variable intY:      integer;
+        variable pixelIdx:  unsigned(18 downto 0);
+    begin
+        -- rotated_x and rotated_y are between (approx)
+        -- -225.0 and 225.0, so we first convert to be between
+        -- (for x) 95 and 545
+        -- (for y) 15 and 465
+        intX := to_integer((rotated_x(31) &
+                            rotated_x(31 downto 23)) + -- sign extend the integer part
+                           to_signed(320, 10));
+        intY := to_integer(rotated_y(31 downto 23) +
+                           to_signed(240, 9));
+
+        -- next we need to work out the index of the pixel
+        pixelIdx := to_unsigned((intY * 640) + intX, 19);
+
+        -- the pixel address is the top 16 bits of that
+        setPixelAddr <= pixelIdx(18 downto 3);
+
+        -- then the bit mask is the decoded lower 3 bits
+        setPixelBitMask <= (others => '0');
+        setPixelBitMask(to_integer(pixelIdx(2 downto 0))) <= '1';
+    end process;
+
+    dut: video_subsystem
+        port map (i_clk100M             => clk100M,
+                  i_clk25M              => clk25M,
+                  i_reset               => reset,
+                  i_setPixelAddr        => setPixelAddr,
+                  i_setPixelBitMask     => setPixelBitMask,
+                  i_setPixel            => cordic_valid,
+                  o_requestNewData      => requestNewData,
+                  o_vgaClk              => VGA_CLK,
+                  o_rOut                => VGA_R,
+                  o_gOut                => VGA_G,
+                  o_bOut                => VGA_B,
+                  o_nBlank              => VGA_BLANK,
+                  o_nSync               => VGA_SYNC,
+                  o_nHSync              => VGA_HS,
+                  o_nVSync              => VGA_VS);
 
 end architecture synth;
