@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 library common;
+use common.all;
 use common.type_pkg.all;
 
 entity cordic_rotation_3d is
