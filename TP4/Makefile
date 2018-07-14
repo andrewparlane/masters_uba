@@ -76,7 +76,13 @@ video_ram: all
 video_subsystem: all
 	@$(call VSIM_CMD, video_subsystem_tb)
 
-.PHONY: sram video_ram video_subsystem
+cordic: all
+	@$(call VSIM_CMD, cordic_rotation_tb)
+
+cordic_3d: all
+	@$(call VSIM_CMD, cordic_rotation_3d_tb)
+
+.PHONY: sram video_ram video_subsystem cordic cordic_3d
 
 # delete the library and all compiled files
 clean: helper_clean
