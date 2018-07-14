@@ -187,12 +187,12 @@ begin
                    o_nLB        => SRAM_LB_N,
                    o_nUB        => SRAM_UB_N);
 
-    -- we extend the read sram data from Q7.9 to Q9.23
+    -- we extend the read sram data from Q6.10 to Q9.23
     -- adding zeros to the lower bits and sign extending the
     -- upper bits
-    sram_rdata_ext(13 downto 0) <= (others => '0');
-    sram_rdata_ext(29 downto 14) <= signed(sram_rdata);
-    sram_rdata_ext(31 downto 30) <= (others => sram_rdata(15));
+    sram_rdata_ext(12 downto 0) <= (others => '0');
+    sram_rdata_ext(28 downto 13) <= signed(sram_rdata);
+    sram_rdata_ext(31 downto 29) <= (others => sram_rdata(15));
 
     -- We need to know when we are reading sram. This is the
     -- idle signal. However our reads are delayed by 3 ticks
