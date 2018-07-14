@@ -75,7 +75,33 @@ architecture synth of cordic_rotation_3d is
     signal yzValid: std_ulogic;
     signal xzValid: std_ulogic;
 
+    signal betaDelayed:     unsigned((N + M - 1) downto 0);
+    signal gammaDelayed:    unsigned((N + M - 1) downto 0);
+
 begin
+
+    -----------------------------------------------------------------
+    -- Delay beta and gamma signals
+    -----------------------------------------------------------------
+    -- They aren't used until the 2nd and 3rd cordics
+    -- and so we can't use i_beta or i_gamma at that point
+    -----------------------------------------------------------------
+
+    betaDelay: delay
+        generic map (DELAY => STEPS,
+                     WIDTH => (N + M))
+        port map (clk => i_clk,
+                  rst => i_reset,
+                  input => std_ulogic_vector(i_beta),
+                  unsigned(output) => betaDelayed);
+
+    gammaDelay: delay
+        generic map (DELAY => STEPS*2,
+                     WIDTH => (N + M))
+        port map (clk => i_clk,
+                  rst => i_reset,
+                  input => std_ulogic_vector(i_gamma),
+                  unsigned(output) => gammaDelayed);
 
     -----------------------------------------------------------------
     -- first round. Rotate around axis Z
@@ -125,7 +151,7 @@ begin
                         i_en => xyValid,
                         i_x => y(0),
                         i_y => z(0),
-                        i_alpha => i_beta,
+                        i_alpha => betaDelayed,
                         o_x => y(1),
                         o_y => z(1),
                         o_valid => yzValid);
@@ -156,7 +182,7 @@ begin
                         i_en => yzValid,
                         i_x => z(1),
                         i_y => x(1),
-                        i_alpha => i_gamma,
+                        i_alpha => gammaDelayed,
                         o_x => z(2),
                         o_y => x(2),
                         o_valid => xzValid);
