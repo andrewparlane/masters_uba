@@ -80,6 +80,21 @@ architecture synth of tp4 is
               output:   out std_ulogic_vector((WIDTH - 1) downto 0));
     end component delay;
 
+    component transform is
+        port (i_clk:                in  std_ulogic;
+              i_reset:              in  std_ulogic;
+              i_start:              in  std_ulogic;
+              i_value:              in  signed(15 downto 0);
+              i_valid:              in  std_ulogic;
+              i_alpha:              in  unsigned(31 downto 0);
+              i_beta:               in  unsigned(31 downto 0);
+              i_gamma:              in  unsigned(31 downto 0);
+              o_setPixelAddr:       out unsigned(15 downto 0);
+              o_setPixelBitMask:    out unsigned(7 downto 0);
+              o_setPixel:           out std_ulogic);
+    end component transform;
+
+
     component video_subsystem is
         port (i_clk100M:            in  std_ulogic;
               i_clk25M:             in  std_ulogic;
@@ -106,13 +121,6 @@ architecture synth of tp4 is
               locked:   out std_logic);
     end component;
 
-    type CoOrd is
-    (
-        CoOrd_X,
-        CoOrd_Y,
-        CoOrd_Z
-    );
-
     constant NUM_COORDS:    natural := 5;
 
     signal clk25M:          std_ulogic;
@@ -120,27 +128,19 @@ architecture synth of tp4 is
     signal pll_locked:      std_ulogic;
 
     signal idle:            std_ulogic;
-    signal idleDelayed:     std_ulogic;
-    signal currentCoOrd:    CoOrd;
+    signal sramRDataValid:  std_ulogic;
 
     signal sram_address:    unsigned(17 downto 0);
     signal sram_rnw:        std_ulogic;
     signal sram_start:      std_ulogic;
     signal sram_rdata:      std_ulogic_vector(15 downto 0);
-    signal sram_rdata_ext:  signed(31 downto 0);
 
-    signal cordic_en:       std_ulogic;
-    signal original_x:      signed(31 downto 0);
-    signal original_y:      signed(31 downto 0);
-    signal original_z:      signed(31 downto 0);
-    signal rotated_x:       signed(31 downto 0);
-    signal rotated_y:       signed(31 downto 0);
-    signal rotated_z:       signed(31 downto 0);
     constant alpha:         unsigned(31 downto 0) := (others => '0');
     constant beta:          unsigned(31 downto 0) := (others => '0');
     constant gamma:         unsigned(31 downto 0) := (others => '0');
-    signal cordic_valid:    std_ulogic;
 
+    signal transformStart:  std_ulogic;
+    signal setPixel:        std_ulogic;
     signal setPixelAddr:    unsigned(15 downto 0);
     signal setPixelBitMask: unsigned(7 downto 0);
     signal requestNewData:  std_ulogic;
@@ -187,13 +187,6 @@ begin
                    o_nLB        => SRAM_LB_N,
                    o_nUB        => SRAM_UB_N);
 
-    -- we extend the read sram data from Q6.10 to Q9.23
-    -- adding zeros to the lower bits and sign extending the
-    -- upper bits
-    sram_rdata_ext(12 downto 0) <= (others => '0');
-    sram_rdata_ext(28 downto 13) <= signed(sram_rdata);
-    sram_rdata_ext(31 downto 29) <= (others => sram_rdata(15));
-
     -- We need to know when we are reading sram. This is the
     -- idle signal. However our reads are delayed by 3 ticks
     -- so we must delay idle by 3 ticks too
@@ -203,7 +196,7 @@ begin
             port map (clk => clk100M,
                       rst => reset,
                       input(0) => idle,
-                      output(0) => idleDelayed);
+                      output(0) => sramRDataValid);
 
     -- Control logic
     process (clk100M, reset)
@@ -212,12 +205,21 @@ begin
             idle <= '0';
             sram_start <= '0';
         elsif (rising_edge(clk100M)) then
+            -- transformStart should only be pulsed for one tick
+            transformStart <= '0';
+
             if (idle = '1') then
                 -- wait for start signal
                 if (requestNewData = '1') then
                     idle <= '0';
+
+                    -- start reading from sram
                     sram_address <= to_unsigned(0, 18);
                     sram_start <= '1';
+
+                    -- force the transform unit to expect
+                    -- the X component
+                    transformStart <= '1';
                 end if;
             else
                 -- have we finished reading?
@@ -234,90 +236,25 @@ begin
     end process;
 
     -----------------------------------------------------------------
-    -- CORDIC 3D
+    -- Rotate the co-ordinates and obtain the pixel address
     -----------------------------------------------------------------
+    transformInst: transform
+        port map (i_clk              => clk100M,
+                  i_reset            => reset,
+                  i_start            => transformStart,
+                  i_value            => signed(sram_rdata),
+                  i_valid            => sramRDataValid,
+                  i_alpha            => alpha,
+                  i_beta             => beta,
+                  i_gamma            => gamma,
+                  o_setPixelAddr     => setPixelAddr,
+                  o_setPixelBitMask  => setPixelBitMask,
+                  o_setPixel         => setPixel);
 
-    -- set up the input co-ordinates
-    process (clk100M, reset)
-    begin
-        if (reset = '1') then
-            currentCoOrd <= CoOrd_X;
-            cordic_en <= '0';
-        elsif (rising_edge(clk100M)) then
-            -- deassert en (if it was set)
-            cordic_en <= '0';
-
-            if (idleDelayed) then
-                currentCoOrd <= CoOrd_X;
-            else
-                -- sram_rdata should contain our data now
-                -- we put it in the correct spot
-                if (currentCoOrd = CoOrd_X) then
-                    original_x <= sram_rdata_ext;
-                    currentCoOrd <= CoOrd_Y;
-                elsif (currentCoOrd = CoOrd_Y) then
-                    original_y <= sram_rdata_ext;
-                    currentCoOrd <= CoOrd_Z;
-                elsif (currentCoOrd = CoOrd_Z) then
-                    original_z <= sram_rdata_ext;
-                    currentCoOrd <= CoOrd_X;
-
-                    -- now all the data is valid start the cordic
-                    cordic_en <= '1';
-                end if;
-            end if;
-        end if;
-    end process;
-
-    cordic: cordic_rotation_3d
-            generic map (N => 9,
-                         M => 23,
-                         STEPS => 10)
-            port map (i_clk => clk100M,
-                      i_reset => reset,
-                      i_en => cordic_en,
-                      i_x => original_x,
-                      i_y => original_y,
-                      i_z => original_z,
-                      i_alpha => alpha,
-                      i_beta  => beta,
-                      i_gamma => gamma,
-                      o_x => rotated_x,
-                      o_y => rotated_y,
-                      o_z => rotated_z,
-                      o_valid => cordic_valid);
 
     -----------------------------------------------------------------
     -- Video subsystem
     -----------------------------------------------------------------
-    -- Video RAM + ADV7123 controller
-    -----------------------------------------------------------------
-
-    process (all)
-        variable intX:      integer;
-        variable intY:      integer;
-        variable pixelIdx:  unsigned(18 downto 0);
-    begin
-        -- rotated_x and rotated_y are between (approx)
-        -- -225.0 and 225.0, so we first convert to be between
-        -- (for x) 95 and 545
-        -- (for y) 15 and 465
-        intX := to_integer((rotated_x(31) &
-                            rotated_x(31 downto 23)) + -- sign extend the integer part
-                           to_signed(320, 10));
-        intY := to_integer(rotated_y(31 downto 23) +
-                           to_signed(240, 9));
-
-        -- next we need to work out the index of the pixel
-        pixelIdx := to_unsigned((intY * 640) + intX, 19);
-
-        -- the pixel address is the top 16 bits of that
-        setPixelAddr <= pixelIdx(18 downto 3);
-
-        -- then the bit mask is the decoded lower 3 bits
-        setPixelBitMask <= (others => '0');
-        setPixelBitMask(to_integer(pixelIdx(2 downto 0))) <= '1';
-    end process;
 
     dut: video_subsystem
         port map (i_clk100M             => clk100M,
@@ -325,7 +262,7 @@ begin
                   i_reset               => reset,
                   i_setPixelAddr        => setPixelAddr,
                   i_setPixelBitMask     => setPixelBitMask,
-                  i_setPixel            => cordic_valid,
+                  i_setPixel            => setPixel,
                   o_requestNewData      => requestNewData,
                   o_vgaClk              => VGA_CLK,
                   o_rOut                => VGA_R,

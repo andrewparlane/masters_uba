@@ -105,6 +105,12 @@ cordic_3d_delay: all cordic_test_gen
 
 .PHONY: cordic_no_delay cordic_delay cordic_3d_no_delay cordic_3d_delay
 
+transform: all cordic_test_gen
+	$(CORDIC_GEN_PATH)/cordicTestGen -p -n $(NUM_CORDIC_TESTS) -o $(CORDIC_GEN_PATH)/out.txt
+	@$(call VSIM_CMD, transform_tb, -gTEST_FILE=c/cordic_test_generator/out.txt)
+
+.PHONY: transform
+
 # delete the library and all compiled files
 clean: helper_clean
 	$(call DEL_VLIB_CMD, $(COMMON_LIB))

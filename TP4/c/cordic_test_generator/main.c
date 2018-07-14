@@ -31,6 +31,7 @@ static const struct option _gLongOptions[] =
     {"version",             no_argument,        0,          'V' },
     {"num_tests",           required_argument,  0,          'n' },
     {"3d",                  no_argument,        0,          '3' },
+    {"gen_pixel_addr",      no_argument,        0,          'p' },
     {"report_max",          no_argument,        0,          'r' },
     {"output",              required_argument,  0,          'o' },
     {0,                     0,                  0,           0  }
@@ -69,6 +70,7 @@ static void usage(FILE *stream, const char *ourName)
            "  -V, --version             Prints version information.\n"
            "  -n, --num_tests NUM       Number of tests to output.\n"
            "  -3, --3d                  Generate a 3D cordic test file.\n"
+           "  -p, --gen_pixel_addr      Instead of the rotated cordic values, generate pixel address and bit mask.\n"
            "  -r, --report_max          Write the max calculated value to stdout.\n"
            "  -o, --output              Path to output file.\n"
            "\n"
@@ -283,10 +285,13 @@ void cordic3d(int32_t x, int32_t y, int32_t z,
     *rotatedZ = z;
 }
 
-static void generateTests(FILE *f, uint32_t num_tests, bool threeD, bool report_max)
+static void generateTests(FILE *f, uint32_t num_tests, bool threeD, bool pixelAddr, bool report_max)
 {
     int32_t maxValueCalculated = 0;
     bool maxValWasNeg = false;
+
+    uint32_t maxX = 0;
+    uint32_t maxY = 0;
 
     for (uint32_t i = 0; i < num_tests; i++)
     {
@@ -297,7 +302,46 @@ static void generateTests(FILE *f, uint32_t num_tests, bool threeD, bool report_
         uint32_t beta   = generateAngle();
         uint32_t gamma  = generateAngle();
 
-        if (threeD)
+        if (pixelAddr)
+        {
+            int32_t rotatedX;
+            int32_t rotatedY;
+            int32_t rotatedZ;
+
+            // if we are calculating for pixelAddr tests
+            // the data is used in Q6.10 format
+            // so we need to clear the bottom 13 bits
+            // as that's how it'll be used in the test
+            x &= ~((1 << 13) - 1);
+            y &= ~((1 << 13) - 1);
+            z &= ~((1 << 13) - 1);
+
+            cordic3d(x, y, z, alpha, beta, gamma,
+                     &rotatedX, &rotatedY, &rotatedZ);
+
+            uint32_t intX = (rotatedX >> QM) + 320;
+            uint32_t intY = (rotatedY >> QM) + 240;
+
+            uint32_t pixel = (intY * 640) + intX;
+
+            uint32_t byteAddr = pixel / 8;
+            uint32_t bitMask = 1 << (pixel % 8);
+
+            fprintf(f, "%u %u %u %u %u %u %u %u %u %u %u\n",
+                    x, y, z, alpha, beta, gamma,
+                    rotatedX, rotatedY, rotatedZ,
+                    byteAddr, bitMask);
+
+            if (intX > maxX)
+            {
+                maxX = intX;
+            }
+            if (intY > maxY)
+            {
+                maxY = intY;
+            }
+        }
+        else if (threeD)
         {
             int32_t rotatedX;
             int32_t rotatedY;
@@ -354,8 +398,15 @@ static void generateTests(FILE *f, uint32_t num_tests, bool threeD, bool report_
 
     if (report_max)
     {
-        printf("Max value calculated %u %f\n", maxValueCalculated,
-              ((double)maxValueCalculated) / pow(2.0, QM));
+        if (!pixelAddr)
+        {
+            printf("Max value calculated %u %f\n", maxValueCalculated,
+                  ((double)maxValueCalculated) / pow(2.0, QM));
+        }
+        else
+        {
+            printf("Max X: %u, max Y: %u\n", maxX, maxY);
+        }
     }
 }
 
@@ -369,6 +420,9 @@ int main(int argc, char **argv)
 
     // 2d or 3d
     bool threeD = false;
+
+    // pixel address
+    bool pixelAddr = false;
 
     // report_max
     bool report_max = false;
@@ -387,7 +441,7 @@ int main(int argc, char **argv)
     while (1)
     {
         int option_index = 0;
-        int c = getopt_long(argc, argv, "hV3rn:o:", _gLongOptions, &option_index);
+        int c = getopt_long(argc, argv, "hV3prn:o:", _gLongOptions, &option_index);
 
         if (c == -1)
         {
@@ -423,6 +477,13 @@ int main(int argc, char **argv)
             }
             case '3':
             {
+                threeD = true;
+                break;
+            }
+            case 'p':
+            {
+                pixelAddr = true;
+                // need threeD for this
                 threeD = true;
                 break;
             }
@@ -499,7 +560,7 @@ int main(int argc, char **argv)
         }
     }
 
-    generateTests(f, num_tests, threeD, report_max);
+    generateTests(f, num_tests, threeD, pixelAddr, report_max);
 
     if (outputFile != NULL)
     {
