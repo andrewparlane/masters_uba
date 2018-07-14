@@ -28,6 +28,8 @@ QUARTUS_DIR		= C:\\altera/13.0sp1/quartus
 #	use common.all;
 COMMON_LIB		= common
 
+CORDIC_GEN_PATH = c/cordic_test_generator
+
 # src files
 SRCS	= $(wildcard $(SRC_DIR)/*.vhd) \
 		  $(wildcard $(SRC_DIR)/synth_test/*.vhd) \
@@ -39,6 +41,10 @@ TB_SRCS	= $(wildcard $(TB_SRC_DIR)/*.vhd) \
 VCOM_FLAGS		=
 VSIM_FLAGS		=
 
+ifndef NUM_CORDIC_TESTS
+NUM_CORDIC_TESTS = 100000
+endif
+
 # Now include our helper.mk which has all the rules we need
 # to create our library, compile and simulate our test benches
 include ../herramientas/helper.mk
@@ -49,8 +55,11 @@ common:
 	@# Add the common lib to our modelsim.ini
 	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
+cordic_test_gen:
+	@make -C $(CORDIC_GEN_PATH)
+
 # default rule is to create the library, and compile all the components
-all: common srcs tb_srcs altera_mf
+all: common srcs tb_srcs altera_mf cordic_test_gen
 
 .PHONY: common all
 
@@ -76,13 +85,25 @@ video_ram: all
 video_subsystem: all
 	@$(call VSIM_CMD, video_subsystem_tb)
 
-cordic: all
-	@$(call VSIM_CMD, cordic_rotation_tb)
+.PHONY: sram video_ram video_subsystem
 
-cordic_3d: all
-	@$(call VSIM_CMD, cordic_rotation_3d_tb)
+cordic_no_delay: all cordic_test_gen
+	$(CORDIC_GEN_PATH)/cordicTestGen -n $(NUM_CORDIC_TESTS) -o $(CORDIC_GEN_PATH)/out.txt
+	@$(call VSIM_CMD, cordic_rotation_tb, -gTEST_FILE=c/cordic_test_generator/out.txt -gDELAY_BETWEEN_ENTRIES=0)
 
-.PHONY: sram video_ram video_subsystem cordic cordic_3d
+cordic_delay: all cordic_test_gen
+	$(CORDIC_GEN_PATH)/cordicTestGen -n $(NUM_CORDIC_TESTS) -o $(CORDIC_GEN_PATH)/out.txt
+	@$(call VSIM_CMD, cordic_rotation_tb, -gTEST_FILE=c/cordic_test_generator/out.txt -gDELAY_BETWEEN_ENTRIES=2)
+
+cordic_3d_no_delay: all cordic_test_gen
+	$(CORDIC_GEN_PATH)/cordicTestGen -3 -n $(NUM_CORDIC_TESTS) -o $(CORDIC_GEN_PATH)/out.txt
+	@$(call VSIM_CMD, cordic_rotation_3d_tb, -gTEST_FILE=c/cordic_test_generator/out.txt -gDELAY_BETWEEN_ENTRIES=0)
+
+cordic_3d_delay: all cordic_test_gen
+	$(CORDIC_GEN_PATH)/cordicTestGen -3 -n $(NUM_CORDIC_TESTS) -o $(CORDIC_GEN_PATH)/out.txt
+	@$(call VSIM_CMD, cordic_rotation_3d_tb, -gTEST_FILE=c/cordic_test_generator/out.txt -gDELAY_BETWEEN_ENTRIES=2)
+
+.PHONY: cordic_no_delay cordic_delay cordic_3d_no_delay cordic_3d_delay
 
 # delete the library and all compiled files
 clean: helper_clean
