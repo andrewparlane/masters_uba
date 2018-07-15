@@ -114,7 +114,10 @@ transform: all cordic_test_gen
 uart_rx: all
 	@$(call VSIM_CMD, uart_rx_tb)
 
-.PHONY: uart_rx
+control: all
+	@$(call VSIM_CMD, control_tb)
+
+.PHONY: uart_rx control
 
 # delete the library and all compiled files
 clean: helper_clean

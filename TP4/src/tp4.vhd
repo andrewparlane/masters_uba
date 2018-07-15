@@ -8,6 +8,7 @@ use common.all;
 entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
           KEY:          in      std_ulogic_vector(0 downto 0);
+          UART_RXD:     in      std_ulogic;
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
           SRAM_DQ:      inout   std_ulogic_vector(15 downto 0);
           SRAM_WE_N:    out     std_ulogic;
@@ -26,6 +27,21 @@ entity tp4 is
 end entity tp4;
 
 architecture synth of tp4 is
+    component control is
+        port (i_clk:            in  std_ulogic;
+              i_reset:          in  std_ulogic;
+              i_uartData:       in  std_ulogic_vector(7 downto 0);
+              i_uartDataValid:  in  std_ulogic;
+              i_requestNewData: in  std_ulogic;
+              o_transformStart: out std_ulogic;
+              o_sramStart:      out std_ulogic;
+              o_sramRnW:        out std_ulogic;
+              o_sramAddr:       out unsigned(17 downto 0);
+              o_sramWdata:      out std_ulogic_vector(15 downto 0);
+              o_waitingForData: out std_ulogic;
+              o_transforming:   out std_ulogic);
+    end component control;
+
     component cordic_rotation_3d is
         generic (N: natural;
                  M: natural;
@@ -94,7 +110,6 @@ architecture synth of tp4 is
               o_setPixel:           out std_ulogic);
     end component transform;
 
-
     component video_subsystem is
         port (i_clk100M:            in  std_ulogic;
               i_clk25M:             in  std_ulogic;
@@ -121,19 +136,39 @@ architecture synth of tp4 is
               locked:   out std_logic);
     end component;
 
-    constant NUM_COORDS:    natural := 5;
+    component uart_rx is
+        generic (CLOCK_PERIOD_NS:   natural;
+                 BIT_TIME_NS:       natural);
+        port ( -- Clock/reset
+              i_clk:            in  std_ulogic;
+              i_reset:          in  std_ulogic;
+
+              -- Bus ports
+              i_rx:             in  std_ulogic;
+
+              -- Data ports
+              o_readData:       out std_ulogic_vector(7 downto 0);
+              o_readDataValid:  out std_ulogic;
+              o_readDataError:  out std_ulogic;
+
+              -- Status ports
+              o_receiving:      out std_ulogic;
+              o_isBreak:        out std_ulogic);
+    end component uart_rx;
 
     signal clk25M:          std_ulogic;
     signal clk100M:         std_ulogic;
     signal pll_locked:      std_ulogic;
 
-    signal idle:            std_ulogic;
-    signal sramRDataValid:  std_ulogic;
+    signal uart_rdata:          std_ulogic_vector(7 downto 0);
+    signal uart_rdata_valid:    std_ulogic;
 
-    signal sram_address:    unsigned(17 downto 0);
-    signal sram_rnw:        std_ulogic;
-    signal sram_start:      std_ulogic;
-    signal sram_rdata:      std_ulogic_vector(15 downto 0);
+    signal sram_address:        unsigned(17 downto 0);
+    signal sram_rnw:            std_ulogic;
+    signal sram_start:          std_ulogic;
+    signal sram_rdata:          std_ulogic_vector(15 downto 0);
+    signal sram_wdata:          std_ulogic_vector(15 downto 0);
+    signal sram_rdata_valid:    std_ulogic;
 
     constant alpha:         unsigned(31 downto 0) := (others => '0');
     constant beta:          unsigned(31 downto 0) := (others => '0');
@@ -160,18 +195,48 @@ begin
                             c1      => clk25M,
                             locked  => pll_locked);
 
+    controlInst: control
+        port map (i_clk             => clk100M,
+                  i_reset           => reset,
+                  i_uartData        => uart_rdata,
+                  i_uartDataValid   => uart_rdata_valid,
+                  i_requestNewData  => requestNewData,
+                  o_transformStart  => transformStart,
+                  o_sramStart       => sram_start,
+                  o_sramRnW         => sram_rnw,
+                  o_sramAddr        => sram_address,
+                  o_sramWdata       => sram_wdata,
+                  o_waitingForData  => open,
+                  o_transforming    => open);
+
+    -----------------------------------------------------------------
+    -- UART Rx
+    -----------------------------------------------------------------
+    -- The UART_RX pin is put through a syncronizer in
+    -- the uart_rx component
+    -----------------------------------------------------------------
+    uart: uart_rx
+        generic map (CLOCK_PERIOD_NS => 10, -- 100MHz
+                     BIT_TIME_NS => 8680)   -- Baud rate 115200
+        port map (i_clk             => clk100M,
+                  i_reset           => reset,
+                  i_rx              => UART_RXD,
+                  o_readData        => uart_rdata,
+                  o_readDataValid   => uart_rdata_valid,
+                  o_readDataError   => open,
+                  o_receiving       => open,
+                  o_isBreak         => open);
+
     -----------------------------------------------------------------
     -- SRAM
     -----------------------------------------------------------------
-
-    sram_rnw <= '1';
 
     sramInst:
     sram port map (i_clk        => clk100M,
                    i_reset      => reset,
                    -- inputs
                    i_addr       => sram_address,
-                   i_wdata      => std_ulogic_vector(to_unsigned(0, 16)),
+                   i_wdata      => sram_wdata,
                    i_rnw        => sram_rnw,
                    i_start      => sram_start,
                    -- outputs
@@ -187,53 +252,18 @@ begin
                    o_nLB        => SRAM_LB_N,
                    o_nUB        => SRAM_UB_N);
 
-    -- We need to know when we are reading sram. This is the
-    -- idle signal. However our reads are delayed by 3 ticks
-    -- so we must delay idle by 3 ticks too
+    -- We need to know when sram_rdata contains a valid
+    -- coordinate component that we want to transform.
+    -- This is the sram_rnw signal ANDed with the sram_start
+    -- signal. However our reads are delayed by 3 ticks
+    -- so we must delay this 3 ticks too
     dly:    delay
             generic map (DELAY => 3,
                          WIDTH => 1)
             port map (clk => clk100M,
                       rst => reset,
-                      input(0) => idle,
-                      output(0) => sramRDataValid);
-
-    -- Control logic
-    process (clk100M, reset)
-    begin
-        if (reset = '1') then
-            idle <= '0';
-            sram_start <= '0';
-        elsif (rising_edge(clk100M)) then
-            -- transformStart should only be pulsed for one tick
-            transformStart <= '0';
-
-            if (idle = '1') then
-                -- wait for start signal
-                if (requestNewData = '1') then
-                    idle <= '0';
-
-                    -- start reading from sram
-                    sram_address <= to_unsigned(0, 18);
-                    sram_start <= '1';
-
-                    -- force the transform unit to expect
-                    -- the X component
-                    transformStart <= '1';
-                end if;
-            else
-                -- have we finished reading?
-                if (sram_address = (to_unsigned(3 * NUM_COORDS, 18))) then
-                    -- we are done
-                    idle <= '1';
-                    sram_start <= '0';
-                end if;
-
-                -- read the next address
-                sram_address <= sram_address + to_unsigned(1, 18);
-            end if;
-        end if;
-    end process;
+                      input(0) => sram_rnw and sram_start,
+                      output(0) => sram_rdata_valid);
 
     -----------------------------------------------------------------
     -- Rotate the co-ordinates and obtain the pixel address
@@ -243,14 +273,13 @@ begin
                   i_reset            => reset,
                   i_start            => transformStart,
                   i_value            => signed(sram_rdata),
-                  i_valid            => sramRDataValid,
+                  i_valid            => sram_rdata_valid,
                   i_alpha            => alpha,
                   i_beta             => beta,
                   i_gamma            => gamma,
                   o_setPixelAddr     => setPixelAddr,
                   o_setPixelBitMask  => setPixelBitMask,
                   o_setPixel         => setPixel);
-
 
     -----------------------------------------------------------------
     -- Video subsystem
