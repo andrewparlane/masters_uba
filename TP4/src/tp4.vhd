@@ -2,9 +2,6 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library common;
-use common.all;
-
 entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
           KEY:          in      std_ulogic_vector(0 downto 0);
@@ -62,39 +59,32 @@ architecture synth of tp4 is
     end component cordic_rotation_3d;
 
     -- writes take two cycles
-    -- read data appears after 3 ticks
+    -- read data appears after 4 ticks
+    --  1 to process the start request
     --  1 to get it from the SRAM
     --  2 in the syncronizer
     component sram is
-        port (i_clk:    in      std_ulogic; -- max clk 100MHz
-              i_reset:  in      std_ulogic;
+        port (i_clk:            in      std_ulogic; -- max clk 100MHz
+              i_reset:          in      std_ulogic;
               -- inputs
-              i_addr:   in      unsigned(17 downto 0);
-              i_wdata:  in      std_ulogic_vector(15 downto 0);
-              i_rnw:    in      std_ulogic;
-              i_start:  in      std_ulogic;
+              i_addr:           in      unsigned(17 downto 0);
+              i_wdata:          in      std_ulogic_vector(15 downto 0);
+              i_rnw:            in      std_ulogic;
+              i_start:          in      std_ulogic;
               -- outputs
-              o_rdata:  out     std_ulogic_vector(15 downto 0);
+              o_rdata:          out     std_ulogic_vector(15 downto 0);
               -- status
-              o_busy:   out     std_ulogic;
+              o_busy:           out     std_ulogic;
+              o_rdata_valid:    out     std_ulogic;
               -- bus ports
-              io_data:  inout   std_ulogic_vector(15 downto 0);
-              o_addr:   out     std_ulogic_vector(17 downto 0);
-              o_nCE:    out     std_ulogic;
-              o_nOE:    out     std_ulogic;
-              o_nWE:    out     std_ulogic;
-              o_nLB:    out     std_ulogic;
-              o_nUB:    out     std_ulogic);
+              io_data:          inout   std_ulogic_vector(15 downto 0);
+              o_addr:           out     std_ulogic_vector(17 downto 0);
+              o_nCE:            out     std_ulogic;
+              o_nOE:            out     std_ulogic;
+              o_nWE:            out     std_ulogic;
+              o_nLB:            out     std_ulogic;
+              o_nUB:            out     std_ulogic);
     end component sram;
-
-    component delay is
-        generic (DELAY: natural;
-                 WIDTH: natural);
-        port (clk:      in  std_ulogic;
-              rst:      in  std_ulogic;
-              input:    in  std_ulogic_vector((WIDTH - 1) downto 0);
-              output:   out std_ulogic_vector((WIDTH - 1) downto 0));
-    end component delay;
 
     component transform is
         port (i_clk:                in  std_ulogic;
@@ -237,35 +227,23 @@ begin
     sram port map (i_clk        => clk100M,
                    i_reset      => reset,
                    -- inputs
-                   i_addr       => sram_address,
-                   i_wdata      => sram_wdata,
-                   i_rnw        => sram_rnw,
-                   i_start      => sram_start,
+                   i_addr           => sram_address,
+                   i_wdata          => sram_wdata,
+                   i_rnw            => sram_rnw,
+                   i_start          => sram_start,
                    -- outputs
-                   o_rdata      => sram_rdata,
+                   o_rdata          => sram_rdata,
                    -- status
-                   o_busy       => open,
+                   o_busy           => open,
+                   o_rdata_valid    => sram_rdata_valid,
                    -- bus ports
-                   io_data      => SRAM_DQ,
-                   o_addr       => SRAM_ADDR,
-                   o_nCE        => SRAM_CE_N,
-                   o_nOE        => SRAM_OE_N,
-                   o_nWE        => SRAM_WE_N,
-                   o_nLB        => SRAM_LB_N,
-                   o_nUB        => SRAM_UB_N);
-
-    -- We need to know when sram_rdata contains a valid
-    -- coordinate component that we want to transform.
-    -- This is the sram_rnw signal ANDed with the sram_start
-    -- signal. However our reads are delayed by 3 ticks
-    -- so we must delay this 3 ticks too
-    dly:    delay
-            generic map (DELAY => 3,
-                         WIDTH => 1)
-            port map (clk => clk100M,
-                      rst => reset,
-                      input(0) => sram_rnw and sram_start,
-                      output(0) => sram_rdata_valid);
+                   io_data          => SRAM_DQ,
+                   o_addr           => SRAM_ADDR,
+                   o_nCE            => SRAM_CE_N,
+                   o_nOE            => SRAM_OE_N,
+                   o_nWE            => SRAM_WE_N,
+                   o_nLB            => SRAM_LB_N,
+                   o_nUB            => SRAM_UB_N);
 
     -----------------------------------------------------------------
     -- Rotate the co-ordinates and obtain the pixel address

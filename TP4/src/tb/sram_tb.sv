@@ -9,6 +9,7 @@ module sram_tb;
     logic               rnw;
     logic               start;
     logic [15:0]        rdata;
+    logic               rdata_valid;
     logic               busy;
     wire logic [15:0]   bus_data;
     logic [17:0]        bus_addr;
@@ -20,7 +21,6 @@ module sram_tb;
 
     logic [15:0]        bus_data_w;
     logic [15:0]        bus_data_r;
-    logic               bus_data_wen;
 
     // --------------------------------------------------------------
     // Generate the clock
@@ -39,31 +39,32 @@ module sram_tb;
     // --------------------------------------------------------------
     // DUT
     // --------------------------------------------------------------
-    sram dut   (.i_clk       (clk),
-                .i_reset     (reset),
+    sram dut   (.i_clk          (clk),
+                .i_reset        (reset),
                 // input
-                .i_addr      (addr),
-                .i_wdata     (wdata),
-                .i_rnw       (rnw),
-                .i_start     (start),
+                .i_addr         (addr),
+                .i_wdata        (wdata),
+                .i_rnw          (rnw),
+                .i_start        (start),
                 // output
-                .o_rdata     (rdata),
+                .o_rdata        (rdata),
                 // status
-                .o_busy      (busy),
+                .o_busy         (busy),
+                .o_rdata_valid  (rdata_valid),
                 // bus ports
-                .io_data     (bus_data),
-                .o_addr      (bus_addr),
-                .o_nCE       (bus_nCE),
-                .o_nOE       (bus_nOE),
-                .o_nWE       (bus_nWE),
-                .o_nLB       (bus_nLB),
-                .o_nUB       (bus_nUB));
+                .io_data        (bus_data),
+                .o_addr         (bus_addr),
+                .o_nCE          (bus_nCE),
+                .o_nOE          (bus_nOE),
+                .o_nWE          (bus_nWE),
+                .o_nLB          (bus_nLB),
+                .o_nUB          (bus_nUB));
 
     // --------------------------------------------------------------
     // data bus
     // --------------------------------------------------------------
     assign bus_data_r = bus_data;
-    assign bus_data = bus_data_wen ? bus_data_w : 'z;
+    assign bus_data = !bus_nWE ? 'z : bus_data_w;
 
     // --------------------------------------------------------------
     // Test stimulus
@@ -74,63 +75,71 @@ module sram_tb;
         reset <= 1;
         start <= 0;
         addr <= 18'h0;
+        bus_data_w <= '0;
         rnw <= 1;
-        bus_data_wen <= 0;
-        #(CLOCK_PERIOD_NS*10);
+        repeat (5) @(posedge clk);
         reset <= 0;
-        #(CLOCK_PERIOD_NS*10);
 
-        bus_data_wen <= 1;
+        repeat (10) @(posedge clk);
+
         for (int b = 0; b < 16; b++) begin
             bus_data_w <= 16'b1 << b;
-            #CLOCK_PERIOD_NS;
+            @(posedge clk);
         end
-        bus_data_wen <= 0;
 
         // pulse start for one tick
+        @(posedge clk);
+        addr <= 18'hBEEF;
         start <= 1;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
+        addr <= 18'h0000;
         start <= 0;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
+        bus_data_w <= 16'hDEAD;
 
-        // pulse start for 5 ticks
+        // pulse start for 2 ticks
+        @(posedge clk);
+        addr <= 18'h1234;
         start <= 1;
-        #(CLOCK_PERIOD_NS * 5);
+        @(posedge clk);
+        addr <= 18'h5678;
+        @(posedge clk);
         start <= 0;
-        #CLOCK_PERIOD_NS;
 
         // do a write
+        @(posedge clk);
         wdata <= 16'h1234;
         rnw <= 0;
         start <= 1;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
         start <= 0;
-        #(CLOCK_PERIOD_NS*5);
+        repeat (5) @(posedge clk);
 
         // write 2 words in a row
+        @(posedge clk);
         addr <= 18'h1;
         wdata <= 16'hABCD;
         start <= 1;
-        #CLOCK_PERIOD_NS;
-        #CLOCK_PERIOD_NS;
+        repeat (2) @(posedge clk);
         addr <= 18'h2;
         wdata <= 16'h9876;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
         start <= 0;
-        #(CLOCK_PERIOD_NS*5);
+        repeat (5) @(posedge clk);
 
         // read 2 words then write a word
+        @(posedge clk);
         addr <= 18'h31234;
         rnw <= 1;
         start <= 1;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
         addr <= 18'h31235;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
         addr <= 18'h31236;
         rnw <= 0;
-        #CLOCK_PERIOD_NS;
+        @(posedge clk);
         start <= 0;
-        #(CLOCK_PERIOD_NS*10);
+        repeat (10) @(posedge clk);
 
         $stop;
     end
@@ -139,14 +148,12 @@ module sram_tb;
     // Asserts
     // --------------------------------------------------------------
     // check that CE, WE, OE are deasserted (1) while in reset
-    // and that the data bus is high impedance
     inRst:
     assert property
         (@(posedge clk)
         reset |-> (bus_nCE &&
                    bus_nOE &&
-                   bus_nWE &&
-                   bus_data === 'Z));
+                   bus_nWE));
 
     // check that if we are idle (not start and not busy)
     // then CE, WE, OE are deasserted (1)
@@ -158,23 +165,13 @@ module sram_tb;
                                bus_nOE &&
                                bus_nWE));
 
-    // check that if we are not busy and !bus_data_write_en,
-    // then bus_data is high impedance
-    idleBusData:
-    assert property
-        (@(posedge clk)
-        disable iff (reset)
-        (!bus_data_wen && !busy) |->
-        (bus_data === 'z));
-
-
     // chack that data put into the data bus comes out
     // of the rdata signal 2 ticks later
     rdData3Cycles:
     assert property
         (@(posedge clk)
         disable iff (reset)
-        ##2 // so we don't try to get values before time 0
+        ##3 // so we don't try to get values from when the syncroniser was in reset
         (rdata === $past(bus_data,2)));
 
     // check the address on the bus is the address in
@@ -202,8 +199,26 @@ module sram_tb;
                              !bus_nOE &&
                              bus_nWE &&
                              !bus_nLB &&
-                             !bus_nUB &&
-                             bus_data === 'Z)));
+                             !bus_nUB)));
+
+    // check that if the rdata_valid signal asserts
+    // start and rnw were both asserted 3 ticks before
+    readDataValid:
+    assert property
+        (@(posedge clk)
+        disable iff (reset)
+        rdata_valid |->
+            ($past(start, 4) &&
+             $past(rnw, 4)));
+
+    // check that if start and rnw are asserted
+    // then rdata_valid is asserted in 3 ticks
+    startAndRnwImpliesReadDataValid:
+    assert property
+        (@(posedge clk)
+        disable iff (reset)
+        (start && rnw) |->
+            ##4 rdata_valid);
 
     // check the writing works as desired
     startWrite:
@@ -215,7 +230,12 @@ module sram_tb;
          !bus_nUB && busy    && bus_data === wdata)
         ##1 // one tick later everything gets released
         (bus_nCE && bus_nOE && bus_nWE && bus_nLB &&
-         bus_nUB && !busy    && bus_data === 'Z));
+         bus_nUB && !busy));
 
+    // bus_data should never be a meta value
+    busDataValid:
+    assert property
+        (@(posedge clk)
+        (!$isunknown(bus_data)));
 
 endmodule

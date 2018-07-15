@@ -2,36 +2,49 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.all;
+
 library altera_mf;
 use altera_mf.all;
 
 -- writes take two cycles
--- read data appears after 3 ticks
+-- read data appears after 4 ticks
+--  1 to process the start request
 --  1 to get it from the SRAM
 --  2 in the syncronizer
 entity sram is
-    port (i_clk:    in      std_ulogic; -- max clk 100MHz
-          i_reset:  in      std_ulogic;
+    port (i_clk:            in      std_ulogic; -- max clk 100MHz
+          i_reset:          in      std_ulogic;
           -- inputs
-          i_addr:   in      unsigned(17 downto 0);
-          i_wdata:  in      std_ulogic_vector(15 downto 0);
-          i_rnw:    in      std_ulogic;
-          i_start:  in      std_ulogic;
+          i_addr:           in      unsigned(17 downto 0);
+          i_wdata:          in      std_ulogic_vector(15 downto 0);
+          i_rnw:            in      std_ulogic;
+          i_start:          in      std_ulogic;
           -- outputs
-          o_rdata:  out     std_ulogic_vector(15 downto 0);
+          o_rdata:          out     std_ulogic_vector(15 downto 0);
           -- status
-          o_busy:   out     std_ulogic;
+          o_busy:           out     std_ulogic;
+          o_rdata_valid:    out     std_ulogic;
           -- bus ports
-          io_data:  inout   std_ulogic_vector(15 downto 0);
-          o_addr:   out     std_ulogic_vector(17 downto 0);
-          o_nCE:    out     std_ulogic;
-          o_nOE:    out     std_ulogic;
-          o_nWE:    out     std_ulogic;
-          o_nLB:    out     std_ulogic;
-          o_nUB:    out     std_ulogic);
+          io_data:          inout   std_ulogic_vector(15 downto 0);
+          o_addr:           out     std_ulogic_vector(17 downto 0);
+          o_nCE:            out     std_ulogic;
+          o_nOE:            out     std_ulogic;
+          o_nWE:            out     std_ulogic;
+          o_nLB:            out     std_ulogic;
+          o_nUB:            out     std_ulogic);
 end entity sram;
 
 architecture synth of sram is
+    component delay is
+        generic (DELAY: natural;
+                 WIDTH: natural);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              input:    in  std_ulogic_vector((WIDTH - 1) downto 0);
+              output:   out std_ulogic_vector((WIDTH - 1) downto 0));
+    end component delay;
 
     component altera_std_synchronizer_bundle is
     generic (DEPTH : integer := 3;              -- must be >= 2
@@ -118,5 +131,16 @@ begin
     end process;
 
     o_busy <= busy;
+
+    -- when both i_start and i_rnw are asserted
+    -- then the read data becomes available 4 ticks later
+    dly:    delay
+            generic map (DELAY => 4,
+                         WIDTH => 1)
+            port map (clk => i_clk,
+                      rst => i_reset,
+                      input(0) => i_start and i_rnw,
+                      output(0) => o_rdata_valid);
+
 
 end architecture synth;
