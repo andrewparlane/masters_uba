@@ -117,6 +117,9 @@ uart_rx: all
 control: all
 	@$(call VSIM_CMD, control_tb)
 
+buttons: all
+	@$(call VSIM_CMD, buttons_tb)
+
 .PHONY: uart_rx control
 
 # delete the library and all compiled files

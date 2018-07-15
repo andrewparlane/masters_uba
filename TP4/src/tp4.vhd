@@ -4,7 +4,8 @@ use ieee.numeric_std.all;
 
 entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
-          KEY:          in      std_ulogic_vector(0 downto 0);
+          KEY:          in      std_ulogic_vector(3 downto 0);
+          SW:           in      std_ulogic_vector(0 downto 0);
           UART_RXD:     in      std_ulogic;
           LEDR:         out     std_ulogic_vector(2 downto 0);
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
@@ -108,6 +109,7 @@ architecture synth of tp4 is
               i_setPixelAddr:       in  unsigned(15 downto 0);
               i_setPixelBitMask:    in  unsigned(7 downto 0);
               i_setPixel:           in  std_ulogic;
+              o_endOfFrame:         out std_ulogic;
               o_requestNewData:     out std_ulogic;
               o_vgaClk:             out std_ulogic;
               o_rOut:               out std_ulogic_vector(9 downto 0);
@@ -147,6 +149,19 @@ architecture synth of tp4 is
               o_isBreak:        out std_ulogic);
     end component uart_rx;
 
+    component buttons is
+        port (i_clk:            in  std_ulogic;
+              i_reset:          in  std_ulogic;
+              i_buttonAlpha:    in  std_ulogic;
+              i_buttonBeta:     in  std_ulogic;
+              i_buttonGamma:    in  std_ulogic;
+              i_reverse:        in  std_ulogic;
+              i_update:         in  std_ulogic;
+              o_alpha:          out unsigned(31 downto 0);
+              o_beta:           out unsigned(31 downto 0);
+              o_gamma:          out unsigned(31 downto 0));
+    end component buttons;
+
     signal clk25M:          std_ulogic;
     signal clk100M:         std_ulogic;
     signal pll_locked:      std_ulogic;
@@ -161,14 +176,15 @@ architecture synth of tp4 is
     signal sram_wdata:          std_ulogic_vector(15 downto 0);
     signal sram_rdata_valid:    std_ulogic;
 
-    constant alpha:         unsigned(31 downto 0) := (others => '0');
-    constant beta:          unsigned(31 downto 0) := (others => '0');
-    constant gamma:         unsigned(31 downto 0) := (others => '0');
+    signal alpha:         unsigned(31 downto 0);
+    signal beta:          unsigned(31 downto 0);
+    signal gamma:         unsigned(31 downto 0);
 
     signal transformStart:  std_ulogic;
     signal setPixel:        std_ulogic;
     signal setPixelAddr:    unsigned(15 downto 0);
     signal setPixelBitMask: unsigned(7 downto 0);
+    signal endOfFrame:      std_ulogic;
     signal requestNewData:  std_ulogic;
 
     signal reset:           std_ulogic;
@@ -189,6 +205,28 @@ begin
     LEDR(2) <= led_transform;
 
     -----------------------------------------------------------------
+    -- Buttons
+    -----------------------------------------------------------------
+    -- The buttons and the switch are put through a syncronizer
+    -- to avoid metastability.
+    -- We update alpha, beta and gamma on the endOfFrame signal
+    -- which gives plenty of time before we actually need the
+    -- new angles
+    -----------------------------------------------------------------
+    buttonsInst: buttons
+        port map (i_clk             => clk100M,
+                  i_reset           => reset,
+                  i_buttonAlpha     => not KEY(1),
+                  i_buttonBeta      => not KEY(2),
+                  i_buttonGamma     => not KEY(3),
+                  i_reverse         => SW(0),
+                  i_update          => endOfFrame,
+                  o_alpha           => alpha,
+                  o_beta            => beta,
+                  o_gamma           => gamma);
+
+
+    ----------------------------------------------------------------
     -- PLLs
     -----------------------------------------------------------------
     pll_inst: pll port map (areset  => '0',
@@ -283,6 +321,7 @@ begin
                   i_setPixelAddr        => setPixelAddr,
                   i_setPixelBitMask     => setPixelBitMask,
                   i_setPixel            => setPixel,
+                  o_endOfFrame          => endOfFrame,
                   o_requestNewData      => requestNewData,
                   o_vgaClk              => VGA_CLK,
                   o_rOut                => VGA_R,

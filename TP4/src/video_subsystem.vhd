@@ -13,6 +13,7 @@ entity video_subsystem is
           i_setPixelAddr:       in  unsigned(15 downto 0);
           i_setPixelBitMask:    in  unsigned(7 downto 0);
           i_setPixel:           in  std_ulogic;
+          o_endOfFrame:         out std_ulogic;
           o_requestNewData:     out std_ulogic;
           o_vgaClk:             out std_ulogic;
           o_rOut:               out std_ulogic_vector(9 downto 0);
@@ -231,6 +232,7 @@ begin
                  nVSync => o_nVSync);
 
     sramAddrPortA25MHz <= to_unsigned((to_integer(pixelY) * H_ACTIVE) + to_integer(pixelX), 19);
+    o_endOfFrame <= endOfFrame;
 
     -----------------------------------------------------------------
     -- Zeroing
