@@ -6,6 +6,7 @@ entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
           KEY:          in      std_ulogic_vector(0 downto 0);
           UART_RXD:     in      std_ulogic;
+          LEDR:         out     std_ulogic_vector(2 downto 0);
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
           SRAM_DQ:      inout   std_ulogic_vector(15 downto 0);
           SRAM_WE_N:    out     std_ulogic;
@@ -172,9 +173,20 @@ architecture synth of tp4 is
 
     signal reset:           std_ulogic;
 
+    signal led_in_rx_mode:  std_ulogic;
+    signal led_rx:          std_ulogic;
+    signal led_transform:   std_ulogic;
+
 begin
 
     reset <= not (KEY(0) or pll_locked);
+
+    -----------------------------------------------------------------
+    -- LEDs
+    -----------------------------------------------------------------
+    LEDR(0) <= led_in_rx_mode;
+    LEDR(1) <= led_rx;
+    LEDR(2) <= led_transform;
 
     -----------------------------------------------------------------
     -- PLLs
@@ -199,8 +211,8 @@ begin
                   o_sramRnW         => sram_rnw,
                   o_sramAddr        => sram_address,
                   o_sramWdata       => sram_wdata,
-                  o_waitingForData  => open,
-                  o_transforming    => open);
+                  o_waitingForData  => led_in_rx_mode,
+                  o_transforming    => led_transform);
 
     -----------------------------------------------------------------
     -- UART Rx
@@ -217,7 +229,7 @@ begin
                   o_readData        => uart_rdata,
                   o_readDataValid   => uart_rdata_valid,
                   o_readDataError   => open,
-                  o_receiving       => open,
+                  o_receiving       => led_rx,
                   o_isBreak         => open);
 
     -----------------------------------------------------------------
