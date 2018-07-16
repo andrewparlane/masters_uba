@@ -219,7 +219,7 @@ begin
 
     -- in reset if either the reset button is pressed
     -- or the PLL is not locked
-    reset <= not (key_0_sync and pll_locked);
+    reset <= not (KEY(0) and pll_locked);
     led_reset <= reset;
 
     -----------------------------------------------------------------
