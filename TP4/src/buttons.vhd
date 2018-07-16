@@ -15,7 +15,10 @@ entity buttons is
           i_update:         in  std_ulogic;
           o_alpha:          out unsigned(31 downto 0);
           o_beta:           out unsigned(31 downto 0);
-          o_gamma:          out unsigned(31 downto 0));
+          o_gamma:          out unsigned(31 downto 0);
+          o_alphaPressed:   out std_ulogic;
+          o_betaPressed:    out std_ulogic;
+          o_gammaPressed:   out std_ulogic);
 end entity buttons;
 
 architecture synth of buttons is
@@ -148,5 +151,9 @@ begin
     o_alpha <= unsigned(alpha(30 downto 0) & '0');
     o_beta  <= unsigned(beta(30 downto 0) & '0');
     o_gamma <= unsigned(gamma(30 downto 0) & '0');
+
+    o_alphaPressed <= buttonAlpha;
+    o_BetaPressed  <= buttonBeta;
+    o_gammaPressed <= buttonGamma;
 
 end architecture synth;

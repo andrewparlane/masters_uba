@@ -8,6 +8,7 @@ entity tp4 is
           SW:           in      std_ulogic_vector(0 downto 0);
           UART_RXD:     in      std_ulogic;
           LEDR:         out     std_ulogic_vector(2 downto 0);
+          LEDG:         out     std_ulogic_vector(7 downto 0);
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
           SRAM_DQ:      inout   std_ulogic_vector(15 downto 0);
           SRAM_WE_N:    out     std_ulogic;
@@ -159,7 +160,10 @@ architecture synth of tp4 is
               i_update:         in  std_ulogic;
               o_alpha:          out unsigned(31 downto 0);
               o_beta:           out unsigned(31 downto 0);
-              o_gamma:          out unsigned(31 downto 0));
+              o_gamma:          out unsigned(31 downto 0);
+              o_alphaPressed:   out std_ulogic;
+              o_betaPressed:    out std_ulogic;
+              o_gammaPressed:   out std_ulogic);
     end component buttons;
 
     signal clk25M:          std_ulogic;
@@ -192,12 +196,17 @@ architecture synth of tp4 is
     signal led_in_rx_mode:  std_ulogic;
     signal led_rx:          std_ulogic;
     signal led_transform:   std_ulogic;
+    signal led_reset:       std_ulogic;
+    signal led_alpha:       std_ulogic;
+    signal led_beta:        std_ulogic;
+    signal led_gamma:       std_ulogic;
 
 begin
 
     -- in reset if either the reset button is pressed
     -- or the PLL is not locked
     reset <= not (key_0_sync and pll_locked);
+    led_reset <= reset;
 
     -----------------------------------------------------------------
     -- LEDs
@@ -205,6 +214,11 @@ begin
     LEDR(0) <= led_in_rx_mode;
     LEDR(1) <= led_rx;
     LEDR(2) <= led_transform;
+
+    LEDG(1 downto 0) <= (others => led_reset);
+    LEDG(3 downto 2) <= (others => led_alpha);
+    LEDG(5 downto 4) <= (others => led_beta);
+    LEDG(7 downto 6) <= (others => led_gamma);
 
     -----------------------------------------------------------------
     -- Buttons
@@ -225,8 +239,10 @@ begin
                   i_update          => endOfFrame,
                   o_alpha           => alpha,
                   o_beta            => beta,
-                  o_gamma           => gamma);
-
+                  o_gamma           => gamma,
+                  o_alphaPressed    => led_alpha,
+                  o_BetaPressed     => led_beta,
+                  o_gammaPressed    => led_gamma);
 
     ----------------------------------------------------------------
     -- PLLs
