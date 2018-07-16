@@ -48,9 +48,13 @@ architecture synth of buttons is
                 := to_signed(360, 10) &
                    (21 downto 0 => '0');
 
-    signal alpha:   signed(31 downto 0);
-    signal beta:    signed(31 downto 0);
-    signal gamma:   signed(31 downto 0);
+    signal newAlpha:    signed(31 downto 0);
+    signal newBeta:     signed(31 downto 0);
+    signal newGamma:    signed(31 downto 0);
+
+    signal alpha:       signed(31 downto 0);
+    signal beta:        signed(31 downto 0);
+    signal gamma:       signed(31 downto 0);
 
     signal buttonAlpha:     std_ulogic;
     signal buttonBeta:      std_ulogic;
@@ -77,10 +81,48 @@ begin
                      dout(2)    => buttonGamma,
                      dout(3)    => reverse);
 
-    process (i_clk, i_reset)
+
+    process (all)
         variable alphaTmp:  signed(31 downto 0);
         variable betaTmp:   signed(31 downto 0);
         variable gammaTmp:  signed(31 downto 0);
+    begin
+        if (reverse = '1') then
+            alphaTmp := alpha - DELTA;
+            betaTmp  :=  beta - DELTA;
+            gammaTmp := gamma - DELTA;
+
+            if (alphaTmp < 0) then
+                alphaTmp := alphaTmp + FIXED_360;
+            end if;
+            if (betaTmp < 0) then
+                betaTmp := betaTmp + FIXED_360;
+            end if;
+            if (gammaTmp < 0) then
+                gammaTmp := gammaTmp + FIXED_360;
+            end if;
+        else
+            alphaTmp := alpha + DELTA;
+            betaTmp  :=  beta + DELTA;
+            gammaTmp := gamma + DELTA;
+
+            if (alphaTmp >= FIXED_360) then
+                alphaTmp := alphaTmp - FIXED_360;
+            end if;
+            if (betaTmp >= FIXED_360) then
+                betaTmp := betaTmp - FIXED_360;
+            end if;
+            if (gammaTmp >= FIXED_360) then
+                gammaTmp := gammaTmp - FIXED_360;
+            end if;
+        end if;
+
+        newAlpha <= alphaTmp;
+        newBeta  <= betaTmp;
+        newGamma <= gammaTmp;
+    end process;
+
+    process (i_clk, i_reset)
     begin
         if (i_reset = '1') then
             alpha <= (others => '0');
@@ -88,45 +130,15 @@ begin
             gamma <= (others => '0');
         elsif (rising_edge(i_clk)) then
             if (i_update = '1') then
-                if (reverse = '1') then
-                    alphaTmp := alpha - DELTA;
-                    betaTmp  :=  beta - DELTA;
-                    gammaTmp := gamma - DELTA;
-
-                    if (alphaTmp < 0) then
-                        alphaTmp := alphaTmp + FIXED_360;
-                    end if;
-                    if (betaTmp < 0) then
-                        betaTmp := betaTmp + FIXED_360;
-                    end if;
-                    if (gammaTmp < 0) then
-                        gammaTmp := gammaTmp + FIXED_360;
-                    end if;
-                else
-                    alphaTmp := alpha + DELTA;
-                    betaTmp  :=  beta + DELTA;
-                    gammaTmp := gamma + DELTA;
-
-                    if (alphaTmp >= FIXED_360) then
-                        alphaTmp := alphaTmp - FIXED_360;
-                    end if;
-                    if (betaTmp >= FIXED_360) then
-                        betaTmp := betaTmp - FIXED_360;
-                    end if;
-                    if (gammaTmp >= FIXED_360) then
-                        gammaTmp := gammaTmp - FIXED_360;
-                    end if;
-                end if;
-
                 -- only update them if the button is pressed
                 if (buttonAlpha = '1') then
-                    alpha <= alphaTmp;
+                    alpha <= newAlpha;
                 end if;
                 if (buttonBeta = '1') then
-                    beta <= betaTmp;
+                    beta <= newBeta;
                 end if;
                 if (buttonGamma = '1') then
-                    gamma <= gammaTmp;
+                    gamma <= newGamma;
                 end if;
             end if;
         end if;
