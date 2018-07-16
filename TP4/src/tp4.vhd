@@ -9,7 +9,7 @@ entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
           KEY:          in      std_ulogic_vector(3 downto 0);
           SW:           in      std_ulogic_vector(0 downto 0);
-          UART_RXD:     in      std_ulogic;
+          GPIO_UART_RX: in      std_ulogic;
           LEDR:         out     std_ulogic_vector(2 downto 0);
           LEDG:         out     std_ulogic_vector(7 downto 0);
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
@@ -301,7 +301,7 @@ begin
                      BIT_TIME_NS => 8680)   -- Baud rate 115200
         port map (i_clk             => clk100M,
                   i_reset           => reset,
-                  i_rx              => UART_RXD,
+                  i_rx              => GPIO_UART_RX,
                   o_readData        => uart_rdata,
                   o_readDataValid   => uart_rdata_valid,
                   o_readDataError   => open,

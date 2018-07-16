@@ -401,7 +401,7 @@ set_location_assignment PIN_AD24 -to SD_DAT
 set_location_assignment PIN_AC23 -to SD_DAT3
 set_location_assignment PIN_Y21 -to SD_CMD
 set_location_assignment PIN_AD25 -to SD_CLK
-set_location_assignment PIN_D25 -to GPIO_0[0]
+set_location_assignment PIN_D25 -to GPIO_UART_RX
 set_location_assignment PIN_J22 -to GPIO_0[1]
 set_location_assignment PIN_E26 -to GPIO_0[2]
 set_location_assignment PIN_E25 -to GPIO_0[3]
