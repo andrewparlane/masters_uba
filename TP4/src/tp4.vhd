@@ -195,7 +195,9 @@ architecture synth of tp4 is
 
 begin
 
-    reset <= not (KEY(0) or pll_locked);
+    -- in reset if either the reset button is pressed
+    -- or the PLL is not locked
+    reset <= not (key_0_sync and pll_locked);
 
     -----------------------------------------------------------------
     -- LEDs
