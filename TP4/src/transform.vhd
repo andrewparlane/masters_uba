@@ -67,7 +67,6 @@ architecture synth of transform is
     signal gamma:           unsigned(31 downto 0);
     signal rotated_x:       signed(31 downto 0);
     signal rotated_y:       signed(31 downto 0);
-    signal rotated_z:       signed(31 downto 0);
     signal cordic_valid:    std_ulogic;
 
     signal cordic_valid_delayed:    std_ulogic;
@@ -152,7 +151,7 @@ begin
                       i_gamma => gamma,
                       o_x => rotated_x,
                       o_y => rotated_y,
-                      o_z => rotated_z,
+                      o_z => open,
                       o_valid => cordic_valid);
 
     -----------------------------------------------------------------
