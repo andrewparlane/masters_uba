@@ -14,6 +14,7 @@ entity video_subsystem is
           i_setPixelBitMask:    in  unsigned(7 downto 0);
           i_setPixel:           in  std_ulogic;
           o_endOfFrame:         out std_ulogic;
+          o_dataDuringActive:   out std_ulogic;
           o_requestNewData:     out std_ulogic;
           o_vgaClk:             out std_ulogic;
           o_rOut:               out std_ulogic_vector(9 downto 0);
@@ -84,6 +85,7 @@ architecture synth of video_subsystem is
 
     constant LAST_VIDEO_RAM_ADDR:   natural := ((H_ACTIVE * V_ACTIVE) / 8) - 1;
 
+    signal nBlank:          std_ulogic;
     signal endOfFrame:      std_ulogic;
     signal pixelX:          unsigned((PIXEL_X_WIDTH - 1) downto 0);
     signal pixelY:          unsigned((PIXEL_Y_WIDTH - 1) downto 0);
@@ -226,13 +228,14 @@ begin
                  rOut   => o_rOut,
                  gOut   => o_gOut,
                  bOut   => o_bOut,
-                 nBlank => o_nBlank,
+                 nBlank => nBlank,
                  nSync  => o_nSync,
                  nHSync => o_nHSync,
                  nVSync => o_nVSync);
 
     sramAddrPortA25MHz <= to_unsigned((to_integer(pixelY) * H_ACTIVE) + to_integer(pixelX), 19);
     o_endOfFrame <= endOfFrame;
+    o_nBlank <= nBlank;
 
     -----------------------------------------------------------------
     -- Zeroing
@@ -266,6 +269,23 @@ begin
                 -- start by zeroing the data
                 zeroing <= '1';
                 zeroingAddr <= (others => '0');
+            end if;
+        end if;
+    end process;
+
+   -----------------------------------------------------------------
+    -- Report an error if we ever write to SRAM during
+    -- the active region
+    -----------------------------------------------------------------
+
+    process (i_clk100M, i_reset)
+    begin
+        if (i_reset = '1') then
+            o_dataDuringActive <= '0';
+        elsif (rising_edge(i_clk100M)) then
+            if ((wenPortB100MHz = '1') and
+                (nBlank = '1')) then
+                o_dataDuringActive <= '1';
             end if;
         end if;
     end process;

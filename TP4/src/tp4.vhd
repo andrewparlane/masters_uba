@@ -10,7 +10,7 @@ entity tp4 is
           KEY:          in      std_ulogic_vector(3 downto 0);
           SW:           in      std_ulogic_vector(0 downto 0);
           GPIO_UART_RX: in      std_ulogic;
-          LEDR:         out     std_ulogic_vector(2 downto 0);
+          LEDR:         out     std_ulogic_vector(3 downto 0);
           LEDG:         out     std_ulogic_vector(7 downto 0);
           SRAM_ADDR:    out     std_ulogic_vector(17 downto 0);
           SRAM_DQ:      inout   std_ulogic_vector(15 downto 0);
@@ -123,6 +123,7 @@ architecture synth of tp4 is
               i_setPixelBitMask:    in  unsigned(7 downto 0);
               i_setPixel:           in  std_ulogic;
               o_endOfFrame:         out std_ulogic;
+              o_dataDuringActive:   out std_ulogic;
               o_requestNewData:     out std_ulogic;
               o_vgaClk:             out std_ulogic;
               o_rOut:               out std_ulogic_vector(9 downto 0);
@@ -208,6 +209,7 @@ architecture synth of tp4 is
     signal led_in_rx_mode:  std_ulogic;
     signal led_rx:          std_ulogic;
     signal led_transform:   std_ulogic;
+    signal led_error:       std_ulogic;
     signal led_reset:       std_ulogic;
     signal led_alpha:       std_ulogic;
     signal led_beta:        std_ulogic;
@@ -226,6 +228,7 @@ begin
     LEDR(0) <= led_in_rx_mode;
     LEDR(1) <= led_rx;
     LEDR(2) <= led_transform;
+    LEDR(3) <= led_error;
 
     LEDG(1 downto 0) <= (others => led_reset);
     LEDG(3 downto 2) <= (others => led_alpha);
@@ -360,6 +363,7 @@ begin
                   i_setPixelBitMask     => setPixelBitMask,
                   i_setPixel            => setPixel,
                   o_endOfFrame          => endOfFrame,
+                  o_dataDuringActive    => led_error,
                   o_requestNewData      => requestNewData,
                   o_vgaClk              => VGA_CLK,
                   o_rOut                => VGA_R,
