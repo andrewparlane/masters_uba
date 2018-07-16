@@ -485,6 +485,10 @@ set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_parameter -name CYCLONEII_SAFE_WRITE NO_CHANGE
+set_global_assignment -name VHDL_FILE ../../src/buttons.vhd
+set_global_assignment -name VHDL_FILE ../../src/uart_rx.vhd
+set_global_assignment -name VHDL_FILE ../../src/transform.vhd
+set_global_assignment -name VHDL_FILE ../../src/control.vhd
 set_global_assignment -name VHDL_FILE ../../../common/src/counter.vhd
 set_global_assignment -name VHDL_FILE ../../../common/src/vga/vga.vhd -library common
 set_global_assignment -name VHDL_FILE ../../../common/src/vga/adv7123.vhd -library common
