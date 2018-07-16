@@ -51,7 +51,7 @@ include ../herramientas/helper.mk
 
 common:
 	@# Build all the sources, but not the testbenches
-	@make -C $(COMMON_DIR) srcs
+	@make -C $(COMMON_DIR) all
 	@# Add the common lib to our modelsim.ini
 	@$(call MAP_VLIB_CMD, $(COMMON_DIR), $(COMMON_LIB))
 
