@@ -59,16 +59,32 @@ void main(void)
         return;
     }
 
-    uint32_t lines;
+    uint16_t lines;
     while (1)
     {
         double x,y,z;
         if (fscanf(coordFile, "%lf\t%lf\t%lf", &x, &y, &z) != 3)
         {
-            printf("done with %u entries\n", lines);
+            printf("Found %u lines (coordinates)\n", lines);
             break;
         }
         lines++;
+    }
+
+    // go back to the beginning of the input file
+    fseek(coordFile, 0, SEEK_SET);
+    // Write the number of lines to the output file
+    // as 16 bits little endien
+    fwrite(&lines, 2, 1, outFile);
+
+    while (1)
+    {
+        double x,y,z;
+        if (fscanf(coordFile, "%lf\t%lf\t%lf", &x, &y, &z) != 3)
+        {
+            printf("done\n");
+            break;
+        }
 
         uint16_t xfix = getFixed(x);
         uint16_t yfix = getFixed(y);
