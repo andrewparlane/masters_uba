@@ -120,7 +120,7 @@ control: all
 buttons: all
 	@$(call VSIM_CMD, buttons_tb)
 
-.PHONY: uart_rx control
+.PHONY: uart_rx control buttons
 
 # delete the library and all compiled files
 clean: helper_clean
