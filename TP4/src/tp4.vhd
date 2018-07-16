@@ -355,7 +355,7 @@ begin
     -----------------------------------------------------------------
     -- Video subsystem
     -----------------------------------------------------------------
-    dut: video_subsystem
+    videoSubystem: video_subsystem
         port map (i_clk100M             => clk100M,
                   i_clk25M              => clk25M,
                   i_reset               => reset,
