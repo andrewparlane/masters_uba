@@ -88,8 +88,9 @@ architecture synth of vga is
     signal x: unsigned((COUNTER_X_WIDTH - 1) downto 0);
     signal y: unsigned((COUNTER_Y_WIDTH - 1) downto 0);
 
-    signal xAtMax: std_ulogic;
-    signal yAtMax: std_ulogic;
+    signal xAtMax:  std_ulogic;
+    signal xAtZero: std_ulogic;
+    signal yAtZero: std_ulogic;
 begin
 
     -------------------------------------------------------------------------------------
@@ -103,7 +104,7 @@ begin
                                   load => '0',
                                   loadData => to_unsigned(0, x'length),
                                   count => x,
-                                  atZero => open,
+                                  atZero => xAtZero,
                                   atMax => xAtMax);
 
     yCont:  counter     generic map (WIDTH => COUNTER_Y_WIDTH,
@@ -114,8 +115,8 @@ begin
                                   load => '0',
                                   loadData => to_unsigned(0, y'length),
                                   count => y,
-                                  atZero => open,
-                                  atMax => yAtMax);
+                                  atZero => yAtZero,
+                                  atMax => open);
 
     -------------------------------------------------------------------------------------
     -- Salidas
@@ -163,9 +164,9 @@ begin
             end if;
 
             -- We're at the end of the frame
-            -- when both pixelX and pixelY are at their max
-            -- values. Which happens when y and x are at max.
-            endOfFrame <= yAtMax and xAtMax;
+            -- when we start the vertical blanking region
+            -- which happens when both x and y are zero
+            endOfFrame <= yAtZero and xAtZero;
 
             -- estamos en la región activo?
             if ((x < H_ACTIVE_START) or

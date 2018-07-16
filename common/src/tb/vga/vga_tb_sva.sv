@@ -66,12 +66,12 @@ program vga_props #(parameter H_ACTIVE,
         ($rose(endOfFrame) |=>
             $fell(endOfFrame)));
 
-    // Check that nHSync falls FP pixel
+    // Check that nHSync falls FP - 1 pixel
     // after endOfFrame
     endOfFrameToHSync: assert property
         (@(posedge clk)
         ($rose(endOfFrame) |=>
-            ##(H_FRONT_PORCH) $fell(nHSync)));
+            ##(H_FRONT_PORCH-1) $fell(nHSync)));
 
     // check that once nHSync asserts (active low) then it should
     // stay low for H_SYNC ticks and then rise again
