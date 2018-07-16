@@ -2,6 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.all;
+use common.type_pkg.all;
+
 entity control is
     port (i_clk:            in  std_ulogic;
           i_reset:          in  std_ulogic;
@@ -14,10 +18,20 @@ entity control is
           o_sramAddr:       out unsigned(17 downto 0);
           o_sramWdata:      out std_ulogic_vector(15 downto 0);
           o_waitingForData: out std_ulogic;
-          o_transforming:   out std_ulogic);
+          o_transforming:   out std_ulogic;
+          o_hexDisplays:    out slvArray(7 downto 0)(6 downto 0));
 end entity control;
 
 architecture synth of control is
+    component multi_seven_seg_hex is
+        generic (CIFRAS: natural);
+        port (clk:      in  std_ulogic;
+              rst:      in  std_ulogic;
+              en:       in  std_ulogic_vector((CIFRAS - 1) downto 0);
+              hex:      in  unsignedArray((CIFRAS - 1) downto 0)(3 downto 0);
+              display:  out slvArray((CIFRAS - 1) downto 0)(6 downto 0));
+    end component multi_seven_seg_hex;
+
     type State is
     (
         State_WAITING_FOR_NUM_COORDS,
@@ -37,6 +51,29 @@ architecture synth of control is
     signal nextSramAddr:        unsigned(17 downto 0);
 
 begin
+
+    -- Display the expected number of words on the left hand
+    -- block of 4 HEX displays.
+    -- and the amount actually received on the right hand
+    -- block of 4 HEX displays.
+    -- Actually wordsReceived and numCoordinateWords are 18
+    -- bits, and we have to ignore the upper two bits of ecah
+    -- here, because we only have the 8 HEX outputs
+    multi7SegInst:
+    multi_seven_seg_hex
+        generic map (CIFRAS => 8)
+        port map (clk => i_clk,
+                  rst => i_reset,
+                  en => "11111111",
+                  hex(7) => numCoordinateWords(15 downto 12),
+                  hex(6) => numCoordinateWords(11 downto 8),
+                  hex(5) => numCoordinateWords(7 downto 4),
+                  hex(4) => numCoordinateWords(3 downto 0),
+                  hex(3) => wordsReceived(15 downto 12),
+                  hex(2) => wordsReceived(11 downto 8),
+                  hex(1) => wordsReceived(7 downto 4),
+                  hex(0) => wordsReceived(3 downto 0),
+                  display => o_hexDisplays);
 
     -- we expect that amount of coordinates
     -- each of which has three components

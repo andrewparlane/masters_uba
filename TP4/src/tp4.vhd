@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library common;
+use common.type_pkg.all;
+
 entity tp4 is
     port (CLOCK_50:     in      std_ulogic;
           KEY:          in      std_ulogic_vector(3 downto 0);
@@ -23,7 +26,15 @@ entity tp4 is
           VGA_BLANK:    out     std_ulogic;
           VGA_HS:       out     std_ulogic;
           VGA_VS:       out     std_ulogic;
-          VGA_SYNC:     out     std_ulogic);
+          VGA_SYNC:     out     std_ulogic;
+          HEX0:         out     std_ulogic_vector(6 downto 0);
+          HEX1:         out     std_ulogic_vector(6 downto 0);
+          HEX2:         out     std_ulogic_vector(6 downto 0);
+          HEX3:         out     std_ulogic_vector(6 downto 0);
+          HEX4:         out     std_ulogic_vector(6 downto 0);
+          HEX5:         out     std_ulogic_vector(6 downto 0);
+          HEX6:         out     std_ulogic_vector(6 downto 0);
+          HEX7:         out     std_ulogic_vector(6 downto 0));
 end entity tp4;
 
 architecture synth of tp4 is
@@ -39,7 +50,8 @@ architecture synth of tp4 is
               o_sramAddr:       out unsigned(17 downto 0);
               o_sramWdata:      out std_ulogic_vector(15 downto 0);
               o_waitingForData: out std_ulogic;
-              o_transforming:   out std_ulogic);
+              o_transforming:   out std_ulogic;
+              o_hexDisplays:    out slvArray(7 downto 0)(6 downto 0));
     end component control;
 
     component cordic_rotation_3d is
@@ -268,7 +280,15 @@ begin
                   o_sramAddr        => sram_address,
                   o_sramWdata       => sram_wdata,
                   o_waitingForData  => led_in_rx_mode,
-                  o_transforming    => led_transform);
+                  o_transforming    => led_transform,
+                  o_hexDisplays(0)  => HEX0,
+                  o_hexDisplays(1)  => HEX1,
+                  o_hexDisplays(2)  => HEX2,
+                  o_hexDisplays(3)  => HEX3,
+                  o_hexDisplays(4)  => HEX4,
+                  o_hexDisplays(5)  => HEX5,
+                  o_hexDisplays(6)  => HEX6,
+                  o_hexDisplays(7)  => HEX7);
 
     -----------------------------------------------------------------
     -- UART Rx
