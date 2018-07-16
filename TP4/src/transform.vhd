@@ -70,6 +70,10 @@ architecture synth of transform is
     signal rotated_z:       signed(31 downto 0);
     signal cordic_valid:    std_ulogic;
 
+    signal cordic_valid_delayed:    std_ulogic;
+    signal intX:                    unsigned(9 downto 0);
+    signal intY:                    unsigned(8 downto 0);
+
 begin
 
     -----------------------------------------------------------------
@@ -151,34 +155,66 @@ begin
                       o_z => rotated_z,
                       o_valid => cordic_valid);
 
-    o_setPixel <= cordic_valid;
-
     -----------------------------------------------------------------
     -- Get pixel address and bit
     -----------------------------------------------------------------
+    -- I've pipelined this because I was failing timing
+    -- when trying to do it all as combinatory logic.
+    -- First we get the integer part of the pixel co-ordinate
+    -- and add an offset to it. This brings it into the domain
+    -- of screen co-ordinates 0 - 639, 0 - 478.
+    -- Then in the next tick, we do (y*WIDTH) + x, to get the
+    -- pixel number, and split that into the bit to set and the
+    -- byte to address.
+    -----------------------------------------------------------------
+
+    -- Get the pixel coordinate
+    process (i_clk, i_reset)
+        variable intXTmp:   signed(10 downto 0);
+        variable intYTmp:   signed(9 downto 0);
+    begin
+        if (i_reset = '1') then
+            intX <= (others => '0');
+            intY <= (others => '0');
+            cordic_valid_delayed <= '0';
+        elsif (rising_edge(i_clk)) then
+            if (cordic_valid) then
+                -- rotated_x and rotated_y are between (approx)
+                -- -225.0 and 225.0, so we first convert to be between
+                -- (for x) 95 and 545
+                -- (for y) 15 and 465
+
+                -- sign extend the integer part of rotated_x
+                -- by two bits then add 320
+                intXTmp := (rotated_x(31) &
+                            rotated_x(31) &
+                            rotated_x(31 downto 23)) +
+                           to_signed(320, 11);
+                -- then cast it back to a 10 bit unsigned
+                intX <= unsigned(intXTmp(9 downto 0));
+
+                -- sign extend the integer part of rotated_y
+                -- by one bit, then add 240
+                intYTmp := (rotated_y(31) &
+                            rotated_y(31 downto 23)) +
+                           to_signed(240, 10);
+                -- then cast it back to a 9 bit unsigned
+                intY <= unsigned(intYTmp(8 downto 0));
+
+            else
+                intX <= (others => '0');
+                intY <= (others => '0');
+            end if;
+            cordic_valid_delayed <= cordic_valid;
+        end if;
+    end process;
+
+    -- get the byte and bit mask
     process (all)
-        variable intX:      integer;
-        variable intY:      integer;
         variable pixelIdx:  unsigned(18 downto 0);
     begin
-        if (cordic_valid) then
-            -- rotated_x and rotated_y are between (approx)
-            -- -225.0 and 225.0, so we first convert to be between
-            -- (for x) 95 and 545
-            -- (for y) 15 and 465
-            intX := to_integer((rotated_x(31) & rotated_x(31) &
-                                rotated_x(31 downto 23)) + -- sign extend the integer part
-                               to_signed(320, 11));
-            intY := to_integer((rotated_y(31) &
-                                rotated_y(31 downto 23)) + -- sign extend the integer part
-                               to_signed(240, 10));
-        else
-            intX := 0;
-            intY := 0;
-        end if;
-
-        -- next we need to work out the index of the pixel
-        pixelIdx := to_unsigned((intY * 640) + intX, 19);
+        pixelIdx := intY * to_unsigned(640, 10);
+        pixelIdx := pixelIdx + intX;
 
         -- the pixel address is the top 16 bits of that
         o_setPixelAddr <= pixelIdx(18 downto 3);
@@ -186,6 +222,7 @@ begin
         -- then the bit mask is the decoded lower 3 bits
         o_setPixelBitMask <= (others => '0');
         o_setPixelBitMask(to_integer(pixelIdx(2 downto 0))) <= '1';
+        o_setPixel <= cordic_valid_delayed;
     end process;
 
 end architecture synth;
