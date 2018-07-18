@@ -38,7 +38,7 @@ architecture sim of transform_tb is
     -- 3 ticks to get all three inputs to the cordic
     -- then 30 ticks for the cordic
     -- then 1 tick for the pixel address calculation
-    constant DELAY_TICKS:       natural := 34;
+    constant DELAY_TICKS:       natural := 35;
 
     signal v:                   signed(15 downto 0);
     signal alpha:               unsigned(31 downto 0);

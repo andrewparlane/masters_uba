@@ -39,15 +39,6 @@ architecture synth of transform is
               o_valid:  out std_ulogic);
     end component cordic_rotation_3d;
 
-    component delay is
-        generic (DELAY: natural;
-                 WIDTH: natural);
-        port (clk:      in  std_ulogic;
-              rst:      in  std_ulogic;
-              input:    in  std_ulogic_vector((WIDTH - 1) downto 0);
-              output:   out std_ulogic_vector((WIDTH - 1) downto 0));
-    end component delay;
-
     type coordinateComponent is
     (
         CoordinateComponent_X,
@@ -208,20 +199,25 @@ begin
         end if;
     end process;
 
-    -- get the byte and bit mask
-    process (all)
+    process (i_clk, i_reset)
         variable pixelIdx:  unsigned(18 downto 0);
     begin
-        pixelIdx := intY * to_unsigned(640, 10);
-        pixelIdx := pixelIdx + intX;
+        if (i_reset = '1') then
+            o_setPixelAddr <= (others => '0');
+            o_setPixelBitMask <= (others => '0');
+            o_setPixel <= '0';
+        elsif (rising_edge(i_clk)) then
+            pixelIdx := intY * to_unsigned(640, 10);
+            pixelIdx := pixelIdx + intX;
 
-        -- the pixel address is the top 16 bits of that
-        o_setPixelAddr <= pixelIdx(18 downto 3);
+            -- the pixel address is the top 16 bits of that
+            o_setPixelAddr <= pixelIdx(18 downto 3);
 
-        -- then the bit mask is the decoded lower 3 bits
-        o_setPixelBitMask <= (others => '0');
-        o_setPixelBitMask(to_integer(pixelIdx(2 downto 0))) <= '1';
-        o_setPixel <= cordic_valid_delayed;
+            -- then the bit mask is the decoded lower 3 bits
+            o_setPixelBitMask <= (others => '0');
+            o_setPixelBitMask(to_integer(pixelIdx(2 downto 0))) <= '1';
+            o_setPixel <= cordic_valid_delayed;
+        end if;
     end process;
 
 end architecture synth;
