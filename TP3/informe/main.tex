@@ -1,0 +1,323 @@
+\documentclass[a4paper]{article}
+
+\usepackage[toc,page]{appendix}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{amsmath}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{xcolor}
+\usepackage{minted}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{enumitem}
+
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks,
+    citecolor=blue,
+    filecolor=blue,
+    linkcolor=blue,
+    urlcolor=blue
+}
+
+\newcommand*{\tabulardef}[3]{
+  \begin{tabular}[t]{@{}lp{\dimexpr\linewidth-#1}@{}}
+    #2&#3
+\end{tabular}}
+
+\usepackage{geometry}
+\geometry{a4paper}
+
+\begin{document}
+\begin{figure}
+\centering
+\includegraphics[scale=1]{./img/logo-facu}
+\end{figure}
+
+\title{\large\textsc{66.17 - Sistemas Digitales}\\
+\large Trabajo Práctico 3 - Punto Flotante}
+
+\author{
+Andrew Parlane \\
+}
+
+\maketitle
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introducción}
+
+El objetivo de este trabajo es a diseñar, simular y sintetizar dos circuitos digitales que calculan el producto y la suma/resta de dos números de punto flotante.
+
+Los circuitos implementados deberían soportar cualquier tamaño de punto flotante, especialmente \textit{single precision} y \textit{double precision} definidos en el estándar \textit{IEEE 754}, y los tamaños usados en los archivos de prueba dado para este trabajo.
+
+Además deberían funcionar con los cuatro modos de redondeo y números desnormalizados definido en el estándar \textit{IEEE 754}.
+
+\section{Herramientas}
+
+Las herramientas que usé para este trabajo son:
+\begin{itemize}[noitemsep]
+\item Questa Sim v10.2c
+\item Quartus II v13.0sp1
+\item GNU Make v4.2.1
+\item GCC v6.4.0
+\end{itemize}
+
+\section{Implementación}
+
+Los componentes principales de mi diseño son:
+\begin{itemize}[noitemsep]
+\item Un paquete de apoyo.
+\item Un componente de redondeo.
+\item Un componente de multiplicación.
+\item Un componente de suma.
+\item Un componente de retardo.
+\item Unos bancos de pruebas para simular los diseños.
+\end{itemize}
+
+\subsection{Paquete de apoyo}
+
+Ese paquete tiene algunos tipos comunes, y funciones para trabar con ellos.
+
+\subsubsection{Tipos}
+
+He definido tres tipos:
+\begin{itemize}[noitemsep]
+\item fpNumType - un enum que especifica el tipo de número (zero, NAN, infinito, denormal o normal).
+\item RoundingMode - un enum para el modo de redondeo (nearest, zero, infinito negativo, infinito positivo).
+\item fpUnpacked - un record que guarda el valor del número punto flotante desempacado.
+\end{itemize}
+
+El record \textit{fpUnpacked} tiene:
+
+\begin{tabular}{| l | l | r | p{10cm} |}
+\hline
+\textbf{Nombre} & \textbf{Tipo} & \textbf{Bits} & \textbf{Descripción} \\ \hline
+sign & std\_ulogic & 1 & El signo del número, 0 es positivo. \\
+bExp & unsigned & 11 & El exponente (con el bias). \\
+sig & unsigned & 53 & El significando (con el bit implícito). \\
+numType & fpNumType & - & El tipo del número. \\
+emin & natural & - & El valor del exponente mínimo (con el bias) para números normalizados. \\
+emax & natural & - & El valor del exponente máximo (con el bias) para números normalizados. \\
+bias & natural & - & El bias del exponente bias. \\
+\hline
+\end{tabular} \\
+
+Al principio he implementado \textit{fp\_helper\_pkg.vhd} con genéricos para el número de bits en el exponente y en el significando. Desafortunadamente quartus no soporta paquetes genéricos, así tuve que definir un tamaño máximo para las señales. Elije 11 bits para el exponente y 53 bits para el significando desde la definición de doble precisión en el estándar \textit{IEEE 754}. El compilador debería optimizar el diseño a solo sintetizar el número de bits necesarios.
+
+\subsubsection{Funciones}
+
+He definidos varios funciones que pueden ser partido en cuatro grupos:
+\begin{itemize}[noitemsep]
+\item Empacar / Desempacar - Conversión entre \textit{std\_ulogic\_vector} y \textit{fpUnpacked} y al revés.
+\item Acceso / Comprobación - Funciones que devuelven parte del número o comprueban si el número es especial (cómo cero, o infinito, ...).
+\item Asignación - Devuelven un \textit{fpUnpacked} por un valor especial (cero, infinito, NAN, máximo).
+\item Debug - Reportan el valor en un \textit{fpUnpacked}.
+\end{itemize}
+
+\subsection{Redondeo}
+
+Una operación sobre dos números de punto flotante puede dar un resultado que no entra en el número de bits disponible, ese significa que necesitamos redondear el resultado. El bit 'r' es el bit más significativo que no entra en el significando nuevo. El bit 's' es el \textit{OR} de todo los demás bits. Si 'r' y 's' están cero, el significando calculado es exacto.
+
+El estándar \textit{IEEE 754} defina cuatro modos de redondeo:
+\begin{itemize}[noitemsep]
+\item A cero / Truncar - Nunca redondeamos.
+\item A infinito positivo - Añada uno si el signo es positivo y el significando no es exacto.
+\item A infinito negativo - Resta uno si el signo es negativo y el significando no es exacto.
+\item Al más cercano - Redondea hasta el número más cercano. En el caso de un empate redondea hasta el número par.
+\end{itemize}
+
+Otra parte del redondeo es si hay un overflow el resultado puede ser infinito o el número máximo que puede ser representado (saturación). Cuál depende en el signo y en el modo de redondeo. Si redondeamos alejando del infinito para este signo, el resultado será saturación. Si redondeamos hasta el infinito para este signo, el resultado será infinito. En el caso del redondeo al más cercano, siempre redondeamos hasta infinito.
+
+\subsubsection{Señales y Parámetros}
+
+\begin{tabular}{| l | l | r | l |}
+\hline
+\textbf{Nombre} & \textbf{Tipo} & \textbf{Bits} & \textbf{Descripción} \\ \hline
+\multicolumn{4}{|c|}{Genéricos} \\ \hline
+EBITS & natural & - & El número de bits en el exponente. \\
+SBITS & natural & - & El número de bits en el significando. \\
+DENORMALS & boolean & - & Si soportamos números desnormalizados o no. \\ \hline
+\multicolumn{4}{|c|}{Entradas} \\ \hline
+i\_clk & std\_ulogic & 1 & El reloj. \\
+i\_sig & unsigned & SBITS & El significando a redondear. \\
+i\_bExp & signed & EBITS + 2 & El exponente antes de redondear. \\
+i\_sign & std\_ulogic & 1 & El signo del número. \\
+i\_r & std\_ulogic & 1 & El bit 'r' \\
+i\_s & std\_ulogic & 1 & El bit 's' \\
+i\_rm & RoundingMode & - & El modo de redondeo \\ \hline
+\multicolumn{4}{|c|}{Salidas} \\ \hline
+o\_sig & unsigned & SBITS & El significando redondeado. \\
+o\_bExp & unsigned & EBITS & El exponente después de redondear. \\
+o\_type & fpNumType & - & El tipo del número. \\ \hline
+\end{tabular} \\
+
+Nota que la señal \textit{i\_bExp} es \textit{signed} y tiene \textit{EBITS + 2}. Ese nos deja ver si el calculo ha producido un underflow o un overflow.
+
+\subsection{Multiplicación}
+
+Este componente toma dos vectores que representan dos números de punto flotante y devuelve un vector que representa el producto. Lo he implementado en una forma combinatorio, pero el resultado es guardado en un registro.
+
+\subsubsection{Algoritmo}
+
+El algoritmo de multiplicación es:
+\begin{enumerate}[noitemsep]
+\item El exponente inicial es la suma de los exponentes de las entradas.
+\item Multiplica los dos significandos usando multiplicación de enteros. He usado el operando de multiplicación (*).
+\item Si el bit más significativo es un uno, desplaza el producto un bit a la derecha y añadir uno al exponente.
+\item Deja caer el bit más significativo, que es un cero, y el nuevo significando es los siguiente \textit{SBITS} bits.
+\item El bit 'r' es el siguiente bit del producto.
+\item El bit 's' es el \textit{OR} de todo los demás bits.
+\item Redondea el nuevo significando usando los bits 'r' y 's'.
+\item El signo del resultado es el \textit{XOR} de los signos de las entradas.
+\item El resultado final es el signo calculado antes con:
+\begin{itemize}[noitemsep]
+\item Si uno de las entradas es NAN, el resultado es NAN.
+\item Si una entrada es cero, y la otra es infinita, el resultado es NAN.
+\item Si una entrada es infinita, el resultado es infinito.
+\item Si una entrada es cero, el resultado es cero.
+\item En los demás casos, el resultado final es el resultado del redondeo.
+\end{itemize}
+\end{enumerate}
+
+Para soportar números desnormilizados tenemos que cambiar el algoritmo un poco. Si la suma de los exponentes es menor que E\textsubscript{MIN} desplaza el producto derecha y incrementa el exponente hasta es igual a E\textsubscript{MIN}. Si multiplica un número desnormalizado por un número grande, el resultado puede ser desnormalizado con un exponente más grande que E\textsubscript{MIN}. En este caso, desplaza el producto izquierda hasta que el exponente es E\textsubscript{MIN} o el producto es normalizado. Este cuesta mucho en recursos.
+
+Si quería mejorar el desempeño del diseño, implementaría un pipeline.
+
+\subsubsection{Señales y Parámetros}
+
+\begin{tabular}{| l | l | r | l |}
+\hline
+\textbf{Nombre} & \textbf{Tipo} & \textbf{Bits} & \textbf{Descripción} \\ \hline
+\multicolumn{4}{|c|}{Genéricos} \\ \hline
+TBITS & natural & - & El número de bits en los vectores. \\
+EBITS & natural & - & El número de bits en los exponente. \\
+DENORMALS & boolean & - & Si soportamos números desnormalizados o no. \\ \hline
+\multicolumn{4}{|c|}{Entradas} \\ \hline
+i\_clk & std\_ulogic & 1 & El reloj. \\
+i\_a & std\_ulogic\_vector & TBITS & La entrada A empacada. \\
+i\_b & std\_ulogic\_vector & TBITS & La entrada B empacada. \\
+i\_rm & RoundingMode & - & El modo de redondeo \\ \hline
+\multicolumn{4}{|c|}{Salidas} \\ \hline
+o\_res & std\_ulogic\_vector & TBITS & El resultado A*B empacada. \\ \hline
+\end{tabular}
+
+\subsection{Suma / Resta}
+
+Este componente toma dos vectores que representan dos números de punto flotante y devuelve un vector que representa la suma. Para obtener la resta de las entradas, debería invertir el bit más significativo (el signo) de la entrada B. Lo he implementado con un pipeline de seis etapas.
+
+\subsubsection{Algoritmo}
+
+He implementado el algoritmo detallado en el apéndice J de \textit{Computer Architecture A Quantitative Approach} de \textit{Hennessy y Patterson}.
+
+\begin{enumerate}[noitemsep]
+\item Si la entrada A es menor que la entrada B, intercambia las entradas. El exponente inicial es el exponente de la nueva A.
+\item Si los signos están diferentes reemplazar el significando del B con el \textit{twos complement}.
+\item Desplaza el significando de B derecho por el exponente de la entrada A menos el exponente de la entrada B. Los bits que entran deberían estar unos si los signos de las entradas estuvieron diferentes, o ceros si no. El nuevo significando es los \textit{SBITS} más altos del resultado. De los bits que estuvieron sacados el más significativo es el bit 'g', el siguiente es el bit 'r', y el \textit{OR} de los demás es el bit 's'.
+\item Calcula la suma de los dos significandos. Si los signos estuvieron diferentes, el bit más significativo del resultado es uno, y no había un \textit{carry out}, reemplaza el resultado con el \textit{twos complement} de su mismo.
+\item Desplaza el resultado o derecha un bit (entrando el bit carry) o izquierda (entrando el bit 'g' y después ceros) hasta que el número es normalizado. Y actualiza el exponente como necesario.
+\item Ajustar 'r' y 's'.
+\item Calcula el signo nuevo usando la tabla J.12 en el apéndice de \textit{Hennessy y Patterson}.
+\item Redondea el resultado.
+\item El resultado final es el signo calculado antes con:
+\begin{itemize}[noitemsep]
+\item Si uno de las entradas es NAN, el resultado es NAN.
+\item Si una entrada es -infinito, y el otro es +infinito, el resultado es NAN
+\item Si ambos entradas es cero, el resultado es cero. El signo es negativo si el modo de redondeo está a infinito negativa, y positivo si no.
+\item Si una o ambos entradas es infinito, el resultado es infinito.
+\item En los demás casos el resultado final es el resultado del redondeo.
+\end{itemize}
+\end{enumerate}
+
+Para soportar números desnormalizados el único cambio necesario es a limitar el número de bits a desplazar en el paso 5 así que el exponente no es menor que E\textsubscript{MIN}.
+
+He implementado el pipeline con una etapa para cada paso 1-4, una etapa para pasos 5 y 6, y una etapa para pasos 7, 8 y 9. Si quise mejor el diseño, comenzaría con cambiando las etapas del pipeline. Algunos de mis etapas están much más básicas que otras.
+
+\subsubsection{Señales y Parámetros}
+
+\begin{tabular}{| l | l | r | l |}
+\hline
+\textbf{Nombre} & \textbf{Tipo} & \textbf{Bits} & \textbf{Descripción} \\ \hline
+\multicolumn{4}{|c|}{Genéricos} \\ \hline
+TBITS & natural & - & El número de bits en los vectores. \\
+EBITS & natural & - & El número de bits en los exponente. \\
+DENORMALS & boolean & - & Si soportamos números desnormalizados o no. \\ \hline
+\multicolumn{4}{|c|}{Entradas} \\ \hline
+i\_clk & std\_ulogic & 1 & El reloj. \\
+i\_a & std\_ulogic\_vector & TBITS & La entrada A empacada. \\
+i\_b & std\_ulogic\_vector & TBITS & La entrada B empacada. \\
+i\_rm & RoundingMode & - & El modo de redondeo \\ \hline
+\multicolumn{4}{|c|}{Salidas} \\ \hline
+o\_res & std\_ulogic\_vector & TBITS & El resultado A+B empacada. \\ \hline
+\end{tabular}
+
+\section{Simulación y Verificación}
+
+\subsection{Bancos de Pruebas}
+
+Para verificar el funcionamiento de mis diseños uso un archivo de pruebas. Cada línea tiene dos argumentos y el resultado esperado. Paso los argumentos al componente a probar y verifico que el resultado es el valor esperado. Tuve que implementar una función que lea un número desde una línea de un archivo y vuelva un unsigned, porque el \textit{read()} función devuelve un entero, y enteros en modelsim son limitados a 32 bits signed, o 31 bits unsigned. Así \textit{read()} solo funciona por valores menor o igual a 2147483647.
+
+En el caso del componente \textit{fp\_add} tuve que implementar un componente de retardo porque la unidad de suma usa un pipeline.
+
+Para mejor manejar los diferentes tamaños de cada archivo, mis bancos de pruebas tienen genéricos que definen los tamaños \textit{TBITS} y \textit{EBITS}. Puedo pasar eses valores desde mi Makefile. También paso la ruta del archivo de prueba, el modo de redondeo, si soportamos números desnormalizados o no, y si deberíamos fallar si el signo del resultado no es esperado cuándo el número es cero. Ese último es porque en los archivos de prueba dados con el trabajo un cero negativo, es dada como cero positivo. También en el caso del banco de prueba de la unidad de suma, paso un genérico que dice si deberíamos invertir el bit más significativo de la entrada B para hacer pruebas de la operación \textit{resta}.
+
+\subsection{Generación de pruebas}
+
+Después escribí un programa en C, para generar más archivos de prueba con argumentos aleatorias para las tres operaciones soportados. Tiene varios flags que me permite personalizar el archivo generado:
+
+\begin{tabular}{ | l | p{10cm} | }
+\hline
+Flag & Descripción \\
+\hline
+num\_tests & El número de pruebas a generar \\
+no\_denormal & Generar pruebas con argumentos / resultados desnormalizados \\
+double\_precision & Generar pruebas usando la precisión doble definido en el estándar \textit{IEEE 754}. Sin este flag, genera pruebas de precisión simple. \\
+op\_multiply & Generar pruebas para la operación de multiplicación (default). \\
+op\_add & Generar pruebas para la operación de suma. \\
+op\_subtract & Generar pruebas para la operación de resta. \\
+rounding\_mode & Que modo de redondeo a usar. \\
+\hline
+\end{tabular}
+
+Usando esto combinado con mis bancos de pruebas y un Makefile, puedo ejecutar millones de pruebas.
+
+\subsection{Coverage}
+
+He creado un programa de \textit{systemverilog} con \textit{covergroups} y \textit{coverpoints} para verificar que estoy comprobando todos las combinaciones posibles. Obtengo un coverage de más de 95\%. Esto combinado de más de cien millones de pruebas ejecutados con entradas aleatorias me da mucho confianza que mis implementaciones son correctos.
+
+\section{Síntesis}
+
+He usado Quartus II para obtener un resumen de sintesis para cada uno de los siguiente unidades:
+\begin{itemize}[noitemsep]
+\item Multiplicación de 32 bits sin números desnormalizados.
+\item Multiplicación de 32 bits con números desnormalizados.
+\item Suma de 32 bits sin números desnormalizados.
+\item Suma de 32 bits con números desnormalizados.
+\end{itemize}
+
+\subsection{Resumen de síntesis}
+\begin{tabular}{ lr | r | r | r | r |}
+\cline{3-6}
+& & \multicolumn{2}{|c|}{Multiplicación} & \multicolumn{2}{|c|}{Suma} \\ \cline{3-6}
+& & Sin denormals & Con denormals & Sin denormals & Con denormals \\ \hline
+\multicolumn{1}{ |c| }{\textbf{Ítem}} & \textbf{Disponible} & \multicolumn{4}{ c | }{\textbf{Utilizado}} \\ \hline
+\multicolumn{1}{ |c| }{Logic elements}      & 33,216    & 313 (\textless1\%)    & 1,141 (3\%)           & 766 (2\%)             & 812 (2\%)             \\
+\multicolumn{1}{ |c| }{Registers}           & 33,216    & 100 (\textless1\%)    & 101 (\textless1\%)    & 274 (\textless1\%)    & 274 (\textless1\%)    \\
+\multicolumn{1}{ |c| }{Bits de memoria}     & 483,840   & 0   (0\%)             & 0 (0\%)               & 72 (\textless1\%)     & 72 (\textless1\%)     \\
+\multicolumn{1}{ |c| }{Global clocks}       & 16        & 1   (6\%)             & 1 (6\%)               & 1 (6\%)               & 1 (6\%)               \\
+\multicolumn{1}{ |c| }{Frecuencia Máxima}   &    -      & 49.55MHz              & 29.43MHz              & 83.96MHz              & 68.9MHz               \\ \hline
+\end{tabular} \\
+
+\section{Código}
+
+Todo el código es disponible en mi github: \url{https://github.com/andrewparlane/fiuba6617/tree/master/TP3}.
+
+\end{document}

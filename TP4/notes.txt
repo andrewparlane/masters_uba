@@ -1,0 +1,94 @@
+data format
+    file value range: -1.0 - 1.0, max vector length = root(3) = 1.73
+    each cordic has a *1.65 built in, and 3 cordics so *4.5 total
+    display resolution is 640*480
+    and we are a sphere, so display in range of 450*450
+    0,0 is the center, so need to do offset of +225
+    if input values were between -29.0 and 29.0
+    then output of cordics would be -225.0 to 225.0
+    then after the offset they would be 0 to 450.0
+    send and store in memory Q6.10
+    Process en Q9.23. Need at least 9 bits of integer
+    to hold 450, and want to keep as much precsion as posible.
+
+uart
+    baud rate - 115200
+Cordic
+    passes - 10
+Video
+    resolution
+        640*480@60Hz
+            single buffered - 307,200 bits
+            double buffered - 614,400 bits
+            clock: 25MHz
+    options
+        1) single buffereed in BRAM
+           clear and rewrite all during blanking ~1.76mS
+           12,000 co-ords read + 3*cordic + written
+           = new value written every 146nS -> clk 6MHz
+           probably doable
+        2) Double buffered in SRAM / SDRAM
+           would need to be able to guarantee pixel data is ready
+           so probably have to read X rows of pixel data to a buffer
+           while writing cordic results to a buffer.
+           Then write codic data to RAM, then read more pixels
+           etc...
+        3) Don't worry about it, the updates will look like shit
+           while rotating
+
+RAMs
+----
+    BRAM
+        430,080 bits + 53,760 parity bits
+    SDRAM - U17 - 1M*16*4
+        IS42S16400D-7TL
+        speed 7ns - 143MHz
+        8MB
+    SRAM - U18 - 256K*16
+        IS61LV25616AL-10T
+        512KB
+        pretty simple interface
+        read at 100MHz
+        write at 100MHz (probably)
+
+Clocks
+------
+    VGA
+        25MHz
+    SRAM
+        max 100MHz
+
+Plan
+----
+    enter stage 1
+    UART writes data to SRAM
+    enter stage 2
+    loop at 50Hz
+        start pipeline
+            read coordinates
+            cordic1
+            cordic2
+            cordic3
+            convert to 2D
+            write to BRAM
+
+video ram plan
+    1.44ms all vertical blanking
+    1.12ms sync + bp
+
+    to do in that time:
+        clear video ram
+        write new values
+        + latency ~= 33 ticks
+
+    Make video RAM byte addressable
+        clear takes 38,400 ticks
+            @100MHz = 0.384mS
+        write new values
+            only get new values every 3 ticks
+            have to read old value, set the bit and write it back
+                I can do that in the 3 ticks available
+            12,000 co-ordinates -> 36,000 ticks
+                @100MHz = 0.36mS
+        total = 0.744mS
+

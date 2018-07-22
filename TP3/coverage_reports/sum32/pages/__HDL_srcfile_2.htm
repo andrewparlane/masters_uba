@@ -1,0 +1,153 @@
+
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+  <title>Questa Coverage Report</title>
+  <link rel="StyleSheet" media="screen" href="../css/hdl2html.css"/>
+</head>
+<body id="hdl2html">
+  <tt><a name="1"/><span style="color:red">%s%%s%%s%%s%%s%1%s%%s%</span><span class="keyword">library</span>%s%ieee;<br/>
+<a name="2"/><span style="color:red">%s%%s%%s%%s%%s%2%s%%s%</span><span class="keyword">use</span>%s%ieee.std_logic_1164.<span class="keyword">all</span>;<br/>
+<a name="3"/><span style="color:red">%s%%s%%s%%s%%s%3%s%%s%</span><span class="keyword">use</span>%s%ieee.numeric_std.<span class="keyword">all</span>;<br/>
+<a name="4"/><span style="color:red">%s%%s%%s%%s%%s%4%s%%s%</span><br/>
+<a name="5"/><span style="color:red">%s%%s%%s%%s%%s%5%s%%s%</span><span class="keyword">use</span>%s%work.fp_type_pkg.<span class="keyword">all</span>;<br/>
+<a name="6"/><span style="color:red">%s%%s%%s%%s%%s%6%s%%s%</span><span class="keyword">use</span>%s%work.fp_helper_pkg.<span class="keyword">all</span>;<br/>
+<a name="7"/><span style="color:red">%s%%s%%s%%s%%s%7%s%%s%</span><br/>
+<a name="8"/><span style="color:red">%s%%s%%s%%s%%s%8%s%%s%</span><span class="keyword">entity</span>%s%fp_round%s%<span class="keyword">is</span><br/>
+<a name="9"/><span style="color:red">%s%%s%%s%%s%%s%9%s%%s%</span>%s%%s%%s%%s%<span class="keyword">generic</span>%s%(TBITS:%s%%s%%s%%s%%s%<span class="keytype">natural</span>;<br/>
+<a name="10"/><span style="color:red">%s%%s%%s%%s%10%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%EBITS:%s%%s%%s%%s%%s%<span class="keytype">natural</span>;<br/>
+<a name="11"/><span style="color:red">%s%%s%%s%%s%11%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%SBITS:%s%%s%%s%%s%%s%<span class="keytype">natural</span>;<br/>
+<a name="12"/><span style="color:red">%s%%s%%s%%s%12%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%DENORMALS:%s%<span class="keytype">boolean</span>);<br/>
+<a name="13"/><span style="color:red">%s%%s%%s%%s%13%s%%s%</span>%s%%s%%s%%s%<span class="keyword">port</span>%s%(i_clk:%s%%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">std_ulogic</span>;<br/>
+<a name="14"/><span style="color:red">%s%%s%%s%%s%14%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_sig:%s%%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">unsigned</span>((SBITS%s%-%s%1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="15"/><span style="color:red">%s%%s%%s%%s%15%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_bExp:%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">signed</span>((EBITS%s%+%s%1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="16"/><span style="color:red">%s%%s%%s%%s%16%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_sign:%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">std_ulogic</span>;<br/>
+<a name="17"/><span style="color:red">%s%%s%%s%%s%17%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_r:%s%%s%%s%%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">std_ulogic</span>;<br/>
+<a name="18"/><span style="color:red">%s%%s%%s%%s%18%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_s:%s%%s%%s%%s%%s%%s%<span class="keyattr">in</span>%s%%s%<span class="keytype">std_ulogic</span>;<br/>
+<a name="19"/><span style="color:red">%s%%s%%s%%s%19%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%i_rm:%s%%s%%s%%s%%s%<span class="keyattr">in</span>%s%%s%RoundingMode;<br/>
+<a name="20"/><span style="color:red">%s%%s%%s%%s%20%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig:%s%%s%%s%%s%<span class="keyattr">out</span>%s%<span class="keytype">unsigned</span>((SBITS%s%-%s%1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="21"/><span style="color:red">%s%%s%%s%%s%21%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp:%s%%s%%s%<span class="keyattr">out</span>%s%<span class="keytype">unsigned</span>((EBITS%s%-%s%1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="22"/><span style="color:red">%s%%s%%s%%s%22%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type:%s%%s%%s%<span class="keyattr">out</span>%s%fpNumType);<br/>
+<a name="23"/><span style="color:red">%s%%s%%s%%s%23%s%%s%</span><span class="keyword">end</span>%s%<span class="keyword">entity</span>%s%fp_round;<br/>
+<a name="24"/><span style="color:red">%s%%s%%s%%s%24%s%%s%</span><br/>
+<a name="25"/><span style="color:red">%s%%s%%s%%s%25%s%%s%</span><span class="keyword">architecture</span>%s%synth%s%<span class="keyword">of</span>%s%fp_round%s%<span class="keyword">is</span><br/>
+<a name="26"/><span style="color:red">%s%%s%%s%%s%26%s%%s%</span><span class="keyword">begin</span><br/>
+<a name="27"/><span style="color:red">%s%%s%%s%%s%27%s%%s%</span>%s%%s%%s%%s%<span class="keyword">process</span>%s%(<span class="keyword">all</span>)<br/>
+<a name="28"/><span style="color:red">%s%%s%%s%%s%28%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">variable</span>%s%useSigP1:%s%%s%<span class="keytype">std_ulogic</span>;<br/>
+<a name="29"/><span style="color:red">%s%%s%%s%%s%29%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%+1%s%for%s%carry%s%outs</span><br/>
+<a name="30"/><span style="color:red">%s%%s%%s%%s%30%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">variable</span>%s%sig:%s%%s%%s%%s%%s%%s%%s%<span class="keytype">unsigned</span>(SBITS%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="31"/><span style="color:red">%s%%s%%s%%s%31%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%+2%s%for%s%underflow%s%/%s%overflow</span><br/>
+<a name="32"/><span style="color:red">%s%%s%%s%%s%32%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">variable</span>%s%bExp:%s%%s%%s%%s%%s%%s%<span class="keytype">signed</span>((EBITS+1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="33"/><span style="color:red">%s%%s%%s%%s%33%s%%s%</span>%s%%s%%s%%s%<span class="keyword">begin</span><br/>
+<a name="34"/><span style="color:red">%s%%s%%s%%s%34%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%Rounding,%s%4%s%cases:</span><br/>
+<a name="35"/><span style="color:red">%s%%s%%s%%s%35%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%1)%s%round%s%towards%s%negative%s%infinity</span><br/>
+<a name="36"/><span style="color:red">%s%%s%%s%%s%36%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%-11.1%s%-&gt;%s%-12.0,%s%11.9%s%-&gt;%s%11.0</span><br/>
+<a name="37"/><span style="color:red">%s%%s%%s%%s%37%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%2)%s%round%s%towards%s%positive%s%infinity</span><br/>
+<a name="38"/><span style="color:red">%s%%s%%s%%s%38%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%-11.9%s%-&gt;%s%-11.0,%s%11.1%s%-&gt;%s%12.0</span><br/>
+<a name="39"/><span style="color:red">%s%%s%%s%%s%39%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%3)%s%round%s%towards%s%0</span><br/>
+<a name="40"/><span style="color:red">%s%%s%%s%%s%40%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%-11.9%s%-&gt;%s%-11.0,%s%11.9%s%-&gt;%s%11.0</span><br/>
+<a name="41"/><span style="color:red">%s%%s%%s%%s%41%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%4)%s%round%s%to%s%nearest%s%(ties%s%to%s%even)</span><br/>
+<a name="42"/><span style="color:red">%s%%s%%s%%s%42%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%-11.9%s%-&gt;%s%-12.0,%s%-11.1%s%-&gt;%s%-11.0</span><br/>
+<a name="43"/><span style="color:red">%s%%s%%s%%s%43%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%%s%11.9%s%-&gt;%s%%s%12.0,%s%%s%11.1%s%-&gt;%s%%s%11.0</span><br/>
+<a name="44"/><span style="color:red">%s%%s%%s%%s%44%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%%s%%s%%s%%s%%s%%s%11.5%s%-&gt;%s%%s%12.0,%s%%s%12.5%s%-&gt;%s%%s%12.0</span><br/>
+<a name="45"/><span style="color:red">%s%%s%%s%%s%45%s%%s%</span><br/>
+<a name="46"/><span style="color:red">%s%%s%%s%%s%46%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%(i_rm%s%=%s%RoundingMode_NEG_INF)%s%<span class="keyword">then</span><br/>
+<a name="47"/><span style="color:red">%s%%s%%s%%s%47%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%Only%s%add%s%one%s%if%s%we%s%are%s%negative%s%and%s%(i_r%s%or%s%i_s)</span><br/>
+<a name="48"/><span style="color:red">%s%%s%%s%%s%48%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%useSigP1%s%:=%s%i_sign%s%<span class="keyword">and</span>%s%(i_r%s%<span class="keyword">or</span>%s%i_s);<br/>
+<a name="49"/><span style="color:red">%s%%s%%s%%s%49%s%%s%</span><br/>
+<a name="50"/><span style="color:red">%s%%s%%s%%s%50%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">elsif</span>%s%(i_rm%s%=%s%RoundingMode_POS_INF)%s%<span class="keyword">then</span><br/>
+<a name="51"/><span style="color:red">%s%%s%%s%%s%51%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%Only%s%add%s%one%s%if%s%we%s%are%s%positive%s%and%s%(i_r%s%or%s%i_s)</span><br/>
+<a name="52"/><span style="color:red">%s%%s%%s%%s%52%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%useSigP1%s%:=%s%(<span class="keyword">not</span>%s%i_sign)%s%<span class="keyword">and</span><br/>
+<a name="53"/><span style="color:red">%s%%s%%s%%s%53%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%(i_r%s%<span class="keyword">or</span>%s%i_s);<br/>
+<a name="54"/><span style="color:red">%s%%s%%s%%s%54%s%%s%</span><br/>
+<a name="55"/><span style="color:red">%s%%s%%s%%s%55%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">elsif</span>%s%(i_rm%s%=%s%RoundingMode_0)%s%<span class="keyword">then</span><br/>
+<a name="56"/><span style="color:red">%s%%s%%s%%s%56%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%never%s%add%s%one</span><br/>
+<a name="57"/><span style="color:red">%s%%s%%s%%s%57%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%useSigP1%s%:=%s%'0';<br/>
+<a name="58"/><span style="color:red">%s%%s%%s%%s%58%s%%s%</span><br/>
+<a name="59"/><span style="color:red">%s%%s%%s%%s%59%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span>%s%<span class="comment">--%s%RoundingMode_NEAREST</span><br/>
+<a name="60"/><span style="color:red">%s%%s%%s%%s%60%s%%s%</span><br/>
+<a name="61"/><span style="color:red">%s%%s%%s%%s%61%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%we%s%add%s%one%s%if%s%we%s%are%s%greater%s%than%s%halfway%s%(i_r%s%and%s%i_s)</span><br/>
+<a name="62"/><span style="color:red">%s%%s%%s%%s%62%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%in%s%the%s%half%s%way%s%case%s%(i_r%s%and%s%(not%s%i_s))%s%we%s%tie%s%to%s%even</span><br/>
+<a name="63"/><span style="color:red">%s%%s%%s%%s%63%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%so%s%add%s%1%s%if%s%the%s%lsb%s%of%s%the%s%sig%s%is%s%1%s%(odd)</span><br/>
+<a name="64"/><span style="color:red">%s%%s%%s%%s%64%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%so:%s%(i_r%s%and%s%i_s)%s%or%s%(i_r%s%and%s%(not%s%i_s)%s%and%s%sig(0))</span><br/>
+<a name="65"/><span style="color:red">%s%%s%%s%%s%65%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%useSigP1%s%:=%s%(i_r%s%<span class="keyword">and</span>%s%i_sig(0))%s%<span class="keyword">or</span><br/>
+<a name="66"/><span style="color:red">%s%%s%%s%%s%66%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%(i_r%s%<span class="keyword">and</span>%s%i_s);<br/>
+<a name="67"/><span style="color:red">%s%%s%%s%%s%67%s%%s%</span><br/>
+<a name="68"/><span style="color:red">%s%%s%%s%%s%68%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="69"/><span style="color:red">%s%%s%%s%%s%69%s%%s%</span><br/>
+<a name="70"/><span style="color:red">%s%%s%%s%%s%70%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%we%s%use%s%SBITS%s%+%s%1,%s%so%s%we%s%can%s%catch%s%overflows</span><br/>
+<a name="71"/><span style="color:red">%s%%s%%s%%s%71%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%(useSigP1%s%=%s%'0')%s%<span class="keyword">then</span><br/>
+<a name="72"/><span style="color:red">%s%%s%%s%%s%72%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%sig%s%:=%s%'0'%s%&amp;%s%i_sig;<br/>
+<a name="73"/><span style="color:red">%s%%s%%s%%s%73%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span><br/>
+<a name="74"/><span style="color:red">%s%%s%%s%%s%74%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%sig%s%:=%s%('0'%s%&amp;%s%i_sig)%s%+%s%to_unsigned(1,%s%SBITS+1);<br/>
+<a name="75"/><span style="color:red">%s%%s%%s%%s%75%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="76"/><span style="color:red">%s%%s%%s%%s%76%s%%s%</span><br/>
+<a name="77"/><span style="color:red">%s%%s%%s%%s%77%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%check%s%for%s%carry%s%out</span><br/>
+<a name="78"/><span style="color:red">%s%%s%%s%%s%78%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%(sig(SBITS)%s%=%s%'1')%s%<span class="keyword">then</span><br/>
+<a name="79"/><span style="color:red">%s%%s%%s%%s%79%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%carry%s%out,%s%shift%s%right%s%by%s%1</span><br/>
+<a name="80"/><span style="color:red">%s%%s%%s%%s%80%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%sig%s%:=%s%'0'%s%&amp;%s%sig(SBITS%s%<span class="keyword">downto</span>%s%1);<br/>
+<a name="81"/><span style="color:red">%s%%s%%s%%s%81%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%bExp%s%:=%s%i_bExp%s%+%s%to_signed(1,%s%EBITS%s%+%s%2);<br/>
+<a name="82"/><span style="color:red">%s%%s%%s%%s%82%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span><br/>
+<a name="83"/><span style="color:red">%s%%s%%s%%s%83%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%no%s%carry%s%out,%s%so%s%just%s%set%s%the%s%biased%s%exponent</span><br/>
+<a name="84"/><span style="color:red">%s%%s%%s%%s%84%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%bExp%s%:=%s%i_bExp;<br/>
+<a name="85"/><span style="color:red">%s%%s%%s%%s%85%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="86"/><span style="color:red">%s%%s%%s%%s%86%s%%s%</span><br/>
+<a name="87"/><span style="color:red">%s%%s%%s%%s%87%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%check%s%for%s%underflow</span><br/>
+<a name="88"/><span style="color:red">%s%%s%%s%%s%88%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%(bExp%s%&lt;%s%to_signed(get_emin,%s%EBITS+2))%s%<span class="keyword">then</span><br/>
+<a name="89"/><span style="color:red">%s%%s%%s%%s%89%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="90"/><span style="color:red">%s%%s%%s%%s%90%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="91"/><span style="color:red">%s%%s%%s%%s%91%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_ZERO;<br/>
+<a name="92"/><span style="color:red">%s%%s%%s%%s%92%s%%s%</span><br/>
+<a name="93"/><span style="color:red">%s%%s%%s%%s%93%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%check%s%for%s%gradual%s%underflow</span><br/>
+<a name="94"/><span style="color:red">%s%%s%%s%%s%94%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">elsif</span>%s%((bExp%s%=%s%to_signed(get_emin,%s%EBITS+2))%s%<span class="keyword">and</span><br/>
+<a name="95"/><span style="color:red">%s%%s%%s%%s%95%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%(sig(SBITS-1)%s%=%s%'0'))%s%<span class="keyword">then</span><br/>
+<a name="96"/><span style="color:red">%s%%s%%s%%s%96%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%((sig%s%=%s%to_unsigned(0,%s%SBITS+1))%s%<span class="keyword">or</span><br/>
+<a name="97"/><span style="color:red">%s%%s%%s%%s%97%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%(<span class="keyword">not</span>%s%DENORMALS))%s%<span class="keyword">then</span><br/>
+<a name="98"/><span style="color:red">%s%%s%%s%%s%98%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%nothing%s%left,%s%so%s%actual%s%underflow</span><br/>
+<a name="99"/><span style="color:red">%s%%s%%s%%s%99%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="100"/><span style="color:red">%s%%s%%s%100%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="101"/><span style="color:red">%s%%s%%s%101%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_ZERO;<br/>
+<a name="102"/><span style="color:red">%s%%s%%s%102%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span><br/>
+<a name="103"/><span style="color:red">%s%%s%%s%103%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%denormal</span><br/>
+<a name="104"/><span style="color:red">%s%%s%%s%104%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%sig((SBITS-1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="105"/><span style="color:red">%s%%s%%s%105%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="106"/><span style="color:red">%s%%s%%s%106%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_DENORMAL;<br/>
+<a name="107"/><span style="color:red">%s%%s%%s%107%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="108"/><span style="color:red">%s%%s%%s%108%s%%s%</span><br/>
+<a name="109"/><span style="color:red">%s%%s%%s%109%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%check%s%for%s%overflow</span><br/>
+<a name="110"/><span style="color:red">%s%%s%%s%110%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">elsif</span>%s%(bExp%s%&gt;%s%to_signed(get_emax(EBITS),%s%EBITS+2))%s%<span class="keyword">then</span><br/>
+<a name="111"/><span style="color:red">%s%%s%%s%111%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%If%s%we%s%round%s%away%s%from%s%(i_sign)%s%inifinity,</span><br/>
+<a name="112"/><span style="color:red">%s%%s%%s%112%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%then%s%the%s%value%s%saturates%s%at%s%the%s%max</span><br/>
+<a name="113"/><span style="color:red">%s%%s%%s%113%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%representatable%s%value%s%=%s%1.111...111%s%*%s%2^EMAX</span><br/>
+<a name="114"/><span style="color:red">%s%%s%%s%114%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%if%s%we%s%round%s%towards%s%(i_sign)%s%infinity%s%then</span><br/>
+<a name="115"/><span style="color:red">%s%%s%%s%115%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%the%s%value%s%is%s%infinity</span><br/>
+<a name="116"/><span style="color:red">%s%%s%%s%116%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%if%s%we%s%round%s%to%s%nearest%s%(ties%s%even)%s%then</span><br/>
+<a name="117"/><span style="color:red">%s%%s%%s%117%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%the%s%max%s%representatable%s%number%s%is%s%odd%s%(ends%s%in%s%1)</span><br/>
+<a name="118"/><span style="color:red">%s%%s%%s%118%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%so%s%we%s%round%s%to%s%infinity</span><br/>
+<a name="119"/><span style="color:red">%s%%s%%s%119%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">if</span>%s%(((i_rm%s%=%s%RoundingMode_0))%s%<span class="keyword">or</span><br/>
+<a name="120"/><span style="color:red">%s%%s%%s%120%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%((i_rm%s%=%s%RoundingMode_NEG_INF)%s%<span class="keyword">and</span>%s%(i_sign%s%=%s%'0'))%s%<span class="keyword">or</span><br/>
+<a name="121"/><span style="color:red">%s%%s%%s%121%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%((i_rm%s%=%s%RoundingMode_POS_INF)%s%<span class="keyword">and</span>%s%(i_sign%s%=%s%'1')))%s%<span class="keyword">then</span><br/>
+<a name="122"/><span style="color:red">%s%%s%%s%122%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%saturate%s%at%s%max%s%representatable</span><br/>
+<a name="123"/><span style="color:red">%s%%s%%s%123%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'1');<br/>
+<a name="124"/><span style="color:red">%s%%s%%s%124%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%to_unsigned(get_emax(EBITS),%s%EBITS);<br/>
+<a name="125"/><span style="color:red">%s%%s%%s%125%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_INFINITY;<br/>
+<a name="126"/><span style="color:red">%s%%s%%s%126%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span><br/>
+<a name="127"/><span style="color:red">%s%%s%%s%127%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%infinity</span><br/>
+<a name="128"/><span style="color:red">%s%%s%%s%128%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'0');<br/>
+<a name="129"/><span style="color:red">%s%%s%%s%129%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%(<span class="keyword">others</span>%s%=&gt;%s%'1');<br/>
+<a name="130"/><span style="color:red">%s%%s%%s%130%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_NORMAL;<br/>
+<a name="131"/><span style="color:red">%s%%s%%s%131%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="132"/><span style="color:red">%s%%s%%s%132%s%%s%</span><br/>
+<a name="133"/><span style="color:red">%s%%s%%s%133%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="comment">--%s%normal%s%number</span><br/>
+<a name="134"/><span style="color:red">%s%%s%%s%134%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">else</span><br/>
+<a name="135"/><span style="color:red">%s%%s%%s%135%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_sig%s%&lt;=%s%sig((SBITS-1)%s%<span class="keyword">downto</span>%s%0);<br/>
+<a name="136"/><span style="color:red">%s%%s%%s%136%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_bExp%s%&lt;=%s%<span class="keytype">unsigned</span>(bExp((EBITS-1)%s%<span class="keyword">downto</span>%s%0));<br/>
+<a name="137"/><span style="color:red">%s%%s%%s%137%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%%s%o_type%s%&lt;=%s%fpNumType_NORMAL;<br/>
+<a name="138"/><span style="color:red">%s%%s%%s%138%s%%s%</span>%s%%s%%s%%s%%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">if</span>;<br/>
+<a name="139"/><span style="color:red">%s%%s%%s%139%s%%s%</span>%s%%s%%s%%s%<span class="keyword">end</span>%s%<span class="keyword">process</span>;<br/>
+<a name="140"/><span style="color:red">%s%%s%%s%140%s%%s%</span><span class="keyword">end</span>%s%<span class="keyword">architecture</span>%s%synth;<br/>
+</tt>
+<script type="text/javascript" src="../scripts/buildsrcpage.js"></script>
+  
+</body>
+</html>

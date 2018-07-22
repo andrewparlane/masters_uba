@@ -1,0 +1,4 @@
+src/fp_mult.vhd
+src/fp_round.vhd
+src/tb/fp_coverage.sv
+src/tb/fp_mult_tb.vhd
