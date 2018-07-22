@@ -219,7 +219,7 @@ begin
 
     -- in reset if either the reset button is pressed
     -- or the PLL is not locked
-    reset <= not (KEY(0) and pll_locked);
+    reset <= not pll_locked;
     led_reset <= reset;
 
     -----------------------------------------------------------------
@@ -262,7 +262,7 @@ begin
     ----------------------------------------------------------------
     -- PLLs
     -----------------------------------------------------------------
-    pll_inst: pll port map (areset  => '0',
+    pll_inst: pll port map (areset  => not KEY(0),
                             inclk0  => CLOCK_50,
                             c0      => clk100M,
                             c1      => clk25M,
