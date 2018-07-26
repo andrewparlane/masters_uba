@@ -1,0 +1,3 @@
+[submodule "6620_orga_de_compus/tp4/drmips"]
+	path = 6620_orga_de_compus/tp4/drmips
+	url = git@github.com:andrewparlane/drmips.git
