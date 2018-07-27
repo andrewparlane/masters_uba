@@ -1,0 +1,133 @@
+To build DrMips
+    Install JDK v8 and put the bin/ in PATH
+    From clean checkout of masters_uba
+    In 6620/tp4
+    git submodule init
+    git submodule update
+    cd drmips
+    mkdir -p install
+    edit misc/drmips.sh changing /usr/ to ../
+    make DESTDIR=install install
+
+To run DrMIPS
+    Follow the build instructions above
+    cd install/usr/bin
+    ./drmips
+
+Branch Predictors
+    static:
+        Always guess not taken / taken
+    Dynamic:
+        Local history
+            n-bit saturating counters indexed by m-bits of the address
+        Global history
+            n-bit saturating counters indexed by m-bits of global branch history
+        Combined
+            m-bits of global branch history indexes table of
+            n-bit saturating counters indexed by p-bits of the address
+
+Branch Target Predictors
+    For calculating the address to jump to
+
+Types of branches in MIPS32
+    Without link
+        Type J  - 26 bit immediate, PC = (PC & F0000000) | (target << 2)
+            J
+            JAL
+        Type R  - PC = *Rs
+            JR
+            JALR
+        Type I - 16 bit immediate, PC = (PC + 4) + SEX(offset << 2)
+            BEQ
+            BNE
+            BGEZ
+            BGTZ
+            BLEZ
+            BLTZ
+            BGEZAL
+            BLTZAL
+        Pseudo
+            BEQZ
+            BNEZ
+            BGE
+            BGEU
+            BGT
+            BGTU
+            BLE
+            BLEU
+            BLT
+            BLTU
+
+What can be done when?
+    Type R  - PC = *Rs
+        Always taken
+        IF - read instruction
+        ID - read Rs
+        EX - decode that it's a jump.
+        Options:
+            So we have to flush 2 cycles.
+            Flush 1 cycle and have a delay slot.
+            Decode that it's a jump in ID + 1 flush or 1 Delay slot.
+            Have a branch target predictor that executes in IF
+    Type J  - 26 bit immediate, PC = (PC & F0000000) | (target << 2)
+        Always taken.
+        IF - read instruction
+        ID - decode that it's a jump.
+        Options:
+            So we have to stall 1 cycles.
+            Have a delay slot.
+            Have a branch target predictor that executes in IF.
+    Type I - 16 bit immediate, PC = (PC + 4) + SEX(offset << 2)
+        Conditional.
+        IF - read instruction
+        ID - calculate target, decode that it's a branch, get prediction and update PC
+        EX - ALU decides if taken
+        MEM - update prediction
+        Options:
+            Branch predictor in ID, update in MEM. 1 flush or 1 delay slot
+
+Plan:
+    Add saturating counter table component
+        has 2^m entries, each is N bits
+        dual port (1 read, 1 update)
+        write before read would be good (copy register file code?)
+        inputs: Write, Taken, UpdateIndex[M-1:0], ReadIndex[M-1:0]
+        outputs: Value[N-1:0]
+    Add global history branch predictor component
+        has a N bit shift register.
+        inputs: Write, Taken
+        outputs: History[N-1:0]
+    Add event counter component
+        How to reset? special instruction?
+        For number of stalls / flushes
+        For number misses
+        For number of instructions
+    Example pipelines based on pipeline.cpu:
+        no delay slot:
+            Always stall
+            Static predictor (not taken)
+            Static predictor (taken)
+            Local history predictor (not sure on what size)
+            Global history predictor (not sure on what size)
+            Combined predictor (not sure on what size)
+        Repeat with delay slot?
+    Create a few test programs.
+        sorting
+            shuffle sort
+            merge sort
+        calculate first N prime numbers
+        Check if N numbers are prime
+    Measure hit rates and stalls for each pipeline
+
+Work log:
+    26th July, 3 hours
+        trying to build drmips
+            works with jdk10 and gradle 4.9
+            ./gradlew wrapper --gradle-version=4.9 --distribution-type=bin
+        Can now build and run
+            editting the name of the add block to add2 works
+    27th July, 1610 -
+        Writing build instructions for drmips
+        Making notes on types of branch predictors
+        Making work plan
+    Total: 3 hours
